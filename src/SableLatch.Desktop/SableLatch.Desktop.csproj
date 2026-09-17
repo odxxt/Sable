@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF><UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>SableLatch</AssemblyName><Version>0.6.6</Version>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\SableLatch.ico</ApplicationIcon>
+    <!-- WPF owns the windows and DPI policy. WinForms is used only for NotifyIcon. -->
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
+  </PropertyGroup>
+  <ItemGroup><ProjectReference Include="..\SableLatch.Core\SableLatch.Core.csproj" /></ItemGroup>
+  <ItemGroup><Resource Include="Assets\SableLatch.ico" /></ItemGroup>
+  <ItemGroup><Content Include="Themes\*.json" CopyToOutputDirectory="PreserveNewest"/><Content Include="Languages\*.json" CopyToOutputDirectory="PreserveNewest"/></ItemGroup>
+</Project>

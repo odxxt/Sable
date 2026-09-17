@@ -1,0 +1,242 @@
+PASS: Windows confirms capture exclusion on the main panel HWND
+PASS: Default and bundled themes use approximately 95 percent background opacity
+PASS: Welcome focuses on create and restore; import remains in settings
+PASS: Enter invokes the setup Next action
+PASS: Recovery key starts hidden without plaintext in the textbox
+PASS: Recovery key step fits without scrolling
+PASS: Recovery key is revealed only on request
+PASS: Recovery copy shows muted green confirmation
+PASS: Setup Back preserves the password draft
+PASS: Setup Back reaches welcome without creating a vault
+PASS: Enter invokes the setup Next action
+PASS: Enter invokes the setup Next action
+PASS: Setup does not create files before its final step
+PASS: PIN setup Back returns to the hidden recovery step
+PASS: Enter invokes the setup Next action
+PASS: Enter finishes setup from the PIN confirmation field
+PASS: Setup Finish creates the vault, enrolls PIN and opens the list
+PASS: All items is a plain label with no button hover
+PASS: Text has a subtle contrast shadow
+PASS: Position reset returns to the default bottom-right placement
+PASS: Search is hidden by default
+PASS: No permanent footer text
+PASS: List is capped at four and a half 56-pixel rows
+PASS: Add entry follows the viewport without a large blank gap
+PASS: Unpinned window has the native Alt+Tab exclusion style
+PASS: Pinned window has the native Alt+Tab inclusion style
+PASS: Unpin removes active background even while focused
+PASS: Rearrange button clears active state when switched off
+PASS: Settings Back remains at the same position across subsections
+PASS: Settings subsection Back returns to settings
+PASS: Settings root Back returns to entries
+PASS: Nested security Back returns to security settings
+PASS: First login click copies username, stays on list and holds topmost without pinning
+PASS: Second login click copies password and hides the unpinned panel
+PASS: Pinned login remains open after password copy
+PASS: Arming deletion shows DELETE without removing the entry
+PASS: DELETE confirmation sends a secret login to encrypted trash
+PASS: Editor Save is always visible outside the scrolling form
+PASS: Save position is consistent between login and text editors
+PASS: Drag shows an insertion marker after the lower half of the target row
+PASS: Drop inserts at the displayed position
+PASS: New entry uses type buttons instead of a dropdown
+PASS: Switching entry types preserves unfinished drafts
+PASS: Enter saves a multiline entry through the shared page action
+PASS: Shortcut setting uses a record control
+PASS: Shortcut recorder enters capture mode
+PASS: Restore default resets the shortcut capture control
+PASS: Lock retains only a PIN ticket and shows typed PIN input
+PASS: PIN screen has no number pad
+PASS: Locked screen is centered and explicitly marked locked
+PASS: PIN input has no filled box
+PASS: PIN unlock reopens the actual list after system-style locking
+PASS: Invalid input gets a shake transform and red feedback
+PASS: Enter invokes Save PIN from the confirmation field
+PASS: PIN settings save succeeds after full-password verification
+PASS: New PIN from the settings form unlocks successfully
+PASS: PIN input is disabled synchronously when a submission starts
+PASS: PIN failure 1 consumes exactly one attempt
+PASS: PIN failure 1 shows only the requested remaining-attempt hint
+PASS: Cooldown blocks rapid retries without changing the attempt budget
+PASS: PIN feedback finishes with an empty input before the next attempt
+PASS: PIN input is disabled synchronously when a submission starts
+PASS: PIN failure 2 consumes exactly one attempt
+PASS: PIN failure 2 shows only the requested remaining-attempt hint
+PASS: Cooldown blocks rapid retries without changing the attempt budget
+PASS: PIN feedback finishes with an empty input before the next attempt
+PASS: PIN input is disabled synchronously when a submission starts
+PASS: PIN failure 3 consumes exactly one attempt
+PASS: PIN failure 3 shows only the requested remaining-attempt hint
+PASS: Cooldown blocks rapid retries without changing the attempt budget
+PASS: PIN feedback finishes with an empty input before the next attempt
+PASS: PIN input is disabled synchronously when a submission starts
+PASS: PIN failure 4 consumes exactly one attempt
+PASS: PIN failure 4 shows only the requested remaining-attempt hint
+PASS: Cooldown blocks rapid retries without changing the attempt budget
+PASS: PIN feedback finishes with an empty input before the next attempt
+PASS: PIN input is disabled synchronously when a submission starts
+PASS: Fifth failed PIN requires the full password (screen=unlock, ticket=, remaining=, unlocked=False, busy=False)
+PASS: Without a live process ticket the full password is required
+PASS: New entries persist creation and modification timestamps
+PASS: PIN exhaustion is recorded in protected audit history
+PASS: Move to folder opens its choices immediately
+PASS: First Back on changed settings stays and shakes Save with a discard hint
+PASS: Settings Save stays fixed while the unsaved prompt appears (before=299.3333333333333, after=299.3333333333333)
+PASS: Further editing resets the discard confirmation
+PASS: Second Back discards only unsaved settings and returns normally
+PASS: Reverting a setting does not trigger a false unsaved warning
+PASS: Enter saves settings through the fixed footer action
+PASS: Leaving a form clears its Enter action instead of resubmitting an old page
+PASS: Folder customization is initially collapsed
+PASS: Folder customization expands in the existing page without losing its name
+PASS: Selected folder icon is saved in the encrypted document
+PASS: Scrollable settings show only the lower cue at the top
+PASS: Thin scrollbar thumb starts at the actual top rather than the middle
+PASS: Middle of a page shows both scroll cues
+PASS: Scroll thumb follows the content and the lower cue clears at the end
+PASS: Dragging the thin thumb actually scrolls the page
+PASS: Unloaded scroll overlays are removed instead of retaining old pages
+PASS: Backup setup stays opt-in with its checkbox initially off
+PASS: Setup guide saves an explicit backup preference before continuing
+PASS: Setup guide saves Trash retention and records progress
+PASS: Setup guide finishes after the three essential choices
+PASS: Completed setup card disappears from Settings
+PASS: Settings separates everyday controls from advanced vault tools
+PASS: Advanced subsection Back returns to the Advanced hub
+PASS: Taskbar and native style agree for unpinned mode never
+PASS: Taskbar honors pinned mode never
+PASS: Taskbar and native style agree for unpinned mode always
+PASS: Taskbar honors pinned mode always
+PASS: Taskbar and native style agree for unpinned mode pinned
+PASS: Taskbar honors pinned mode pinned
+PASS: Folder shell ends after Add entry and keeps the 4.5-row viewport
+PASS: Folder list exposes a lower overflow cue
+PASS: Advanced is absent from the list footer
+PASS: Advanced is a fixed header switch, separate from content type tabs
+PASS: Advanced button opens the advanced entry editor
+PASS: Advanced reveals a closed dropdown with no unselected action settings
+PASS: The redundant Show an action button checkbox is removed
+PASS: Choosing Application opens its picker after the type is selected
+PASS: Untested actions keep Save entry named consistently and dimmed
+PASS: Pressing dimmed Save shakes Test action without launching or saving
+PASS: Missing action path shakes the path field and prevents launch
+PASS: First two field failures show animation without inline error text
+PASS: Third field failure explains the problem under the field
+PASS: Application picker is highlighted and focuses its fixed search field
+PASS: Application choices display extracted small application icons
+PASS: Covered editor scroll cues stay hidden behind the picker
+PASS: Application picker offers detected apps and a separate Browse fallback
+PASS: Selecting an application fills its executable path
+PASS: Selecting an app closes the overlay and resumes the unchanged editor
+PASS: Selecting Windows and Control Panel opens the combined picker immediately
+PASS: Combined picker starts with six useful destinations instead of the full catalog
+PASS: Combined search distinguishes both sound destinations by source
+PASS: Control Panel picker searches friendly names and fills the selected destination
+PASS: Cancel closes the app picker without selecting or changing the draft
+PASS: Mouse wheel over a closed dropdown scrolls without changing the action or opening a picker
+PASS: Mouse wheel over an open action menu does not select another action
+PASS: Changing action type clears target, arguments and working folder
+PASS: Action labels are fixed to Run without a tooltip input
+PASS: Advanced entry Save remains fixed outside the scrolling options
+PASS: Changing content type preserves advanced color and action drafts
+PASS: Changing type back preserves the text draft
+PASS: A failed launch keeps Save dimmed and marks the action field
+PASS: Testing enables Save entry without renaming either button
+PASS: Changing a tested script dims Save again
+PASS: Unchanged tested action does not require a redundant test
+PASS: Enter saves the tested advanced entry
+PASS: Advanced save persists color, action and current folder
+PASS: Custom row has a separate action button beside Edit
+PASS: Copying an advanced entry copies only its payload and never opens the action
+PASS: Verify off launches directly without a destination page
+PASS: Action review requires an explicit Run button instead of form Enter
+PASS: Backing out of an action review returns without executing
+PASS: Unapproved transferred action shows first-run review before executing
+PASS: A queued click on a cancelled review cannot execute the action
+PASS: Cancelling first-run review does not grant execution consent
+PASS: Failed first launch never records local consent
+PASS: Explicit first-run confirmation records consent after successful launch
+PASS: A second unchanged run on this device no longer asks for verification
+PASS: Changing an approved command requires review again
+PASS: Testing an unapproved existing entry also requires first-run review
+PASS: A queued click on a cancelled test review cannot execute the action
+PASS: Cancelling test review preserves the editor without consent
+PASS: Confirmed test returns to the editor and grants local consent
+PASS: Search includes uncommon Control Panel items in a broad compact catalog
+PASS: Settings search accepts multiword and alternate keyword queries
+PASS: Every built-in destination has a unique valid Windows launch plan
+PASS: Ordinary entries save their color without enabling Advanced
+PASS: A color-only entry reopens with Advanced off
+PASS: Secret reveal is an eye inside the value box without a checkbox row
+PASS: Eye reveals the value and clears the hidden password control
+PASS: Eye hides the value and clears the plaintext editor
+PASS: Masked multiline editing preserves mixed line endings without exposing text
+PASS: Multiline paste stays masked and cannot be copied or recovered through undo
+PASS: Masked editor automation exposes no value or text pattern
+PASS: Eye reveal preserves every pasted secret line
+PASS: Enabled Advanced switch uses the active theme accent
+PASS: Testing an action does not copy the secret being edited
+PASS: Run and copy choice persists on the secret entry
+PASS: Run and copy uses a small badge without increasing the action button width
+PASS: Run and copy copies the actual secret with sensitive clipboard handling
+PASS: A failed action launch leaves the clipboard unchanged
+PASS: First-run copy review reveals no secret and copies nothing before confirmation
+PASS: Cancelling Run and copy leaves the clipboard unchanged
+PASS: Login Run and copy copies its password, not its label or username
+PASS: Selecting Run disables copying while preserving the secret action
+PASS: Script keep-open option starts off
+PASS: Test action uses one third and Save two thirds while sharing height and vertical alignment
+PASS: Changing terminal lifetime invalidates the tested action
+PASS: Text entries save Run and copy and keep-terminal settings
+PASS: Entry context menus have native capture exclusion
+PASS: Right-click Run and copy launches then copies ordinary text with its normal clipboard policy
+PASS: Action dropdowns have native capture exclusion
+PASS: Switching away from a script clears and hides keep-terminal settings
+PASS: Tooltips use the shared dark theme
+PASS: Tooltips have native capture exclusion
+PASS: Capture protection reported no failures for the windows opened in this fixture
+PASS: Quit sits in the fixed Settings footer to the right of About
+PASS: First Quit asks for confirmation without closing the vault
+PASS: Settings Quit respects the existing busy-operation guard
+PASS: Leaving settings cancels pending Quit confirmation
+PASS: PowerShell uses a fixed system executable and exact encoded script without a temporary file
+PASS: Application action retains an explicit executable and separate arguments
+PASS: Control Panel action passes a canonical name as one argument
+PASS: Windows Settings action accepts the settings scheme
+PASS: Control Panel action can open the main panel
+PASS: Control Panel picker exposes readable names for canonical destinations
+PASS: Run action uses Windows shell resolution with separate arguments
+PASS: Run preserves quoted application paths and their arguments
+PASS: Run expands environment variables for folder destinations
+PASS: Blank starting folder defaults to the Windows user folder
+PASS: CMD keep-open uses /k while retaining disabled AutoRun
+PASS: PowerShell keep-open uses NoExit only when requested
+PASS: CMD action disables AutoRun and prepares only explicit command text
+PASS: Actual PowerShell launch preserves multiline script and quoted metacharacters
+PASS: Actual CMD launch preserves quoted metacharacters
+PASS: Application handler launches the selected executable with its configured arguments
+PASS: Actual CMD remains alive after its fixture command until explicitly closed
+PASS: App preferences expose all three taskbar modes
+PASS: Execution rejects invalid or unsupported action: application / notepad.exe
+PASS: Execution rejects invalid or unsupported action: windows / file:///bad.exe
+PASS: Execution rejects invalid or unsupported action: windows / Microsoft.Mouse & bad
+PASS: Execution rejects invalid or unsupported action: unknown / anything
+PASS: Execution rejects invalid or unsupported action: cmd / echo first
+echo second
+PASS: Execution rejects invalid or unsupported action: powershell / echo disabled
+PASS: On-demand app discovery returns 77 bounded existing executable paths
+PASS: Folders, settings and editor keep fixed size and position (height 411.3333333333333 to 411.3333333333333, top 242.66666666666666 to 242.66666666666666)
+PASS: Main Settings includes Plugins after preferences and About in its footer
+PASS: App preferences omit the entry-layout selector
+PASS: Plugin layout choices stay hidden until another layout is registered
+PASS: Plugin settings Back returns to the main Settings page
+PASS: Ordinary context actions have no checkbox gutter
+PASS: Confirmed second Quit closes the app and releases the unlocked vault
+
+PASS: setup, list, login editor, settings, clipboard settings, rearrange, recovery and lock render.
+PASS: secret canaries absent from list text controls.
+PASS: editor Save persists a multiline text item.
+PASS: search filters the actual list.
+PASS: disabling a content module makes its rows unavailable.
+PASS: pin sets both session policy and the native topmost property.
+PASS: lock drops the document and list references even when pinned.

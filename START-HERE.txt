@@ -1,0 +1,135 @@
+SABLELATCH 0.6.6 — PORTABLE PREVIEW
+
+NEW VAULT
+Extract the entire ZIP into a writable folder. Open SableLatch.exe.
+Choose Create your vault or Restore from backup. Import is inside Settings.
+Setup has Back/Next. Reveal the hidden recovery key when ready, save it separately,
+then finish with an optional PIN.
+Keep all the accompanying runtime files together.
+
+UPDATING YOUR EXISTING COPY
+1. Right-click the old SableLatch tray icon and choose Exit.
+2. Extract the new ZIP into a separate folder.
+3. Copy your entire existing SableLatch-data folder beside the NEW SableLatch.exe.
+   Include the attachments folder and all other data files. Keep the original as a backup.
+4. Run the new SableLatch.exe on the same Windows account/computer.
+5. Unlock using your existing full password, then choose a 4–12 digit PIN.
+
+If you already use a custom vault location, use:
+SableLatch.exe --data-dir "C:\path\to\your\vault-folder"
+
+Do not run both versions against the same vault or alternate them on the same data.
+Older versions do not understand the new PIN settings.
+Moving a vault folder requires its master recovery key. A .sablebackup requires
+its backup password AND original recovery key. A .sableexport needs only its export
+password; create/open a vault, then use Settings > Advanced > Import & export.
+
+QUICK CONTROLS
+Tray icon or Ctrl+Alt+Space: open the popup.
+Header: drag to move. Search: reveal search. Pin: keep open and pause the timer.
+Login row: click once for username, again for password.
+The username copy keeps the popup on top while you paste; password copy closes it
+unless pinned or close-after-copy is disabled.
+Pencil: edit. Hover over it for five seconds to reveal the trash icon.
+Trash/right-click Delete: show a red DELETE button; click it to confirm.
+Rearrange: drag only the right-side handle; the line marks the drop position.
+Entry editor: choose a type button; Enter saves, Shift+Enter adds a text or masked secret line.
+Settings: appearance, clipboard, locking, PIN, backups, About, and shortcut recording.
+
+PASSWORD AND PIN
+Full password: after starting/restarting SableLatch and for credential changes.
+PIN: reopen after timer, manual, Windows-lock, or sleep locks while it keeps running.
+Type the PIN, or click the locked background to focus it. Input clears after failure.
+Five failed PINs require the full password, including rapid submissions.
+Forgot PIN? Choose Use full password, then change it in Security & locking.
+The PIN cannot recover a lost vault, replace the master key, or unlock backups.
+
+PREVIEW LIMITS
+151 core checks and the included WPF interaction checks passed. Native Windows
+device protection, session notifications, hotkeys, and clipboard integration still
+need testing in a normal Windows session. This build has not been independently
+security-audited. See SECURITY.md and VERIFICATION.md for the precise limits.
+
+AUDIT REPORTS
+Settings > Advanced > Activity & audit > Save HTML report. Export over the same file to refresh it.
+Creation/edit dates are encrypted with entries. Older creation dates are not known.
+Reports contain labels and timestamps but no secret values. Security-event history
+is capped at 256 records / 128 KB, with no reporting timer or extra process.
+
+ENCRYPTED EXPORTS
+Use Settings > Advanced > Import & export. Choose a long, unique export password.
+Import adds entries without replacing existing ones; repeated imports add duplicates.
+The recovery key cannot open an export if its export password is lost.
+
+SETTLE IN
+At the top of Settings, Continue setup guides you through backup preferences,
+Trash retention and your shortcut. Your progress is saved in the encrypted vault.
+Settings Save buttons stay fixed below scrolling fields. With unsaved changes,
+Back prompts once; press Back again to discard. Locking always clears drafts.
+Double-click the SableLatch title to return the popup to its default position.
+Folder editing includes an inline Customize picker for folder/work/home/star/lock icons.
+READABILITY AND ENTER
+The background is now about 95% opaque, with no live blur effect.
+Press Enter in a form to Save, go Next or Unlock. Shift+Enter adds a multiline break.
+Open dropdowns and shortcut recording keep their own keyboard behavior.
+ADVANCED ENTRIES
+Use Add entry, then the Advanced switch beside New entry. Pick Text, Secret or Login, a row color,
+and optionally an action: Application, Windows & Control Panel, Run, PowerShell or CMD.
+Test action runs a new action first, then Save entry becomes available.
+The first run on this PC requires review; later unchanged runs open directly.
+Enable Verify each time if you prefer a review on every run.
+Copying the row still copies only its normal value. Scripts run with your
+Windows account permissions; this is not a script sandbox.
+
+SETTINGS
+Everyday: Security & locking, Clipboard & copying, App preferences,
+Plugins & modules. About is at the bottom.
+Advanced: Backups & restore, Import & export, Trash & retention, Activity & audit.
+App preferences > Taskbar & Alt+Tab: Only when pinned, Always, or Never.
+
+UPGRADE
+Exit the old app, extract this version separately, then copy the complete
+SableLatch-data folder beside the new SableLatch.exe. Keep the original copy.
+Do not run older builds against updated data: they may discard new fields.
+
+0.6.2 INTERACTION CHANGES
+The window keeps the compact folder size on every page; it never resizes per folder.
+Scroll cues fade softly on the top/bottom and both sides.
+Choose application lists detected desktop apps; Browse selects another .exe.
+Switching action type clears the old target and arguments.
+Test action actually launches the action. Check its result, then save.
+Test action sits to the left of Save entry while Advanced is enabled.
+Save stays dimmed until tested; clicking it while dimmed only shakes Test action.
+A changed command or destination must be tested again before saving.
+Verify each time is optional. Imported entries always require first-run review.
+0.6.3 INTERACTION CHANGES
+Advanced is a small switch next to the page title.
+Selecting Application or Windows & Control Panel opens its picker immediately.
+Settings search includes 208 built-in destinations with distinct source icons.
+Only six common destinations appear before searching; availability depends on your PC.
+The scroll wheel never changes dropdown selection.
+First-run approvals are local to this Windows account and computer.
+Imports, new computers and changed commands require review before running.
+No action is run automatically during import, restore or unlocking.
+0.6.6 INTERACTION CHANGES
+Use the eye inside a secret value box to reveal or hide it while editing.
+Colors are available without Advanced. Advanced alone enables the action;
+turning it on reveals a closed action menu; settings appear after selection.
+For Secret/Login entries, choose Run or Run & copy (password for Logins).
+Run & copy uses normal sensitive clipboard protections and clearing preferences.
+The row button has a small copy badge. Testing does not copy the secret.
+Quit is at the bottom right of Settings, beside About.
+NEW IN 0.6.6
+Backups are off until enabled in Settings; the setup checklist starts unchecked.
+Advanced reveals a closed action menu. Settings appear after choosing a type.
+Text, Secret and Login support Run / Run & copy, including from right-click menus.
+CMD/PowerShell: Keep terminal open when finished lets you read the result.
+Secret fields support multiline paste and Shift+Enter without revealing the value.
+Smaller colors, dark tooltips, transparent copy badges and aligned footer buttons.
+Capture exclusion covers the panel and its popups in supported Windows capture
+paths. It cannot guarantee invisibility in every recording tool; see SECURITY.md.
+0.6.6 INTERFACE UPDATE
+Settings > Quit now changes to Confirm quit. Click it again to exit.
+Leaving Settings or hiding the panel cancels that confirmation.
+Revealing a secret adds a slash over the same eye icon; click again to hide it.
+In the editor footer, Test action uses one third and Save entry two thirds.

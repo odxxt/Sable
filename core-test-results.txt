@@ -1,0 +1,153 @@
+PASS: Recovery key has 256 bits and passes checksum
+PASS: Recovery typo rejected
+PASS: Labels, folders and custom payload encrypted at rest
+PASS: Attachment encrypted at rest
+PASS: Lock releases decrypted document and key
+PASS: Attachment access rejected while locked
+PASS: Incorrect password rejected
+PASS: Failed password never opens a session
+PASS: Unknown content type survives save and unlock
+PASS: Plugin-owned schema and nested payload preserved
+PASS: Encrypted attachment round trip
+PASS: New screenshot provider registers and copies encrypted attachment without changing vault code
+PASS: Copied vault cannot unlock with password on another device
+PASS: Recovery key alone transfers vault and resets password
+PASS: Recovered vault binds to destination device
+PASS: External vault change cannot be silently overwritten
+PASS: Old password rejected after change
+PASS: Old recovery key rejected by current vault after rotation
+PASS: Backup does not expose plaintext entry data
+PASS: Backup cannot be opened with wrong password
+PASS: Backup password alone does not restore without correct recovery key
+PASS: Backup restores entries and attachments with both credentials
+PASS: Restore refuses to overwrite an existing destination
+PASS: Tampered vault ciphertext rejected
+PASS: Tampered backup rejected
+PASS: Tampered attachment rejected
+PASS: Seven-day expiry affects only old trashed entries
+PASS: Secrets go to encrypted Trash by default
+PASS: Ordinary entries delete permanently by default
+PASS: Trash cleanup can be disabled
+PASS: Search excludes secret values
+PASS: Username copies its actual value and keeps panel open
+PASS: Password copies secret value and completes login flow
+PASS: Session expires after configured duration
+PASS: Pin suspends time-based locking
+PASS: Unpin applies overdue timeout immediately
+PASS: System lock overrides pin
+PASS: Folder cycles rejected
+PASS: Invalid mutation rejected before disk write
+PASS: Failed mutation leaves active document unchanged
+PASS: Backup retention keeps configured number for this vault
+PASS: Short PIN rejected
+PASS: Non-digit PIN rejected
+PASS: Oversized PIN rejected
+PASS: No quick-unlock ticket without PIN enrollment
+PASS: PIN and verifier never stored outside vault encryption
+PASS: Incorrect PIN does not unlock the vault
+PASS: Failed PIN leaves no decrypted document
+PASS: Correct PIN restores encrypted vault during the same process session
+PASS: PIN cannot authorize password-protected security actions
+PASS: Wrong PIN attempt 1 rejected
+PASS: Wrong PIN attempt 2 rejected
+PASS: Wrong PIN attempt 3 rejected
+PASS: Wrong PIN attempt 4 rejected
+PASS: Wrong PIN attempt 5 rejected
+PASS: Five incorrect PINs destroy the process ticket
+PASS: Correct PIN cannot reopen an exhausted ticket
+PASS: Changing PIN invalidates an old configuration ticket
+PASS: Rejected stale configuration does not leave vault open
+PASS: Changing the full password retires old process tickets
+PASS: Disposed session cannot be reopened by PIN
+PASS: Locked vault cannot mint new PIN sessions
+PASS: Existing PIN enrollment survives a full-password restart
+PASS: Four-digit PIN unlocks with a fresh five-attempt budget
+PASS: Four-digit PIN failure 1 rejected
+PASS: PIN budget reports 4 remaining
+PASS: Four-digit PIN failure 2 rejected
+PASS: PIN budget reports 3 remaining
+PASS: Four-digit PIN failure 3 rejected
+PASS: PIN budget reports 2 remaining
+PASS: Four-digit PIN failure 4 rejected
+PASS: PIN budget reports 1 remaining
+PASS: Four-digit PIN failure 5 rejected
+PASS: PIN budget reports 0 remaining
+PASS: Correct four-digit PIN cannot bypass five-attempt exhaustion
+PASS: Audit retention is capped at 256 records
+PASS: Audit file remains within its small size bound
+PASS: Protected audit history cannot be read with a foreign device protector
+PASS: Audit timestamps are encrypted at rest
+PASS: Audit accepts only fixed event codes
+PASS: Editing a legacy entry does not invent a creation date
+PASS: Metadata preserves creation time across edits
+PASS: HTML audit escapes user labels
+PASS: HTML audit excludes username and secret values
+PASS: Audit report is static and blocks external resources
+PASS: Unreadable audit history is not silently replaced
+PASS: Failed audit append preserves the previous file
+PASS: Repeated exports are independently randomized
+PASS: Every export has its own 128-bit salt
+PASS: Every export has a fresh AES-GCM nonce
+PASS: Export exposes neither entry data nor recovery key
+PASS: Weak-length export passwords rejected
+PASS: App password cannot replace the export password
+PASS: Wrong export password rejected
+PASS: Tampered export rejected before import
+PASS: Tampered export salt rejected
+PASS: Unknown export format rejected
+PASS: Export password alone opens all entries
+PASS: Export preserves unknown extension schemas
+PASS: Export includes authenticated attachments
+PASS: Transfers omit PIN and backup credentials
+PASS: Import adds entries without overwriting existing content
+PASS: Import preserves destination PIN configuration
+PASS: Import preserves the destination setup checklist progress
+PASS: Folder customization survives encrypted export and import
+PASS: Imported folder references are remapped consistently
+PASS: Imported attachment references point to newly encrypted destination blobs
+PASS: Repeated import adds independent copies with valid identifiers
+PASS: Imported entries survive destination password lock and unlock
+PASS: Destination recovery key still works after import
+PASS: Missing transfer attachments rejected
+PASS: Invalid import leaves the destination vault unchanged
+PASS: Concurrent PIN submissions cannot extend the five-attempt budget
+PASS: Correct PIN cannot bypass concurrent attempt exhaustion
+PASS: First-run restore works beside the app lease without moving folders
+PASS: First-run restore refuses to overwrite an existing vault
+PASS: Advanced action scripts and secret values are encrypted at rest
+PASS: Advanced action and taskbar preference survive encrypted reopen
+PASS: Advanced options preserve login payload and sensitivity
+PASS: Encrypted export conceals action scripts
+PASS: Advanced color and action survive encrypted export and additive import
+PASS: Local per-action confirmation choice survives encrypted reopen
+PASS: Import preserves the separate Verify each time choice
+PASS: Actions default to direct launch unless verification is selected
+PASS: Advanced secrets use encrypted Trash without losing action configuration
+PASS: Action metadata rejects embedded nulls
+PASS: Action script size is bounded
+PASS: Unknown action metadata survives without requiring an executable provider
+PASS: Older vaults default to ordinary entries and taskbar visibility only when pinned
+PASS: A new local action requires first-run review
+PASS: Local approval survives restarting on the same protected device
+PASS: Local approval file contains no plaintext action target
+PASS: Copied approvals cannot bypass review on another device
+PASS: Imported entries with new IDs cannot inherit local approval
+PASS: Changed command requires a new review
+PASS: Changed arguments invalidate local approval
+PASS: Changed starting folder invalidates local approval
+PASS: Verify each time remains independent of first-run approval
+PASS: Tampered approvals fail closed and require review
+PASS: Explicit review can replace a damaged or foreign approval file
+PASS: Oversized local approval files fail closed
+PASS: Actual additive import cannot inherit a source entry's approval
+PASS: Run and copy mode survives encrypted save and reopen
+PASS: Encrypted export and import preserve Run and copy mode
+PASS: Older actions default to Run without copying
+PASS: Enabling secret copying requires new local execution consent
+PASS: Keeping a terminal open requires new local execution consent
+PASS: New and legacy vaults keep backups off by default
+PASS: Older actions retain automatic terminal closing
+PASS: Multiline secret and terminal option survive encrypted reopen exactly
+PASS: Multiline secrets and terminal options survive encrypted export and import
+
+151 checks passed.

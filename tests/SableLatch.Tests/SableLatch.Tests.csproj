@@ -1,0 +1,1 @@
+<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType></PropertyGroup><ItemGroup><ProjectReference Include="..\..\src\SableLatch.Core\SableLatch.Core.csproj"/><Compile Include="..\..\examples\ScreenshotProvider.cs" Link="ScreenshotProvider.cs"/></ItemGroup></Project>

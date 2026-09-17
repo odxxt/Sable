@@ -1,0 +1,21 @@
+<Window x:Class="SableLatch.Desktop.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="SableLatch" Width="342" Height="411" MinWidth="340" WindowStyle="None" ResizeMode="NoResize" AllowsTransparency="True" Background="Transparent" ShowInTaskbar="False" FontFamily="Segoe UI" UseLayoutRounding="True">
+ <Border x:Name="Shell" Background="{DynamicResource Surface}" BorderBrush="#FF414145" BorderThickness="0" CornerRadius="20" Padding="14,12,14,14">
+  <Grid>
+   <Grid.RowDefinitions><RowDefinition Height="38"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+   <Grid x:Name="Header" MouseLeftButtonDown="HeaderDrag">
+    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+    <StackPanel Orientation="Horizontal" VerticalAlignment="Center"><TextBlock x:Name="BrandTitle" Text="SableLatch" FontSize="13" FontWeight="SemiBold"/></StackPanel>
+    <StackPanel Grid.Column="1" Orientation="Horizontal">
+     <StackPanel x:Name="ExtensionToolbar" Orientation="Horizontal"/>
+     <Button x:Name="SearchButton" Style="{StaticResource HeaderButton}" Content="&#xE721;" ToolTip="Search" Click="ToggleSearch"/><Button x:Name="PinButton" Style="{StaticResource HeaderButton}" Content="&#xE718;" ToolTip="Pin · keep open and pause the session timeout" Click="TogglePin"/>
+     <Button x:Name="OrderButton" Style="{StaticResource HeaderButton}" Content="&#xE8CB;" ToolTip="Rearrange entries" Click="ToggleOrder"/>
+     <Button x:Name="LockButton" Style="{StaticResource HeaderButton}" Content="&#xE72E;" ToolTip="Lock now" Click="LockNow"/>
+     <Button x:Name="SettingsButton" Style="{StaticResource HeaderButton}" Content="&#xE713;" ToolTip="Settings" Click="OpenSettings"/>
+     <Button Style="{StaticResource HeaderButton}" Content="&#xE8BB;" ToolTip="Hide to tray" Click="HidePanel"/>
+    </StackPanel>
+   </Grid>
+   <ContentControl HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" x:Name="Body" Grid.Row="1" Margin="0,10,0,0"/>
+   <TextBlock x:Name="Status" Visibility="Collapsed"/><Border x:Name="ErrorToast" Grid.Row="1" VerticalAlignment="Bottom" Background="#FF56252B" CornerRadius="10" Padding="12" Visibility="Collapsed"><TextBlock x:Name="ErrorText" TextWrapping="Wrap" FontSize="12"/></Border>
+  </Grid>
+ </Border>
+</Window>
