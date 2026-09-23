@@ -88,7 +88,7 @@ public partial class MainWindow
             var menu = box.IsDropDownOpen ? box.Template.FindName("PART_Popup", box) as System.Windows.Controls.Primitives.Popup : null;
             e.Handled = true;
             var scroll = menu?.Child is { } child ? Descendants<ScrollViewer>(child).FirstOrDefault() : FindParent<ScrollViewer>(box);
-            if (scroll is not null) scroll.ScrollToVerticalOffset(scroll.VerticalOffset - e.Delta / 3d);
+            if (scroll is not null) SmoothScrolling.Wheel(scroll, e.Delta);
         };
         AutomationProperties.SetName(box, label); stack.Children.Add(box); return box;
     }

@@ -142,7 +142,7 @@ public partial class MainWindow
         footer.Children.Add(Button("Cancel", Close));
         footer.Children.Add(Button("Test action", () => { if (!ReferenceEquals(Body.Content, host) || startEpoch != epoch || !vault.IsUnlocked || busy) return; Close(); run(); }, true));
     }
-    private static string ActionDescription(EntryAction action) => action.Target + (action.Arguments.Length > 0 ? "\nArguments: " + action.Arguments : "") + (action.WorkingDirectory.Length > 0 ? "\nFolder: " + action.WorkingDirectory : "") + (action.CopyOnRun ? "\nOn run: copy the entry value (password for a login)" : "") + (action.KeepTerminalOpen ? "\nKeep terminal open when finished" : "");
+    private static string ActionDescription(EntryAction action) => action.Target + (action.Arguments.Length > 0 ? "\nArguments: " + action.Arguments : "") + (action.WorkingDirectory.Length > 0 ? "\nFolder: " + action.WorkingDirectory : "") + (action.CopyOnRun ? "\nOn run: copy the entry value (username first for a login)" : "") + (action.KeepTerminalOpen ? "\nKeep terminal open when finished" : "");
 #if DEBUG
     private Action<ProcessStartInfo>? previewActionLaunch = null;
 #endif
@@ -173,7 +173,7 @@ public partial class MainWindow
         var row = entryList?.Items.Cast<RowModel>().FirstOrDefault(r => r.Item.Id == item.Id);
         var container = row is null ? null : entryList!.ItemContainerGenerator.ContainerFromItem(row) as ListBoxItem;
         var source = container is null ? new Button { DataContext = row } : Descendants<Button>(container).FirstOrDefault(b => b.Tag as string == "entry-action") ?? new Button { DataContext = row };
-        await CopyEntry(item, item.ContentType == "sable.login" ? "Password" : "Copy", source);
+        await CopyEntry(item, item.ContentType == "sable.login" ? "Username" : "Copy", source);
     }
     private async void ReviewEntryAction(VaultItem item)
     {

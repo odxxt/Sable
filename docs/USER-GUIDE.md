@@ -1,4 +1,4 @@
-# SableLatch 0.6.6 — portable preview
+# SableLatch 0.7.1 — portable preview
 
 A compact, local clipboard vault for Windows. A native WPF window and tray icon; no browser engine, service, telemetry, or network listener.
 
@@ -20,7 +20,7 @@ The vault lives in `SableLatch-data` beside the app. A custom location can be op
 
 - Text, secret, and login entries; labels; multiline text and masked multiline secrets; nested folders; search across labels and ordinary text.
 - Compact, rounded 342 × 411 popup with borderless rows, subtle edit icons, optional header search, and visual invalid-field feedback.
-- At most 4.5 rows visible, smooth whole-row hover, dark context menus without an icon gutter, and active header fills that clear when switched off. Back follows the settings hierarchy and stays in a fixed position. The entry editor has a fixed Save button, a bottom list fade signals more rows, and the scrollbar is a slim rounded indicator.
+- A fixed compact window with the list filling the available space, smooth whole-row hover, dark context menus without an icon gutter, and active header fills that clear when switched off. Back follows the settings hierarchy and stays in a fixed position. The entry editor has a fixed Save button, a bottom list fade signals more rows, and the scrollbar is a slim rounded indicator.
 - Centered locked screen with a box-free typed PIN. Four to twelve digits are supported. Only the last three remaining attempts are shown; five rejected attempts require the full password.
 - Lightweight audit metadata: creation/modification timestamps on entries, 256 protected security-event records, and a static HTML report from Settings → Advanced → Activity & audit. No reporting server, background timer, or copied-value logging.
 - Click to copy with animated confirmation. Entry types use buttons; switching types preserves unfinished drafts. Right-side drag handles show an insertion line; arrow keys also move a focused handle in rearrange mode.
@@ -101,7 +101,7 @@ See [ARCHITECTURE.md](../ARCHITECTURE.md), [SECURITY.md](../SECURITY.md), and [E
 
 ## Advanced entries (0.6.6)
 
-Choose **Add entry**, then turn on the **Advanced** switch beside the page title. Keep the same Text, Secret or Login type. Entry colors are available with Advanced off. Turning Advanced on reveals a closed action-type dropdown, with its fields hidden until a type is selected. Choosing a type configures the separate play button beside Edit:
+Choose **+ → New entry**, then turn on the **Advanced** switch beside the page title. Keep the same Text, Secret or Login type. Entry colors are available with Advanced off. Turning Advanced on reveals a closed action-type dropdown, with its fields hidden until a type is selected. Choosing a type configures the separate play button beside Edit:
 
 - **Application:** choose an existing .exe, with optional arguments.
 - **Windows & Control Panel:** search both collections together, with distinct icons and source labels. The compact catalog contains 208 destinations and keywords, with only six common choices shown before searching. You can also enter an `ms-settings:` address or canonical name.
@@ -134,18 +134,26 @@ Settings search uses a small built-in catalog, not an indexing service. Search m
 First-run approvals live in a separate device-protected actions.sableconsent file, capped at 2,048 exact entry/action digests (under 300 KB). No command text is stored there, and vault backups/exports omit it. A missing, corrupt, foreign or evicted approval asks again. Local test execution of an existing unapproved entry also requests review; a locally authored new entry's explicit successful test counts as its approval. Programs and scripts still run under your Windows permissions, without a sandbox.
 Secret and Login value editors have an eye inside the right edge of the value box. When revealed, the same eye gains a diagonal slash. Reveal is temporary; hiding clears the plaintext editor and switching/locking clears both controls. Advanced is now the sole action enable switch, with its active track using the theme accent. Entry colors work independently. Turning Advanced off disables a saved action while keeping its configuration for later.
 
-For Text, Secret and Login actions, use the segmented **Run / Run & copy** selector. Run launches only; Run & copy copies the entry value after a successful launch (the password for Login entries), never the row label. The same action is available by right-clicking the entry. The action icon receives a small copy badge without changing size or position. Secret copies use the normal clipboard-history exclusion, clearing timer and close-after-copy preferences. Cancelled reviews and failed launches do not copy. Test action tests execution only and does not copy the edited value. Changing copy mode requires testing and renewed local approval. Commands receive no automatic secret interpolation.
+For Text, Secret and Login actions, use the segmented **Run / Run & copy** selector. Run launches only; Run & copy copies the entry value after a successful launch (username first for Login entries; the panel stays open until the next row click copies the password), never the row label. The same action is available by right-clicking the entry. The action icon receives a small copy badge without changing size or position. Secret copies use the normal clipboard-history exclusion, clearing timer and close-after-copy preferences. Cancelled reviews and failed launches do not copy. Test action tests execution only and does not copy the edited value. Changing copy mode requires testing and renewed local approval. Commands receive no automatic secret interpolation.
 ## Multiline secrets, terminals and capture protection (0.6.6)
 
 Secret and Login password fields accept multiline paste and Shift+Enter while masked. The eye reveals the same complete value; hiding clears the visible plaintext field. Masked text contains only bullets and line breaks, exposes no automation value/text pattern, and has no copy/cut/undo buffer. Enter still saves the current form. Entry colors use smaller swatches, tooltips use the dark theme, and neighboring footer buttons share their height, padding and text alignment.
 
-PowerShell and CMD actions offer **Keep terminal open when finished**, initially off. Enable it to read output after a command such as ping finishes. It uses PowerShell -NoExit or CMD /k, and requires testing the changed action before saving. A script that explicitly exits can still close its terminal. This option is cleared when you change action type. Existing launch approvals are preserved with this option off; enabling it requires new consent. No extra process runs until you test or invoke an action.
+New PowerShell and CMD actions enable **Keep terminal open when finished** by default, so you can read output after a command such as ping finishes. Turn it off to close the terminal when the command completes. Existing saved actions retain their choice. It uses PowerShell -NoExit or CMD /k, and requires testing the changed action before saving. A script that explicitly exits can still close its terminal. Selecting a new CMD or PowerShell action defaults it to on; other action types hide and clear it. Existing launch approvals are preserved with this option off; enabling it requires new consent. No extra process runs until you test or invoke an action.
 
 Windows capture exclusion is applied to the panel and its dropdowns, menus and tooltips. On Windows 10 version 2004 and later, supported capture paths omit these windows; older Windows versions use the blank-content fallback. Security settings report detected protection failures. Teams/Zoom behavior depends on the capture path they use and was not directly tested. Native dialogs, launched programs, alternate capture APIs, elevated software and cameras are outside this protection. It is not possible to promise invisibility to every recorder. See SECURITY.md.
 ## Install the PuTTY module (0.7.0)
 
 Open **Settings → Plugins & modules → Catalog → PuTTY SSH → Install**. This included package works offline. Open the installed module's settings to review the detected PuTTY application or locate it using Browse. If PuTTY is absent, use Download PuTTY to visit the official download page.
 
-Use **Add entry → More types → PuTTY SSH**. Save a name, host, username and password. Advanced contains port, expected server fingerprint, network preference, compression, keepalive and terminal font/size. Clicking the row opens details; Run launches PuTTY after the first connection review. Don't ask again remembers that connection on this Windows environment. Changed hosts, binaries or module manifests ask again.
+Use **+ → New entry → More → PuTTY SSH**. Save a name, host, username and password. Advanced contains port, expected server fingerprint, network preference, compression, keepalive and terminal font/size. Clicking the row opens details; Run launches PuTTY after the first connection review. Don't ask again remembers that connection on this Windows environment. Changed hosts, binaries or module manifests ask again.
 
 Use Install ZIP for community modules. Removal preserves encrypted entries; reinstall the compatible module to use them again. See the module guide for samples and the supported first-version limits.
+
+## Compact navigation and scrolling (0.7.1)
+
+The **+** beside the folder heading opens a small **New entry / New folder** menu. There is no separate bottom Add entry button, so entries use the freed space while the window stays the same size. The entry type selector uses matching segments and a clear active fill. **More** opens module types, with the chosen module named below the selector. Changing type preserves the name and each type's unfinished field values until you leave the editor or lock.
+
+Installed modules show **✓** in Plugins and the catalog; opening the same package shows **Already installed** and a link to its settings. The online catalog checks the installed package against the signed catalog's archive hash. A different package still goes through verification and update review.
+
+Mouse-wheel scrolling eases over 160 milliseconds, including dropdowns, without changing their selection. Nested multiline fields scroll first; at their edge, scrolling continues on the page. It honors Windows' wheel line count and disabled animation preference, cancels on leaving the page, and does no animation work while idle. Scrollbar dragging and keyboard scrolling remain direct.

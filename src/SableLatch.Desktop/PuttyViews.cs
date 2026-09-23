@@ -9,7 +9,7 @@ public partial class MainWindow
     private FrameworkElement BuildPuttyFields(DeclarativeProvider provider, VaultItem? existing, Action<VaultItem> save)
     {
         var stack = new StackPanel();
-        var label = Input(stack, "Name", existing?.Label ?? "");
+        var label = Input(stack, "Name", editorIsNew ? editorSharedLabel : existing?.Label ?? "");
         var host = Input(stack, "Host", existing?.Field("host") ?? "");
         var username = Input(stack, "Username", existing?.Field("username") ?? "");
         stack.Children.Add(Text("Password", 11, true));

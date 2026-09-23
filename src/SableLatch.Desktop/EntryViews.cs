@@ -46,7 +46,7 @@ public partial class MainWindow
             <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="27"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
               <Grid Width="20" Height="20" HorizontalAlignment="Left" VerticalAlignment="Center">
                 <TextBlock x:Name="SymbolGlyph" Text="{Binding Symbol}" FontFamily="Segoe MDL2 Assets" FontSize="15" Foreground="#FFC0C0C7" VerticalAlignment="Center"/>
-                <Path x:Name="NoteIcon" Visibility="Collapsed" Stroke="#FFC0C0C7" StrokeThickness="1" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M 4,4 L 16,4 16,17 4,17 Z M 7,2 L 7,6 M 10,2 L 10,6 M 13,2 L 13,6 M 7,9 L 13,9 M 7,12 L 13,12 M 7,15 L 11,15"/>
+                <Path x:Name="SshIcon" Visibility="Collapsed" Stroke="#FFC0C0C7" StrokeThickness="1.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Data="M 2,3 L 18,3 18,16 2,16 Z M 5,7 L 8,10 5,13 M 11,13 L 15,13"/><Path x:Name="NoteIcon" Visibility="Collapsed" Stroke="#FFC0C0C7" StrokeThickness="1" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M 4,4 L 16,4 16,17 4,17 Z M 7,2 L 7,6 M 10,2 L 10,6 M 13,2 L 13,6 M 7,9 L 13,9 M 7,12 L 13,12 M 7,15 L 11,15"/>
               </Grid>
               <StackPanel Grid.Column="1"><TextBlock Text="{Binding Title}" FontSize="13" FontWeight="Medium" TextTrimming="CharacterEllipsis"/><TextBlock Text="{Binding Subtitle}" Visibility="{Binding SubtitleVisibility}" FontSize="10" Foreground="#FFA3A3AA" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"/><StackPanel Orientation="Horizontal" Margin="0,4,0,0" Visibility="{Binding LoginVisibility}"><TextBlock Tag="Username" Text="username" FontSize="10" Opacity="{Binding UsernameOpacity}"/><TextBlock Text="  ·  " FontSize="10" Opacity=".35"/><TextBlock Tag="Password" Text="password" FontSize="10" Opacity="{Binding PasswordOpacity}"/></StackPanel></StackPanel>
             </Grid>
@@ -59,7 +59,7 @@ public partial class MainWindow
           </StackPanel>
         </Grid>
       </Border>
-      <DataTemplate.Triggers><DataTrigger Binding="{Binding Item.ContentType}" Value="sable.text"><Setter TargetName="SymbolGlyph" Property="Visibility" Value="Collapsed"/><Setter TargetName="NoteIcon" Property="Visibility" Value="Visible"/></DataTrigger><Trigger SourceName="Row" Property="IsMouseOver" Value="True"><Trigger.EnterActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="HoverShade" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.12"/></Storyboard></BeginStoryboard></Trigger.EnterActions><Trigger.ExitActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="HoverShade" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.18"/></Storyboard></BeginStoryboard></Trigger.ExitActions></Trigger><Trigger SourceName="Row" Property="IsKeyboardFocusWithin" Value="True"><Setter TargetName="HoverShade" Property="Opacity" Value=".45"/></Trigger></DataTemplate.Triggers>
+      <DataTemplate.Triggers><DataTrigger Binding="{Binding Item.ContentType}" Value="module.sablelatch.putty"><Setter TargetName="SymbolGlyph" Property="Visibility" Value="Collapsed"/><Setter TargetName="SshIcon" Property="Visibility" Value="Visible"/></DataTrigger><DataTrigger Binding="{Binding Item.ContentType}" Value="sable.text"><Setter TargetName="SymbolGlyph" Property="Visibility" Value="Collapsed"/><Setter TargetName="NoteIcon" Property="Visibility" Value="Visible"/></DataTrigger><Trigger SourceName="Row" Property="IsMouseOver" Value="True"><Trigger.EnterActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="HoverShade" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.12"/></Storyboard></BeginStoryboard></Trigger.EnterActions><Trigger.ExitActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="HoverShade" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.18"/></Storyboard></BeginStoryboard></Trigger.ExitActions></Trigger><Trigger SourceName="Row" Property="IsKeyboardFocusWithin" Value="True"><Setter TargetName="HoverShade" Property="Opacity" Value=".45"/></Trigger></DataTemplate.Triggers>
     </DataTemplate>
     """;
     private void ShowList()
@@ -79,7 +79,14 @@ public partial class MainWindow
         var navRow = new DockPanel(); navigation.Children.Add(navRow);
         if (folder is null) navRow.Children.Add(new TextBlock { Text = "All items", FontSize = 12, Margin = new Thickness(10, 10, 0, 0), VerticalAlignment = VerticalAlignment.Center });
         else navRow.Children.Add(Button("‹  " + FolderPath(folder.Value), () => { folder = vault.Document!.Folders.Single(x => x.Id == folder).ParentId; ShowList(); }));
-        var newFolder = Button("＋", () => ShowFolderEditor()); newFolder.ToolTip = "New folder"; newFolder.HorizontalAlignment = HorizontalAlignment.Right; navRow.Children.Add(newFolder);
+        var createMenu = new ContextMenu { MinWidth = 160, Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom };
+        var addEntry = new MenuItem { Header = "New entry" }; addEntry.Click += (_, _) => ShowEditor(advanced: false);
+        var addFolder = new MenuItem { Header = "New folder" }; addFolder.Click += (_, _) => ShowFolderEditor();
+        createMenu.Items.Add(addEntry); createMenu.Items.Add(addFolder);
+        var create = Button("＋", () => createMenu.IsOpen = true); create.ToolTip = "Create entry or folder";
+        System.Windows.Automation.AutomationProperties.SetName(create, "Create entry or folder");
+        createMenu.PlacementTarget = create; create.ContextMenu = createMenu;
+        create.HorizontalAlignment = HorizontalAlignment.Right; navRow.Children.Add(create);
         var chips = new WrapPanel(); navigation.Children.Add(chips);
         foreach (var f in vault.Document!.Folders.Where(f => f.ParentId == folder).OrderBy(f => f.Order))
         {
@@ -93,13 +100,13 @@ public partial class MainWindow
             menu.Items.Add(delete); chip.ContextMenu = menu; chips.Children.Add(chip);
         }
         entryList = (extensions.Layouts.GetValueOrDefault(vault.Document.Settings.Layout) ?? extensions.Layouts["rows"]).CreateHost();
-        entryList.MaxHeight = 252; entryList.VerticalAlignment = VerticalAlignment.Top;
+        entryList.VerticalAlignment = VerticalAlignment.Stretch;
         entryList.Background = Brushes.Transparent; entryList.BorderThickness = new Thickness(0); entryList.HorizontalContentAlignment = HorizontalAlignment.Stretch; entryList.ItemTemplateSelector = new EntryTemplateSelector(extensions, (DataTemplate)XamlReader.Parse(RowTemplate));
         var itemStyle = new Style(typeof(ListBoxItem)); itemStyle.Setters.Add(new Setter(Control.HorizontalContentAlignmentProperty, HorizontalAlignment.Stretch)); itemStyle.Setters.Add(new Setter(Control.PaddingProperty, new Thickness(0))); itemStyle.Setters.Add(new Setter(Control.BackgroundProperty, Brushes.Transparent)); itemStyle.Setters.Add(new Setter(Control.BorderThicknessProperty, new Thickness(0))); itemStyle.Setters.Add(new Setter(Control.TemplateProperty, XamlReader.Parse("<ControlTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' TargetType='ListBoxItem'><ContentPresenter/></ControlTemplate>"))); entryList.ItemContainerStyle = itemStyle;
         ScrollViewer.SetHorizontalScrollBarVisibility(entryList, ScrollBarVisibility.Disabled); ScrollViewer.SetVerticalScrollBarVisibility(entryList, ScrollBarVisibility.Auto);
         ScrollViewer.SetCanContentScroll(entryList, true); VirtualizingPanel.SetScrollUnit(entryList, ScrollUnit.Pixel);
         VirtualizingPanel.SetIsVirtualizing(entryList, true); VirtualizingPanel.SetVirtualizationMode(entryList, VirtualizationMode.Recycling);
-        var viewport = new Grid { MaxHeight = 252 }; Grid.SetRow(viewport, 2); grid.Children.Add(viewport);
+        var viewport = new Grid(); Grid.SetRow(viewport, 2); grid.Children.Add(viewport);
         viewport.Children.Add(new System.Windows.Documents.AdornerDecorator { Child = entryList });
         var mountedList = entryList;
         mountedList.Loaded += (_, _) => Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
@@ -118,8 +125,6 @@ public partial class MainWindow
             if (e.Key == Key.Delete && FindParent<ListBoxItem>(Keyboard.FocusedElement as DependencyObject)?.DataContext is RowModel row) { ArmDelete(row); e.Handled = true; }
             if (rearranging && Keyboard.FocusedElement is Button { Tag: "drag", DataContext: RowModel moving } && e.Key is Key.Up or Key.Down) { MoveEntry(moving.Item.Id, e.Key == Key.Up ? -1 : 1); e.Handled = true; }
         };
-        var bottom = new Grid(); bottom.ColumnDefinitions.Add(new()); bottom.ColumnDefinitions.Add(new() { Width = GridLength.Auto }); Grid.SetRow(bottom, 3); grid.Children.Add(bottom);
-        var add = Button("＋  Add entry", () => ShowEditor(advanced: false)); add.Height = 38; add.Opacity = .65; bottom.Children.Add(add);
         find.TextChanged += (_, _) => { if (clearingEditors) return; search = find.Text; placeholder.Visibility = string.IsNullOrEmpty(search) ? Visibility.Visible : Visibility.Collapsed; armedDelete = null; PopulateRows(); };
         eraseEditors.Add(find.Clear);
         PopulateRows(); UpdateStatus();

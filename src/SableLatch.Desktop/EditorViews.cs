@@ -13,6 +13,7 @@ public partial class MainWindow
 {
     private Func<VaultItem>? captureEditorDraft;
     private readonly Dictionary<string, VaultItem> editorDrafts = [];
+    private string editorSharedLabel = "";
     private bool editorIsNew;
     private AdvancedEntry? advancedDraft;
     private string? editorTestedAction;
@@ -21,7 +22,7 @@ public partial class MainWindow
         if (!vault.IsUnlocked) return;
         if (screen == "editor" && editorIsNew && existing is null && captureEditorDraft is not null)
         {
-            var draft = captureEditorDraft(); editorDrafts[draft.ContentType] = draft; advancedDraft = draft.Advanced;
+            var draft = captureEditorDraft(); editorDrafts[draft.ContentType] = draft; advancedDraft = draft.Advanced; editorSharedLabel = draft.Label;
         }
         editorIsNew = existing is null;
         advancedEditor = advanced ?? (existing is not null ? existing.Advanced?.Action?.Enabled == true : screen == "editor" && advancedEditor);
@@ -35,24 +36,24 @@ public partial class MainWindow
         advancedSwitch.Click += (_, _) => { if (advancedSwitch.IsChecked != advancedEditor) toggleAdvancedEditor?.Invoke(); };
         var stack = Form(existing is null ? "New entry" : "Edit entry", "", "editor", accessory: advancedSwitch);
         {
-            var picker = new System.Windows.Controls.Primitives.UniformGrid { Columns = existing is null ? 4 : 1, Margin = new Thickness(0, 0, 0, 16) };
+            var picker = new System.Windows.Controls.Primitives.UniformGrid { Columns = existing is null ? types.Count(p => p is not DeclarativeProvider) + 1 : 1 };
+            var group = "entry-type-" + Guid.NewGuid().ToString("N");
             foreach (var option in types.Where(p => existing is null ? p is not DeclarativeProvider : p.Descriptor.Id == type))
             {
-                var choice = Button(option.Descriptor.Name, () => { if (existing is null) ShowEditor(null, option.Descriptor.Id); });
-                choice.HorizontalContentAlignment = HorizontalAlignment.Center;
-                choice.Padding = new Thickness(5, 9, 5, 9); choice.Margin = new Thickness(2, 0, 2, 0);
-                choice.Background = option.Descriptor.Id == type ? (Brush)FindResource("HoverSurface") : Brushes.Transparent;
-                choice.Opacity = option.Descriptor.Id == type ? 1 : .55;
+                var choice = new RadioButton { Content = option.Descriptor.Name, GroupName = group, Style = (Style)FindResource("SegmentChoice"), IsChecked = option.Descriptor.Id == type };
+                System.Windows.Automation.AutomationProperties.SetName(choice, "Entry type " + option.Descriptor.Name);
+                choice.Click += (_, _) => { if (existing is null && option.Descriptor.Id != type) ShowEditor(null, option.Descriptor.Id); };
                 picker.Children.Add(choice);
             }
             if (existing is null)
             {
-                var more = Button(provider is DeclarativeProvider ? provider.Descriptor.Name : "More types", ShowMoreTypes);
-                more.HorizontalContentAlignment = HorizontalAlignment.Center; more.FontSize = 11; more.Padding = new Thickness(3, 9, 3, 9);
-                more.Background = provider is DeclarativeProvider ? (Brush)FindResource("HoverSurface") : Brushes.Transparent;
+                var more = new RadioButton { Content = "More ▾", GroupName = group, Style = (Style)FindResource("SegmentChoice"), IsChecked = provider is DeclarativeProvider };
+                System.Windows.Automation.AutomationProperties.SetName(more, "More types");
+                more.Click += (_, _) => ShowMoreTypes();
                 picker.Children.Add(more);
             }
-            stack.Children.Add(picker);
+            stack.Children.Add(new Border { Background = (Brush)FindResource("ControlSurface"), CornerRadius = new CornerRadius(10), Padding = new Thickness(3), Margin = new Thickness(0, 0, 0, 14), Child = picker });
+            if (existing is null && provider is DeclarativeProvider) stack.Children.Add(Text(provider.Descriptor.Name, 12, true));
         }
         if (!extensions.Editors.TryGetValue(type, out var editor)) { stack.Children.Add(Text("This content type needs its editor extension.")); return; }
         stack.Children.Add(editor.Build(existing ?? editorDrafts.GetValueOrDefault(type), item =>
@@ -68,7 +69,7 @@ public partial class MainWindow
     private FrameworkElement BuildFields(IContentProvider provider, VaultItem? existing, Action<VaultItem> save)
     {
         var stack = new StackPanel();
-        var label = Input(stack, provider.Descriptor.Sensitive ? "Label" : "Label · optional", existing?.Label ?? "");
+        var label = Input(stack, provider.Descriptor.Sensitive ? "Label" : "Label · optional", editorIsNew ? editorSharedLabel : existing?.Label ?? "");
         var readers = new Dictionary<string, Func<string>>();
         var controls = new Dictionary<string, Control>();
         foreach (var field in provider.EditorFields)

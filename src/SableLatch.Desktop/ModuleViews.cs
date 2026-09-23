@@ -26,8 +26,9 @@ public partial class MainWindow
     private void ShowMoreTypes()
     {
         if (!vault.IsUnlocked) return;
-        if (captureEditorDraft is not null) { var draft = captureEditorDraft(); editorDrafts[draft.ContentType] = draft; }
-        var stack = Form("More types", "", "editor", parent: () => ShowEditor());
+        string? previousType = null;
+        if (captureEditorDraft is not null) { var draft = captureEditorDraft(); previousType = draft.ContentType; editorDrafts[draft.ContentType] = draft; editorSharedLabel = draft.Label; advancedDraft = draft.Advanced; }
+        var stack = Form("More types", "", "editor", parent: () => ShowEditor(selectedType: previousType));
         foreach (var provider in content.All.OfType<DeclarativeProvider>().Where(p => !vault.Document!.Settings.DisabledModules.Contains(p.Descriptor.Id)))
             stack.Children.Add(Button(provider.Descriptor.Name + "  ›", () => ShowEditor(selectedType: provider.Descriptor.Id)));
         stack.Children.Add(Button("Install a module  ›", ShowModules));
@@ -41,7 +42,7 @@ public partial class MainWindow
         if (rejectedModules > 0) stack.Children.Add(Text($"{rejectedModules} invalid package(s) were blocked.", 11, true));
         foreach (var package in installedModules)
         {
-            stack.Children.Add(Button(package.Manifest.Name + "  ›", () => ShowModuleSettings(package)));
+            stack.Children.Add(Button(package.Manifest.Name + "  ✓", () => ShowModuleSettings(package)));
             stack.Children.Add(Text(package.Official ? "SableLatch · verified signature" : "Community · not reviewed by SableLatch", 10, true));
         }
         if (installedModules.Count == 0) stack.Children.Add(Text("Add entry types and actions. Modules run only when you use them.", 12, true));
@@ -66,7 +67,16 @@ public partial class MainWindow
     private void ReviewModule(ModulePackage package)
     {
         if (!vault.IsUnlocked) return;
-        var stack = Form("Install module", "", "settings", parent: ShowModules);
+        var current = installedModules.FirstOrDefault(p => p.Manifest.Id == package.Manifest.Id);
+        if (current is not null && (current.Fingerprint == package.Fingerprint || Version.Parse(current.Manifest.Version) > Version.Parse(package.Manifest.Version)))
+        {
+            var installed = Form(package.Manifest.Name, "", "settings", parent: ShowModules);
+            installed.Children.Add(Text("✓  Already installed", 14));
+            installed.Children.Add(Text("Version " + current.Manifest.Version, 11, true));
+            PageAction(Button("Module settings", () => ShowModuleSettings(current))); pageSubmit = null;
+            return;
+        }
+        var stack = Form(current is null ? "Install module" : "Update module", "", "settings", parent: ShowModules);
         stack.Children.Add(Text(package.Manifest.Name, 17));
         stack.Children.Add(Text(package.Manifest.Author + " · " + package.Manifest.Version, 11, true));
         stack.Children.Add(Text(package.Manifest.Description, 12));
@@ -74,7 +84,7 @@ public partial class MainWindow
         stack.Children.Add(Text(package.Manifest.Handler == "putty" ? "Can request a PuTTY connection to the host you configure. Passwords stay in SableLatch's protected launcher." : "Can define fields and request copying of its own non-secret fields. It cannot read other entries.", 12, true));
         stack.Children.Add(Text("No executable code, background activity or direct internet access.", 11, true));
         var reviewedPage = Body.Content; var startEpoch = epoch;
-        PageAction(Button("Install", () =>
+        PageAction(Button(current is null ? "Install" : "Update", () =>
         {
             if (!vault.IsUnlocked || epoch != startEpoch || !ReferenceEquals(Body.Content, reviewedPage)) return;
             try
@@ -92,7 +102,10 @@ public partial class MainWindow
         if (!vault.IsUnlocked) return;
         var stack = Form("Module catalog", "", "settings", parent: ShowModules);
         stack.Children.Add(Text("Official modules", 12, true));
-        stack.Children.Add(Button("PuTTY SSH  ›", () => ReviewModule(ModulePackages.Read(ModuleTrust.Resource("putty.zip"), ModuleTrust.Verify))));
+        var included = ModulePackages.Read(ModuleTrust.Resource("putty.zip"), ModuleTrust.Verify);
+        var installedPutty = installedModules.FirstOrDefault(p => p.Manifest.Id == included.Manifest.Id);
+        stack.Children.Add(Button(installedPutty is null ? "PuTTY SSH  ›" : "PuTTY SSH  ✓", () => ReviewModule(included)));
+        if (installedPutty is not null) stack.Children.Add(Text("Already installed · " + installedPutty.Manifest.Version, 11, true));
         stack.Children.Add(Text("Included with this app. Installs without a download.", 11, true));
         var page = Body.Content; var startEpoch = epoch;
         stack.Children.Add(AsyncButton("Check GitHub catalog", async () =>
@@ -103,8 +116,16 @@ public partial class MainWindow
                 if (startEpoch != epoch || !ReferenceEquals(page, Body.Content)) return;
                 var catalog = ModuleTrust.ReadCatalog(bytes);
                 var list = Form("GitHub catalog", "", "settings", parent: ShowModuleCatalog);
+                var installedByHash = installedModules.ToLookup(p => Convert.ToHexString(SHA256.HashData(p.Archive)), StringComparer.OrdinalIgnoreCase);
                 foreach (var entry in catalog)
                 {
+                    var installed = installedByHash[entry.Sha256].FirstOrDefault();
+                    if (installed is not null)
+                    {
+                        list.Children.Add(Button(entry.Name + "  ✓", () => ReviewModule(installed)));
+                        list.Children.Add(Text("Already installed · " + installed.Manifest.Version, 11, true));
+                        continue;
+                    }
                     var catalogPage = Body.Content;
                     list.Children.Add(AsyncButton(entry.Name + "  ↓", async () =>
                     {
@@ -144,7 +165,8 @@ public partial class MainWindow
                 var dialog = new Microsoft.Win32.OpenFileDialog { Filter = "PuTTY application (*.exe)|*.exe", CheckFileExists = true };
                 if (dialog.ShowDialog(this) == true) pathBox.Text = dialog.FileName;
             }));
-            stack.Children.Add(Button("Download PuTTY ↗", () => Process.Start(new ProcessStartInfo(PuttyBroker.DownloadUrl) { UseShellExecute = true })));
+            if (File.Exists(pathBox.Text)) stack.Children.Add(Text("✓  PuTTY found on this PC", 11, true));
+            else stack.Children.Add(Button("Download PuTTY ↗", () => Process.Start(new ProcessStartInfo(PuttyBroker.DownloadUrl) { UseShellExecute = true })));
             stack.Children.Add(Text("Use the official signed PuTTY release. Password authentication is supported; SSH keys follow later.", 11, true));
         }
         stack.Children.Add(Button("Reset remembered module permissions", () => { moduleApprovals.Clear(); Audit(AuditEvent.ModulePermissionsReset); SetStatus("Module operations will ask again"); }));

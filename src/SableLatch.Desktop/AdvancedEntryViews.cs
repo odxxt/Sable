@@ -53,7 +53,7 @@ public partial class MainWindow
         var directory = Input(directoryHost, "Working folder · optional", existing?.Action?.WorkingDirectory ?? ""); directory.MaxLength = 2048;
         directoryHost.Children.Add(Text("Used for relative file paths, such as .\\report.txt. Leave blank to start in your Windows user folder.", 11, true));
         var hint = Text("", 11, true); details.Children.Add(hint);
-        var terminal = Check(details, "Keep terminal open when finished", existing?.Action?.KeepTerminalOpen ?? false);
+        var terminal = Check(details, "Keep terminal open when finished", existing?.Action?.KeepTerminalOpen ?? true);
         terminal.Checked += (_, _) => changed(); terminal.Unchecked += (_, _) => changed();
         var copyOnRun = existing?.Action?.CopyOnRun == true;
         var canCopy = contentType is "sable.text" or "sable.secret" or "sable.login";
@@ -68,7 +68,7 @@ public partial class MainWindow
             System.Windows.Automation.AutomationProperties.SetName(runOnly, "Action mode Run"); System.Windows.Automation.AutomationProperties.SetName(runCopy, "Action mode Run and copy");
             modes.Children.Add(runOnly); modes.Children.Add(runCopy);
             details.Children.Add(new Border { Background = (Brush)FindResource("ControlSurface"), CornerRadius = new CornerRadius(10), Padding = new Thickness(3), Margin = new Thickness(0, 0, 0, 8), Child = modes });
-            details.Children.Add(Text(contentType == "sable.login" ? "Also copies the password after the action starts." : contentType == "sable.secret" ? "Also copies the secret after the action starts." : "Also copies the text after the action starts.", 11, true));
+            details.Children.Add(Text(contentType == "sable.login" ? "Copies the username first. Click the entry again for the password." : contentType == "sable.secret" ? "Also copies the secret after the action starts." : "Also copies the text after the action starts.", 11, true));
         }
         var verify = Check(details, "Verify each time", existing?.Action?.VerifyEachTime ?? false);
         void BrowseFile()
@@ -99,7 +99,7 @@ public partial class MainWindow
         void Refresh(bool clear)
         {
             var id = names[(string)kind.SelectedItem]; details.Visibility = id.Length == 0 ? Visibility.Collapsed : Visibility.Visible; var script = id is "cmd" or "powershell";
-            if (clear) { target.Clear(); arguments.Clear(); directory.Clear(); terminal.IsChecked = false; directoryHost.Visibility = Visibility.Collapsed; }
+            if (clear) { target.Clear(); arguments.Clear(); directory.Clear(); terminal.IsChecked = script; directoryHost.Visibility = Visibility.Collapsed; }
             terminal.Visibility = script ? Visibility.Visible : Visibility.Collapsed;
             targetLabel.Text = id switch { "application" => "Application path", "windows" => "Settings destination", "control-panel" => "Control Panel name", "run" => "Run command", _ => "Script" };
             target.AcceptsReturn = id == "powershell"; target.MinHeight = script ? 85 : 36;

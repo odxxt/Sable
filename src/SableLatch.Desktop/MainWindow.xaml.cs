@@ -289,7 +289,7 @@ public partial class MainWindow : Window
         ApplyTaskbarVisibility();
         closeChoicePicker?.Invoke();
         ResetSettingsDraft();
-        if (mode != "editor") { editorDrafts.Clear(); advancedDraft = null; editorTestedAction = null; }
+        if (mode != "editor") { editorDrafts.Clear(); editorSharedLabel = ""; advancedDraft = null; editorTestedAction = null; }
         EraseEditors(); recordingShortcut = false; ErrorToast.Visibility = Visibility.Collapsed; Body.Content = element; screen = mode; formError = null;
         backAction = null;
         pageFooter = null;

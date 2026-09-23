@@ -1,3 +1,13 @@
+# 0.7.1 — Compact navigation and smoother editing
+
+- Smooth wheel scrolling across pages and nested editors, respecting Windows animation preferences and wheel settings; no idle timer.
+- Replace the bottom Add entry button with a compact entry/folder menu on the top + button. Keep the window fixed and use the freed list space.
+- Unify the type selector and keep the entry name when changing between text, secret, login and module types.
+- Show installed module checkmarks and Already installed in package review and the catalog.
+- Start Login Run & copy with the username, keep the panel open, then copy the password on the next row click before hiding an unpinned panel.
+- Default newly selected CMD/PowerShell actions to keep their terminal open, with the option to close after completion. Preserve existing saved choices.
+- Use a crisp terminal icon for PuTTY SSH entries.
+
 # 0.7.0 — ZIP modules and protected PuTTY connections
 
 - Install data-only module ZIPs, review community/official status, enable/disable or uninstall while preserving encrypted entries.

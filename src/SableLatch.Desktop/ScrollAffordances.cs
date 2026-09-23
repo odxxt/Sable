@@ -6,7 +6,7 @@ namespace SableLatch.Desktop;
 internal static class ScrollAffordances
 {
     private static readonly DependencyProperty OverlayProperty = DependencyProperty.RegisterAttached("Overlay", typeof(ScrollEdgeOverlay), typeof(ScrollAffordances));
-    public static void Register() => EventManager.RegisterClassHandler(typeof(ScrollViewer), FrameworkElement.LoadedEvent, new RoutedEventHandler(Loaded), true);
+    public static void Register() { SmoothScrolling.Register(); EventManager.RegisterClassHandler(typeof(ScrollViewer), FrameworkElement.LoadedEvent, new RoutedEventHandler(Loaded), true); }
     private static void Loaded(object sender, RoutedEventArgs e)
     {
         if (sender is not ScrollViewer viewer) return;

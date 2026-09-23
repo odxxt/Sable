@@ -20,8 +20,9 @@ PASS: Text has a subtle contrast shadow
 PASS: Position reset returns to the default bottom-right placement
 PASS: Search is hidden by default
 PASS: No permanent footer text
-PASS: List is capped at four and a half 56-pixel rows
-PASS: Add entry follows the viewport without a large blank gap
+PASS: Rows retain their size inside the fixed window
+PASS: The redundant bottom Add entry button is removed
+PASS: Top plus opens the compact entry/folder menu
 PASS: Unpinned window has the native Alt+Tab exclusion style
 PASS: Pinned window has the native Alt+Tab inclusion style
 PASS: Unpin removes active background even while focused
@@ -40,6 +41,9 @@ PASS: Save position is consistent between login and text editors
 PASS: Drag shows an insertion marker after the lower half of the target row
 PASS: Drop inserts at the displayed position
 PASS: New entry uses type buttons instead of a dropdown
+PASS: Switching from text to login preserves the entry name
+PASS: Exactly the selected entry type is marked active
+PASS: Switching to secret preserves the entry name
 PASS: Switching entry types preserves unfinished drafts
 PASS: Enter saves a multiline entry through the shared page action
 PASS: Shortcut setting uses a record control
@@ -109,7 +113,7 @@ PASS: Taskbar and native style agree for unpinned mode always
 PASS: Taskbar honors pinned mode always
 PASS: Taskbar and native style agree for unpinned mode pinned
 PASS: Taskbar honors pinned mode pinned
-PASS: Folder shell ends after Add entry and keeps the 4.5-row viewport
+PASS: Folder entries use the space freed by the removed footer
 PASS: Folder list exposes a lower overflow cue
 PASS: Advanced is absent from the list footer
 PASS: Advanced is a fixed header switch, separate from content type tabs
@@ -175,6 +179,7 @@ PASS: Multiline paste stays masked and cannot be copied or recovered through und
 PASS: Masked editor automation exposes no value or text pattern
 PASS: Eye reveal preserves every pasted secret line
 PASS: Enabled Advanced switch uses the active theme accent
+PASS: New PowerShell actions keep their terminal open by default
 PASS: Testing an action does not copy the secret being edited
 PASS: Run and copy choice persists on the secret entry
 PASS: Run and copy uses a small badge without increasing the action button width
@@ -182,9 +187,10 @@ PASS: Run and copy copies the actual secret with sensitive clipboard handling
 PASS: A failed action launch leaves the clipboard unchanged
 PASS: First-run copy review reveals no secret and copies nothing before confirmation
 PASS: Cancelling Run and copy leaves the clipboard unchanged
-PASS: Login Run and copy copies its password, not its label or username
+PASS: Login Run and copy starts with username and holds the unpinned panel for the password
+PASS: Second login click copies the password and closes the unpinned panel without relaunching
 PASS: Selecting Run disables copying while preserving the secret action
-PASS: Script keep-open option starts off
+PASS: New CMD actions keep their terminal open by default
 PASS: Test action uses one third and Save two thirds while sharing height and vertical alignment
 PASS: Changing terminal lifetime invalidates the tested action
 PASS: Text entries save Run and copy and keep-terminal settings
@@ -232,6 +238,9 @@ PASS: Plugin layout choices stay hidden until another layout is registered
 PASS: Plugin settings Back returns to the main Settings page
 PASS: Module installation does not accept a queued Enter as consent
 PASS: Installing signed ZIP registers its host-owned entry type
+PASS: Already installed module does not offer duplicate installation
+PASS: Local catalog marks PuTTY installed
+PASS: Plugin manager marks PuTTY installed
 PASS: PuTTY editor has no plaintext password label
 PASS: Invalid SSH port prevents saving
 PASS: PuTTY fields are saved with secret classification and schema binding
@@ -243,5 +252,20 @@ PASS: Disabling module makes its preserved SSH entry unavailable
 PASS: Uninstall preserves encrypted SSH entry and marks module unavailable
 PASS: Reinstalling matching module restores existing entries
 PASS: More types lists the installed PuTTY module
+PASS: Back from More types restores the selected type and name
+PASS: Switching to a module preserves the shared entry name
+PASS: PuTTY rows use the terminal vector icon
+PASS: Editor wheel scrolling progresses smoothly to its destination
+PASS: Reversing the wheel reverses smoothly without a queued downward jump
+PASS: Wheel scrolls the multiline field before its enclosing page
+PASS: Wheel continues on the editor page after a multiline field reaches its edge
+PASS: Leaving a page stops its scroll animation
 PASS: Ordinary context actions have no checkbox gutter
 PASS: Confirmed second Quit closes the app and releases the unlocked vault
+PASS: setup, list, login editor, settings, clipboard settings, rearrange, recovery and lock render.
+PASS: secret canaries absent from list text controls.
+PASS: editor Save persists a multiline text item.
+PASS: search filters the actual list.
+PASS: disabling a content module makes its rows unavailable.
+PASS: pin sets both session policy and the native topmost property.
+PASS: lock drops the document and list references even when pinned.
