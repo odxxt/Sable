@@ -25,6 +25,7 @@ public sealed class VaultItem
     public DateTimeOffset? UpdatedAt { get; set; }
     public JsonElement Payload { get; set; } = JsonSerializer.SerializeToElement(new { text = "" });
     public List<Guid> Attachments { get; set; } = [];
+    public string? ModuleSchema { get; set; }
     public string Field(string key) => Payload.ValueKind == JsonValueKind.Object && Payload.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() ?? "" : "";
 }
 

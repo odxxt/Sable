@@ -28,7 +28,8 @@ public sealed class RowModel : System.ComponentModel.INotifyPropertyChanged
     public Visibility OrderVisibility { get; init; }
     public bool Available { get; init; }
     public Brush EntryBackground => EntryColors.Brush(Item.Advanced?.Color);
-    public Visibility ActionVisibility => !DeleteArmed && Available && Item.Advanced?.Action?.Enabled == true ? Visibility.Visible : Visibility.Collapsed;
+    public bool ModuleAction { get; init; }
+    public Visibility ActionVisibility => !DeleteArmed && Available && (ModuleAction || Item.Advanced?.Action?.Enabled == true) ? Visibility.Visible : Visibility.Collapsed;
     public string ActionLabel => Item.Advanced?.Action?.CopyOnRun == true ? "Run & copy" : "Run";
     public Visibility ActionCopyVisibility => Item.Advanced?.Action?.CopyOnRun == true ? Visibility.Visible : Visibility.Collapsed;
 }
@@ -131,12 +132,13 @@ public partial class MainWindow
         var items = string.IsNullOrWhiteSpace(search) ? doc.Items.Where(i => i.DeletedAt is null && i.FolderId == folder) : ItemOperations.Search(doc, search);
         entryList.ItemsSource = items.OrderBy(i => i.Order).Select(i =>
         {
-            var provider = content.Find(i.ContentType); var available = provider is not null && i.ContentVersion == provider.Descriptor.Version && !doc.Settings.DisabledModules.Contains(i.ContentType);
+            var provider = content.Find(i.ContentType); var available = provider is not null && i.ContentVersion == provider.Descriptor.Version && !doc.Settings.DisabledModules.Contains(i.ContentType) && ModuleAvailable(i);
             return new RowModel
             {
                 Item = i, Title = string.IsNullOrWhiteSpace(i.Label) ? i.IsSensitive ? "Secret" : i.Field("text").Split('\n')[0] : i.Label,
                 Subtitle = !available ? "Module unavailable" : i.IsSensitive ? "Secret · ••••••••" : string.IsNullOrWhiteSpace(i.Label) ? "Text" : i.Field("text").Replace('\n', ' '),
                 Symbol = provider?.Descriptor.Symbol ?? "\uE74C", DeleteArmed = armedDelete == i.Id, Available = available, PendingPassword = pendingLogin == i.Id,
+                ModuleAction = provider is DeclarativeProvider,
                 LoginVisibility = i.ContentType == "sable.login" ? Visibility.Visible : Visibility.Collapsed,
                 OrderVisibility = rearranging && string.IsNullOrWhiteSpace(search) ? Visibility.Visible : Visibility.Collapsed
             };
@@ -149,7 +151,7 @@ public partial class MainWindow
         if (action is not "edit" and not "confirm-delete") armedDelete = null;
         switch (action)
         {
-            case "entry-action": if (row.Available) ReviewEntryAction(row.Item); break;
+            case "entry-action": if (row.Available) { if (content.Find(row.Item.ContentType) is DeclarativeProvider module) { if (module.Package.Manifest.Handler == "putty") RunPutty(row.Item); else ShowModuleDetails(row.Item); } else ReviewEntryAction(row.Item); } break;
             case "edit":
                 if (row.DeleteReady) ArmDelete(row);
                 else if (row.Available) ShowEditor(row.Item);
@@ -159,7 +161,8 @@ public partial class MainWindow
             case "up": MoveEntry(row.Item.Id, -1); break;
             case "down": MoveEntry(row.Item.Id, 1); break;
             case "copy":
-                if (row.Item.ContentType == "sable.login") await CopyEntry(row.Item, pendingLogin == row.Item.Id ? "Password" : "Username", b);
+                if (content.Find(row.Item.ContentType) is DeclarativeProvider) ShowModuleDetails(row.Item);
+                else if (row.Item.ContentType == "sable.login") await CopyEntry(row.Item, pendingLogin == row.Item.Id ? "Password" : "Username", b);
                 else if (content.Find(row.Item.ContentType)?.CopyActions.Count > 1) ShowContentActions(row.Item);
                 else await CopyEntry(row.Item, content.Find(row.Item.ContentType)?.CopyActions.FirstOrDefault() ?? "Copy", b);
                 break;
@@ -225,7 +228,7 @@ public partial class MainWindow
         if (row.ActionVisibility == Visibility.Visible)
         {
             var run = new MenuItem { Header = row.ActionLabel, IsEnabled = row.Available };
-            run.Click += (_, _) => ReviewEntryAction(row.Item); menu.Items.Add(run); menu.Items.Add(new Separator());
+            run.Click += (_, _) => { if (content.Find(row.Item.ContentType) is DeclarativeProvider module) { if (module.Package.Manifest.Handler == "putty") RunPutty(row.Item); else ShowModuleDetails(row.Item); } else ReviewEntryAction(row.Item); }; menu.Items.Add(run); menu.Items.Add(new Separator());
         }
         var edit = new MenuItem { Header = "Edit", IsEnabled = row.Available }; edit.Click += (_, _) => ShowEditor(row.Item); menu.Items.Add(edit);
         if (row.Item.Advanced is null) { var advanced = new MenuItem { Header = "Advanced options…", IsEnabled = row.Available }; advanced.Click += (_, _) => ShowEditor(row.Item, advanced: true); menu.Items.Add(advanced); }

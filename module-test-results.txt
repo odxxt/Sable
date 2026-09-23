@@ -1,0 +1,12 @@
+PASS: Exact launched process receives complete password line
+PASS: Transfer buffer cleared immediately after pipe write
+PASS: Unexpected pipe client receives no password
+PASS: Lock/timeout cancellation interrupts pending pipe connection
+PASS: Bundled PuTTY module passes actual publisher signature verification
+PASS: Official GitHub catalog signature validates
+PASS: Installed PuTTY verifies publisher, file identity and version
+PASS: Modified PuTTY executable cannot receive credentials
+BLOCKED: Full PuTTY launch requires Windows registry access, unavailable in this execution session.
+PASS: Denied launch still clears the host password transfer buffer
+PASS: Official PuTTY 0.85 consumes a single-use password pipe without a temporary password file
+10 checks passed; 1 blocked by environment.

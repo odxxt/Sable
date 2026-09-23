@@ -1,3 +1,13 @@
+# 0.7.0 — ZIP modules and protected PuTTY connections
+
+- Install data-only module ZIPs, review community/official status, enable/disable or uninstall while preserving encrypted entries.
+- Add More types, host-rendered custom fields and actions, module settings, signed official packages and an on-demand signed GitHub catalog. The included PuTTY module installs offline.
+- Add PuTTY SSH entries with encrypted passwords, details and explicit Run, local first-run consent, executable signature/hash verification, and single-use local named-pipe delivery tied to the launched process.
+- Advanced SSH options include port, expected host fingerprint, IP family, compression, keepalive and terminal font/size. Password-only initially; private keys follow later.
+- Reject executable ZIP payloads, unsafe archive names, unknown APIs and changes that downgrade secret field schemas. No background module tasks or direct module network access.
+- Provide a ready-to-install quick-note sample, beginner/AI author guide, packaging tool and official-signing helper.
+- Clear mutable password transfer buffers on success, cancellation and failure; record module lifecycle events without credentials or connection details.
+
 # 0.6.6 — quit confirmation and editor refinements
 
 - Settings Quit now requires a second Confirm quit click; hiding the panel or leaving Settings cancels it. The button keeps a fixed width.

@@ -1,0 +1,10 @@
+{
+  "apiVersion": 1,
+  "id": "sablelatch.putty",
+  "version": "1.0.0",
+  "name": "PuTTY SSH",
+  "author": "SableLatch",
+  "description": "Open a password-authenticated SSH session with protected, single-use password delivery. Requires the official PuTTY application.",
+  "icon": "terminal",
+  "handler": "putty"
+}

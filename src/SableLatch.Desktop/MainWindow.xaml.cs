@@ -61,6 +61,9 @@ public partial class MainWindow : Window
         vault = new VaultStore(App.DataDirectory, device);
         audit = new AuditJournal(App.DataDirectory, device);
         actionApprovals = new ActionApprovals(App.DataDirectory, device);
+        moduleApprovals = new ModuleApprovals(App.DataDirectory, device);
+        modules = new ModuleStore(Path.Combine(App.DataDirectory, "modules"), ModuleTrust.Verify);
+        ReloadModules();
         SourceInitialized += (_, _) => InitializePlatform();
         Loaded += (_, _) => { PositionWindow(); if (!App.PreviewMode) ShowUnlock(); };
         IsVisibleChanged += (_, _) => { if (!IsVisible) ResetLoginCopy(); else ApplyTaskbarVisibility(); };

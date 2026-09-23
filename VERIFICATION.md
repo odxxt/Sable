@@ -1,4 +1,19 @@
-# Verification — SableLatch 0.6.6 preview
+# Verification — SableLatch 0.7.0 preview
+
+## Current release
+
+- Core/storage/module suite: **194 checks passed**. New coverage includes bounded ZIP loading, unsafe paths, duplicate JSON/ZIP entries, unsupported code/actions, signature tampering, secret field protection, schema-safe updates, device-local approvals and bounded UTF-8 secret transfer.
+- WPF: **247 interaction checks passed**, plus seven existing view checks. Signed module installation, PuTTY entry editing and validation, first-run consent, no copy/launch on opening details, enable/disable, uninstall preservation, reinstall and More types are exercised using disposable data.
+- Windows module/pipe suite: **10 checks passed, one environment-blocked check**. Exact client identity, wrong-client rejection, cancellation, buffer clearing, actual publisher/catalog signatures and tampered executable rejection were exercised. The installed official PuTTY **0.85** successfully consumed the actual named pipe through `-pwfile`; no temporary password file was used.
+- **Full connection coordinator remains unverified in this restricted session:** creating the temporary non-secret PuTTY registry session was denied by Windows. The failure path clears the transfer buffer. Run `dotnet run --project tests/SableLatch.ModuleTests` in a normal Windows development session to exercise that path using fictional credentials and loopback only. No successful login to a real SSH server has been claimed or tested.
+- Debug and self-contained Windows x64 Release compile with zero warnings/errors. Portable archive inventory/hash checks and a fresh extracted-runtime startup check are recorded in the accompanying release verification file.
+- No existing user vault was opened or modified. No user passwords, SSH hosts or saved actions were used during verification. The online catalog needs these files published to GitHub; bundled module installation is available offline.
+
+Module verification outputs are included in `module-test-results.txt`; core and UI results are in `core-test-results.txt` and `view-test-results.txt`. The security and Windows-platform limitations below still apply. This preview has not received an independent security audit.
+
+## Previous release verification record
+
+### SableLatch 0.6.6
 
 ## Results
 

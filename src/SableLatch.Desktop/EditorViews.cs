@@ -29,14 +29,14 @@ public partial class MainWindow
         if (types.Count == 0) { ShowError("Enable at least one content module in Settings."); return; }
         var type = existing?.ContentType ?? selectedType ?? types[0].Descriptor.Id;
         var provider = content.Find(type);
-        if (provider is null) { ShowError("This entry's editor is not installed. Its data is preserved."); return; }
+        if (provider is null || existing is not null && !ModuleAvailable(existing)) { ShowError("This entry's editor is not installed or its schema is incompatible. Its data is preserved."); return; }
         var advancedSwitch = new CheckBox { Content = "Advanced", IsChecked = advancedEditor, Style = (Style)FindResource("CompactSwitch"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0, 0, 0) };
         System.Windows.Automation.AutomationProperties.SetName(advancedSwitch, "Advanced options");
         advancedSwitch.Click += (_, _) => { if (advancedSwitch.IsChecked != advancedEditor) toggleAdvancedEditor?.Invoke(); };
         var stack = Form(existing is null ? "New entry" : "Edit entry", "", "editor", accessory: advancedSwitch);
         {
-            var picker = new System.Windows.Controls.Primitives.UniformGrid { Columns = existing is null ? types.Count : 1, Margin = new Thickness(0, 0, 0, 16) };
-            foreach (var option in types.Where(p => existing is null || p.Descriptor.Id == type))
+            var picker = new System.Windows.Controls.Primitives.UniformGrid { Columns = existing is null ? 4 : 1, Margin = new Thickness(0, 0, 0, 16) };
+            foreach (var option in types.Where(p => existing is null ? p is not DeclarativeProvider : p.Descriptor.Id == type))
             {
                 var choice = Button(option.Descriptor.Name, () => { if (existing is null) ShowEditor(null, option.Descriptor.Id); });
                 choice.HorizontalContentAlignment = HorizontalAlignment.Center;
@@ -44,6 +44,13 @@ public partial class MainWindow
                 choice.Background = option.Descriptor.Id == type ? (Brush)FindResource("HoverSurface") : Brushes.Transparent;
                 choice.Opacity = option.Descriptor.Id == type ? 1 : .55;
                 picker.Children.Add(choice);
+            }
+            if (existing is null)
+            {
+                var more = Button(provider is DeclarativeProvider ? provider.Descriptor.Name : "More types", ShowMoreTypes);
+                more.HorizontalContentAlignment = HorizontalAlignment.Center; more.FontSize = 11; more.Padding = new Thickness(3, 9, 3, 9);
+                more.Background = provider is DeclarativeProvider ? (Brush)FindResource("HoverSurface") : Brushes.Transparent;
+                picker.Children.Add(more);
             }
             stack.Children.Add(picker);
         }
@@ -104,6 +111,7 @@ public partial class MainWindow
         {
             var item = existing is null ? new VaultItem { ContentType = provider.Descriptor.Id, FolderId = folder, Order = vault.Document!.Items.Count } : Codec.Clone(existing);
             item.Label = label.Text.Trim(); item.IsSensitive = provider.Descriptor.Sensitive;
+            if (provider is DeclarativeProvider module) item.ModuleSchema = module.Package.Manifest.SchemaFingerprint();
             item.Advanced = advancedState.Capture();
             item.Payload = JsonSerializer.SerializeToElement(readers.ToDictionary(x => x.Key, x => x.Value())); return item;
         }

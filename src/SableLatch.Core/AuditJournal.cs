@@ -7,7 +7,8 @@ public enum AuditEvent
 {
     Started, PasswordUnlocked, PinUnlocked, PasswordRejected, PinRejected, PinExhausted,
     Locked, Changed, PasswordChanged, PinChanged, RecoveryChanged, BackupSaved,
-    OperationFailed, ReportExported, Exited, ExportSaved, Imported, EntryActionStarted
+    OperationFailed, ReportExported, Exited, ExportSaved, Imported, EntryActionStarted,
+    ModuleInstalled, ModuleRemoved, ModulePermissionsReset
 }
 public sealed record AuditRecord(DateTimeOffset At, AuditEvent Event);
 public sealed class AuditJournal(string directory, IDeviceProtector protector)

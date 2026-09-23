@@ -224,19 +224,24 @@ PASS: Execution rejects invalid or unsupported action: unknown / anything
 PASS: Execution rejects invalid or unsupported action: cmd / echo first
 echo second
 PASS: Execution rejects invalid or unsupported action: powershell / echo disabled
-PASS: On-demand app discovery returns 77 bounded existing executable paths
+PASS: On-demand app discovery returns 82 bounded existing executable paths
 PASS: Folders, settings and editor keep fixed size and position (height 411.3333333333333 to 411.3333333333333, top 242.66666666666666 to 242.66666666666666)
 PASS: Main Settings includes Plugins after preferences and About in its footer
 PASS: App preferences omit the entry-layout selector
 PASS: Plugin layout choices stay hidden until another layout is registered
 PASS: Plugin settings Back returns to the main Settings page
+PASS: Module installation does not accept a queued Enter as consent
+PASS: Installing signed ZIP registers its host-owned entry type
+PASS: PuTTY editor has no plaintext password label
+PASS: Invalid SSH port prevents saving
+PASS: PuTTY fields are saved with secret classification and schema binding
+PASS: Opening SSH details neither copies a credential nor starts PuTTY
+PASS: SSH details do not connect via queued Enter
+PASS: First SSH action reviews destination before launching
+PASS: Cancelling SSH review does not launch anything
+PASS: Disabling module makes its preserved SSH entry unavailable
+PASS: Uninstall preserves encrypted SSH entry and marks module unavailable
+PASS: Reinstalling matching module restores existing entries
+PASS: More types lists the installed PuTTY module
 PASS: Ordinary context actions have no checkbox gutter
 PASS: Confirmed second Quit closes the app and releases the unlocked vault
-
-PASS: setup, list, login editor, settings, clipboard settings, rearrange, recovery and lock render.
-PASS: secret canaries absent from list text controls.
-PASS: editor Save persists a multiline text item.
-PASS: search filters the actual list.
-PASS: disabling a content module makes its rows unavailable.
-PASS: pin sets both session policy and the native topmost property.
-PASS: lock drops the document and list references even when pinned.

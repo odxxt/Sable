@@ -4,7 +4,7 @@
     <TargetFramework>net10.0-windows</TargetFramework>
     <UseWPF>true</UseWPF><UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>disable</ImplicitUsings>
-    <AssemblyName>SableLatch</AssemblyName><Version>0.6.6</Version>
+    <AssemblyName>SableLatch</AssemblyName><Version>0.7.0</Version>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\SableLatch.ico</ApplicationIcon>
@@ -13,5 +13,9 @@
   </PropertyGroup>
   <ItemGroup><ProjectReference Include="..\SableLatch.Core\SableLatch.Core.csproj" /></ItemGroup>
   <ItemGroup><Resource Include="Assets\SableLatch.ico" /></ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\modules\publisher.pub" LogicalName="SableLatch.Modules.publisher.pub" />
+    <EmbeddedResource Include="..\..\modules\packages\sablelatch.putty.zip" LogicalName="SableLatch.Modules.putty.zip" />
+  </ItemGroup>
   <ItemGroup><Content Include="Themes\*.json" CopyToOutputDirectory="PreserveNewest"/><Content Include="Languages\*.json" CopyToOutputDirectory="PreserveNewest"/></ItemGroup>
 </Project>

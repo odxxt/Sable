@@ -16,7 +16,9 @@ public static class AuditReport
         AuditEvent.RecoveryChanged => "Recovery key changed", AuditEvent.BackupSaved => "Backup saved",
         AuditEvent.OperationFailed => "Operation failed", AuditEvent.ReportExported => "Audit report exported",
         AuditEvent.Exited => "App exited", AuditEvent.ExportSaved => "Encrypted export saved",
-        AuditEvent.Imported => "Encrypted export imported", AuditEvent.EntryActionStarted => "Entry action started", _ => "Unknown event"
+        AuditEvent.Imported => "Encrypted export imported", AuditEvent.EntryActionStarted => "Entry action started",
+        AuditEvent.ModuleInstalled => "Module installed", AuditEvent.ModuleRemoved => "Module removed",
+        AuditEvent.ModulePermissionsReset => "Module permissions reset", _ => "Unknown event"
     };
     public static string Build(VaultDocument document, IReadOnlyList<AuditRecord> events, bool historyAvailable = true)
     {

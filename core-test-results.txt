@@ -149,5 +149,48 @@ PASS: New and legacy vaults keep backups off by default
 PASS: Older actions retain automatic terminal closing
 PASS: Multiline secret and terminal option survive encrypted reopen exactly
 PASS: Multiline secrets and terminal options survive encrypted export and import
+PASS: Unsigned declarative module has scoped type and community status
+PASS: Module rejects unsafe/executable archive member ../escape
+PASS: Module rejects unsafe/executable archive member /absolute
+PASS: Module rejects unsafe/executable archive member C:/file
+PASS: Module rejects unsafe/executable archive member manifest.json:stream
+PASS: Module rejects unsafe/executable archive member plugin.dll
+PASS: Module rejects unsafe/executable archive member plugin.exe
+PASS: Module rejects unsafe/executable archive member ui.xaml
+PASS: Module rejects unsafe/executable archive member script.ps1
+PASS: Module rejects unsafe/executable archive member folder/manifest.json
+PASS: Module rejects unsafe/executable archive member CON
+PASS: Duplicate ZIP entries rejected
+PASS: Expanded ZIP size bounded
+PASS: Compressed package size bounded
+PASS: Duplicate JSON properties rejected
+PASS: Module actions cannot expose a secret field
+PASS: Ambiguous duplicate action captions rejected
+PASS: Modules cannot request arbitrary scripts
+PASS: Unsupported module API rejected
+PASS: Unsigned modules cannot impersonate official namespace
+PASS: Official signature verified using pinned publisher key
+PASS: Untrusted official signature rejected
+PASS: Tampered official manifest rejected
+PASS: Module installed atomically and reloaded
+PASS: Update cannot downgrade secret field to ordinary text
+PASS: Update requires stable publisher identity
+PASS: Uninstall removes only module package
+PASS: Host copy reads only declared ordinary field
+PASS: Module action cannot request undeclared secret copying
+PASS: Secret handoff reads UTF-8 without an immutable plaintext string copy
+PASS: Secret handoff buffer is bounded
+PASS: Module schema binding survives vault serialization
+PASS: PuTTY uses pipe password and restricted launch arguments
+PASS: PuTTY host cannot inject an option
+PASS: PuTTY username rejects control characters
+PASS: PuTTY port bounded
+PASS: Only random host-created pipe names accepted
+PASS: Connection approval binds destination
+PASS: Connection approval binds PuTTY binary
+PASS: New module connection requires explicit approval
+PASS: Don't ask again stores device-protected module consent
+PASS: Moving module approval to another device requires review again
+PASS: Reset module permissions revokes remembered approval
 
-151 checks passed.
+194 checks passed.

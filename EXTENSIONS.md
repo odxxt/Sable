@@ -1,6 +1,8 @@
-# Extension development foundation
+# Extensions
 
-The preview ships trusted built-ins and extension contracts. It does **not** install ZIP modules or promise a stable production plugin ABI yet.
+Version 0.7.0 installs **declarative API 1 ZIP modules**. Start with the [module author guide, samples and PuTTY module](modules/README.md). External packages use a restricted JSON schema, host-owned fields and approved host operations. They cannot load executable code, WPF factories or the interfaces below. Arbitrary code sandboxing and third-party layout/toolbar contributions are deferred.
+
+The sections below describe the internal **trusted built-in composition** interfaces. They are not the public ZIP API and must never be exposed to an unsigned executable extension.
 
 ## Registration surfaces
 
@@ -32,11 +34,11 @@ A bundled extension could contribute a toolbar action that opens an `IEntryEdito
 
 Disabling a module only disables its current editing/copying behavior. Data, schema versions, folder membership, and attachments stay intact. Unknown versions/types render a placeholder. Never discard or reinterpret unknown payloads as text.
 
-## External plugin work still required
+## Executable plugin work still required
 
 The WPF factories in this preview are trusted in-process composition surfaces. They are **not safe to hand directly to arbitrary unsigned code**. A production external host should expose a restricted declarative UI protocol or sandboxed broker, keep app keys private, and mediate selected-item access and clipboard operations. Use explicit permissions for screen capture, network, files, and secrets; deny ambient access. Authorize individual secret access when needed.
 
-Before ZIP distribution, define a manifest with ID/version/API range, content schemas, capabilities, resources, and entry point. Validate archive paths, symlinks, size limits, signatures when available, and update compatibility before enabling anything. Unsigned packages may be accepted with a warning only after the execution boundary is implemented. Add migration/rollback tests and resource limits. Official GitHub hosting and signing keys are project-owner decisions still to be made.
+The API 1 data-only package path now validates a flat archive allowlist, versions, schemas, signatures and bounded sizes. It does not use an executable entry point. Unsigned declarative packages may be installed with a community warning; DLLs, scripts and EXEs are rejected regardless of signature. Future executable packages still require an independently enforced execution boundary, resource limits and a separate permission model.
 
 ### Transfer references
 

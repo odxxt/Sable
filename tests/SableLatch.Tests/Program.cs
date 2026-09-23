@@ -265,6 +265,15 @@ Check(advancedStore.Document!.Items.Single().Field("password") == multilineSecre
 using var multilineTransfer = Transfers.Open(Transfers.Create(advancedStore, exportPassword), exportPassword);
 Transfers.Import(importedStore, multilineTransfer);
 Check(importedStore.Document!.Items.Any(i => i.Field("password") == multilineSecret && i.Advanced?.Action?.KeepTerminalOpen == true), "Multiline secrets and terminal options survive encrypted export and import");
+ModuleChecks.Run(Check, Reject, root);
+var moduleConsentDirectory = TestDir("module-approvals"); Directory.CreateDirectory(moduleConsentDirectory);
+var moduleConsent = new ModuleApprovals(moduleConsentDirectory, device);
+var moduleDigest = new PuttyProfile("localhost", "test").Fingerprint("package", "executable", Guid.NewGuid());
+Check(!moduleConsent.Contains(moduleDigest), "New module connection requires explicit approval");
+moduleConsent.Remember(moduleDigest);
+Check(moduleConsent.Contains(moduleDigest), "Don't ask again stores device-protected module consent");
+Check(!new ModuleApprovals(moduleConsentDirectory, otherDevice).Contains(moduleDigest), "Moving module approval to another device requires review again");
+moduleConsent.Clear(); Check(!moduleConsent.Contains(moduleDigest), "Reset module permissions revokes remembered approval");
 var count = results.Count; File.WriteAllLines(Path.Combine(root, "results.txt"), results.Append($"\n{count} checks passed.")); Console.WriteLine($"\n{count} checks passed.");
 
 sealed class TestDevice(byte[] key) : IDeviceProtector

@@ -41,6 +41,7 @@ public sealed class ContentRegistry
         if (!providers.TryAdd(provider.Descriptor.Id, provider)) throw new InvalidOperationException("Content type already registered.");
     }
     public IContentProvider? Find(string id) => providers.GetValueOrDefault(id);
+    public void Remove(string id) => providers.Remove(id);
     public static ContentRegistry BuiltIns()
     {
         var r = new ContentRegistry();

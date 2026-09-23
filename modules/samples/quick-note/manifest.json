@@ -1,0 +1,16 @@
+{
+  "apiVersion": 1,
+  "id": "example.quick-note",
+  "version": "1.0.0",
+  "name": "Quick note",
+  "author": "Your name",
+  "description": "A first module: save a note and copy it using SableLatch's clipboard controls.",
+  "icon": "note",
+  "handler": "fields",
+  "fields": [
+    { "key": "text", "label": "Note", "kind": "multiline", "required": true }
+  ],
+  "actions": [
+    { "id": "copy", "label": "Copy note", "kind": "copy", "field": "text" }
+  ]
+}

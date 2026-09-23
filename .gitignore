@@ -18,3 +18,7 @@ host.json
 *.suo
 .env
 .env.*
+*.pk8
+*.dpapi
+publisher-recovery.txt
+private-publisher/

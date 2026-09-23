@@ -175,24 +175,11 @@ public partial class MainWindow
         resources["HoverSurface"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString(colors[2]));
         resources["Accent"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString(preset.Accent));
     }
-    private void ShowModules()
-    {
-        var stack = Form("Modules", "Turning a module off preserves its entries. Enable it again to edit or copy them.", "settings", parent: ShowSettings);
-        Func<string> chosenLayout = () => vault.Document!.Settings.Layout;
-        if (extensions.Layouts.Count > 1)
-        {
-            var layouts = extensions.Layouts.Values.ToList();
-            var picker = Select(stack, "Entry layout", layouts.Select(l => l.Name), (extensions.Layouts.GetValueOrDefault(vault.Document!.Settings.Layout) ?? extensions.Layouts["rows"]).Name);
-            chosenLayout = () => layouts.Single(l => l.Name == picker.SelectedItem as string).Id;
-        }
-        var choices = content.All.ToDictionary(p => p.Descriptor.Id, p => Check(stack, p.Descriptor.Name, !vault.Document!.Settings.DisabledModules.Contains(p.Descriptor.Id)));
-        SettingsSave(stack, Button("Save module settings", () => { if (Change(d => { d.Settings.Layout = chosenLayout(); d.Settings.DisabledModules = choices.Where(x => x.Value.IsChecked != true).Select(x => x.Key).ToList(); })) ShowSettings(); }, true));
-        stack.Children.Add(Text("External ZIP plugins are planned. This build does not load external executable code. The core already supports typed entries, encrypted attachments, and provider registration.", 12, true));
-    }
+    private void ShowModules() => ShowPluginManager();
     private void OpenAbout(object sender, RoutedEventArgs e)
     {
         var stack = Form("SableLatch.", "A little space. Only yours.", "about", parent: ShowSettings);
-        stack.Children.Add(Text("VERSION 0.6.6 · PREVIEW", 11, true));
+        stack.Children.Add(Text("VERSION 0.7.0 · PREVIEW", 11, true));
         stack.Children.Add(Text("Portable for Windows 10 and 11 (64-bit). Built with native Windows UI, without a browser engine or background network service."));
         stack.Children.Add(Text("Local encryption: AES-256-GCM\nPassword protection: Argon2id\nDevice protection: Windows DPAPI\nBackup wrapping: RSA-OAEP + AES-GCM", 12, true));
         stack.Children.Add(Text("This first build has automated checks, but has not received an independent security audit. An unlocked or compromised computer can expose displayed and copied data.", 11, true));
