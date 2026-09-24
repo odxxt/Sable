@@ -1,3 +1,10 @@
+# 0.7.2 — Direct dragging and formatted text
+
+- Align the top + menu to the right edge of its button, opening inward into the panel.
+- Remove arrange mode and its toolbar button. Drag entry rows directly to reorder or drop into folder chips; drop on the parent breadcrumb to move up. Show brief folder confirmation and ease row movement. Alt+Up/Down moves a focused entry without a mouse.
+- Preserve safe HTML clipboard formatting in built-in Text entries, alongside plain text. Common inline formatting, lists and tables survive copying to a supporting destination. Strip active content, external images and unsupported styles; bound size and complexity. Editing the plain text removes stale formatting.
+- Document the agreed RDP helper design (not implemented in this release) and publishing/catalog procedure. Verify the live signed PuTTY catalog and ZIP hash.
+
 # 0.7.1 — Compact navigation and smoother editing
 
 - Smooth wheel scrolling across pages and nested editors, respecting Windows animation preferences and wheel settings; no idle timer.

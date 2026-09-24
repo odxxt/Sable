@@ -15,3 +15,5 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 SableLatch's original code is licensed under the MIT license in LICENSE. Third-party terms above remain applicable.
+
+AngleSharp 1.7.3, Copyright 2013-2026 AngleSharp, is included under MIT for bounded HTML clipboard parsing. Upstream commit: 0e6979a8d4f98cd3ee23ed5dcb8418d9cc39e804. Its complete license is included in docs/ANGLESHARP-LICENSE.txt. No JavaScript or browser engine is bundled.

@@ -70,6 +70,7 @@ public partial class MainWindow
     {
         var stack = new StackPanel();
         var label = Input(stack, provider.Descriptor.Sensitive ? "Label" : "Label · optional", editorIsNew ? editorSharedLabel : existing?.Label ?? "");
+        var formattedHtml = provider.Descriptor.Id == "sable.text" ? existing?.Field("html") ?? "" : "";
         var readers = new Dictionary<string, Func<string>>();
         var controls = new Dictionary<string, Control>();
         foreach (var field in provider.EditorFields)
@@ -103,7 +104,31 @@ public partial class MainWindow
                 readers[field.Key] = () => revealed.Visibility == Visibility.Visible ? revealed.Text : masked.Password;
                 controls[field.Key] = masked;
             }
-            else { var box = Input(stack, field.Label, existing?.Field(field.Key) ?? "", field.Kind == EditorFieldKind.Multiline); readers[field.Key] = () => box.Text; controls[field.Key] = box; }
+            else
+            {
+                var box = Input(stack, field.Label, existing?.Field(field.Key) ?? "", field.Kind == EditorFieldKind.Multiline); readers[field.Key] = () => box.Text; controls[field.Key] = box;
+                if (provider.Descriptor.Id == "sable.text" && field.Key == "text")
+                {
+                    var note = Text("Formatting preserved · editing uses plain text", 10, true);
+                    note.Visibility = formattedHtml.Length > 0 ? Visibility.Visible : Visibility.Collapsed; stack.Children.Add(note);
+                    box.TextChanged += (_, _) => { formattedHtml = ""; note.Visibility = Visibility.Collapsed; };
+                    DataObject.AddPastingHandler(box, (_, args) =>
+                    {
+                        if (!args.DataObject.GetDataPresent(DataFormats.Html, false) || box.Text.Length != box.SelectionLength) return;
+                        try
+                        {
+                            if (args.DataObject.GetData(DataFormats.Html, false) is not string input) return;
+                            var html = FormattedText.ReadClipboardHtml(input);
+                            var text = args.DataObject.GetData(DataFormats.UnicodeText, true) as string;
+                            if (text is null || text.Length > 100_000) return;
+                            args.CancelCommand(); box.Text = text; formattedHtml = html;
+                            note.Visibility = html.Length > 0 ? Visibility.Visible : Visibility.Collapsed; box.CaretIndex = box.Text.Length;
+                        }
+                        catch (Exception ex) when (ex is InvalidDataException or ArgumentException or System.Text.DecoderFallbackException)
+                        { args.CancelCommand(); RejectInput(box, "This formatted paste is too large or invalid. Paste plain text instead."); }
+                    });
+                }
+            }
         }
         Action refreshFooter = () => { };
         var advancedState = BuildAdvancedFields(stack, editorIsNew ? advancedDraft ?? existing?.Advanced : existing?.Advanced, () => refreshFooter(), provider.Descriptor.Id);
@@ -114,7 +139,9 @@ public partial class MainWindow
             item.Label = label.Text.Trim(); item.IsSensitive = provider.Descriptor.Sensitive;
             if (provider is DeclarativeProvider module) item.ModuleSchema = module.Package.Manifest.SchemaFingerprint();
             item.Advanced = advancedState.Capture();
-            item.Payload = JsonSerializer.SerializeToElement(readers.ToDictionary(x => x.Key, x => x.Value())); return item;
+            var values = readers.ToDictionary(x => x.Key, x => x.Value());
+            if (provider.Descriptor.Id == "sable.text" && formattedHtml.Length > 0) values["html"] = formattedHtml;
+            item.Payload = JsonSerializer.SerializeToElement(values); return item;
         }
         captureEditorDraft = Capture;
         void SaveFields()

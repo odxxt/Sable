@@ -25,7 +25,7 @@ public sealed class RowModel : System.ComponentModel.INotifyPropertyChanged
     public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
     public void Refresh() => PropertyChanged?.Invoke(this, new(null));
     public Visibility LoginVisibility { get; init; }
-    public Visibility OrderVisibility { get; init; }
+
     public bool Available { get; init; }
     public Brush EntryBackground => EntryColors.Brush(Item.Advanced?.Color);
     public bool ModuleAction { get; init; }
@@ -55,7 +55,6 @@ public partial class MainWindow
             <Button Tag="entry-action" Visibility="{Binding ActionVisibility}" Opacity=".7" Style="{DynamicResource RowIcon}" ToolTip="{Binding ActionLabel}" AutomationProperties.Name="{Binding ActionLabel}"><Grid Width="18" Height="18"><Path Data="M 2,5 L 10,10 2,15 Z" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.3" StrokeLineJoin="Round"/><Path Visibility="{Binding ActionCopyVisibility}" Data="M 11,1 L 16,1 16,6 M 9,3 L 14,3 14,8 9,8 Z" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.1" StrokeLineJoin="Round"/></Grid></Button>
             <Button Tag="edit" Content="{Binding EditSymbol}" Visibility="{Binding EditVisibility}" Opacity=".45" Style="{DynamicResource RowIcon}" ToolTip="Edit · hold here for delete"/>
             <Button Tag="confirm-delete" Content="DELETE" Style="{DynamicResource DangerButton}" Visibility="{Binding DeleteVisibility}" Foreground="White" Padding="8,7" FontSize="10" FontWeight="SemiBold"/>
-            <StackPanel Orientation="Horizontal" Visibility="{Binding OrderVisibility}"><Button Tag="drag" Content="&#xE700;" Opacity=".6" Style="{DynamicResource RowIcon}" ToolTip="Drag to rearrange · arrow keys move a focused handle"/></StackPanel>
           </StackPanel>
         </Grid>
       </Border>
@@ -78,8 +77,13 @@ public partial class MainWindow
         var navigation = new StackPanel { Margin = new Thickness(0, 0, 0, 5) }; Grid.SetRow(navigation, 1); grid.Children.Add(navigation);
         var navRow = new DockPanel(); navigation.Children.Add(navRow);
         if (folder is null) navRow.Children.Add(new TextBlock { Text = "All items", FontSize = 12, Margin = new Thickness(10, 10, 0, 0), VerticalAlignment = VerticalAlignment.Center });
-        else navRow.Children.Add(Button("‹  " + FolderPath(folder.Value), () => { folder = vault.Document!.Folders.Single(x => x.Id == folder).ParentId; ShowList(); }));
-        var createMenu = new ContextMenu { MinWidth = 160, Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom };
+        else
+        {
+            var parent = vault.Document!.Folders.Single(x => x.Id == folder).ParentId;
+            var breadcrumb = Button("‹  " + FolderPath(folder.Value), () => { folder = parent; ShowList(); });
+            AttachFolderDrop(breadcrumb, parent); navRow.Children.Add(breadcrumb);
+        }
+        var createMenu = new ContextMenu { MinWidth = 160, Placement = System.Windows.Controls.Primitives.PlacementMode.Custom, CustomPopupPlacementCallback = (popup, target, offset) => [new(new Point(target.Width - popup.Width, target.Height), System.Windows.Controls.Primitives.PopupPrimaryAxis.Horizontal)] };
         var addEntry = new MenuItem { Header = "New entry" }; addEntry.Click += (_, _) => ShowEditor(advanced: false);
         var addFolder = new MenuItem { Header = "New folder" }; addFolder.Click += (_, _) => ShowFolderEditor();
         createMenu.Items.Add(addEntry); createMenu.Items.Add(addFolder);
@@ -90,7 +94,7 @@ public partial class MainWindow
         var chips = new WrapPanel(); navigation.Children.Add(chips);
         foreach (var f in vault.Document!.Folders.Where(f => f.ParentId == folder).OrderBy(f => f.Order))
         {
-            var chip = Button(f.Name, () => { folder = f.Id; search = ""; ShowList(); }); chip.Content = FolderIcons.Label(f); chip.MaxWidth = 150; chip.ToolTip = f.Name;
+            var chip = Button(f.Name, () => { folder = f.Id; search = ""; ShowList(); }); chip.Content = FolderIcons.Label(f); chip.MaxWidth = 150; chip.ToolTip = f.Name; AttachFolderDrop(chip, f.Id);
             var menu = new ContextMenu(); var rename = new MenuItem { Header = "Edit folder" }; rename.Click += (_, _) => ShowFolderEditor(f); menu.Items.Add(rename);
             var delete = new MenuItem { Header = "Delete empty folder" }; delete.Click += (_, _) =>
             {
@@ -123,7 +127,7 @@ public partial class MainWindow
         entryList.PreviewKeyDown += (_, e) =>
         {
             if (e.Key == Key.Delete && FindParent<ListBoxItem>(Keyboard.FocusedElement as DependencyObject)?.DataContext is RowModel row) { ArmDelete(row); e.Handled = true; }
-            if (rearranging && Keyboard.FocusedElement is Button { Tag: "drag", DataContext: RowModel moving } && e.Key is Key.Up or Key.Down) { MoveEntry(moving.Item.Id, e.Key == Key.Up ? -1 : 1); e.Handled = true; }
+            if (Keyboard.Modifiers == ModifierKeys.Alt && Keyboard.FocusedElement is Button { Tag: "copy", DataContext: RowModel moving } && e.Key is Key.Up or Key.Down) { MoveEntry(moving.Item.Id, e.Key == Key.Up ? -1 : 1); e.Handled = true; }
         };
         find.TextChanged += (_, _) => { if (clearingEditors) return; search = find.Text; placeholder.Visibility = string.IsNullOrEmpty(search) ? Visibility.Visible : Visibility.Collapsed; armedDelete = null; PopulateRows(); };
         eraseEditors.Add(find.Clear);
@@ -144,8 +148,7 @@ public partial class MainWindow
                 Subtitle = !available ? "Module unavailable" : i.IsSensitive ? "Secret · ••••••••" : string.IsNullOrWhiteSpace(i.Label) ? "Text" : i.Field("text").Replace('\n', ' '),
                 Symbol = provider?.Descriptor.Symbol ?? "\uE74C", DeleteArmed = armedDelete == i.Id, Available = available, PendingPassword = pendingLogin == i.Id,
                 ModuleAction = provider is DeclarativeProvider,
-                LoginVisibility = i.ContentType == "sable.login" ? Visibility.Visible : Visibility.Collapsed,
-                OrderVisibility = rearranging && string.IsNullOrWhiteSpace(search) ? Visibility.Visible : Visibility.Collapsed
+                LoginVisibility = i.ContentType == "sable.login" ? Visibility.Visible : Visibility.Collapsed
             };
         }).ToList();
     }
@@ -203,6 +206,7 @@ public partial class MainWindow
             if (startEpoch == epoch && source.DataContext is RowModel copiedRow) { copiedRow.Copied = false; copiedRow.Refresh(); }
         }
         catch (System.Runtime.InteropServices.ExternalException) { ShowError("The clipboard is busy. Try copying again."); }
+        catch (Exception ex) when (ex is InvalidDataException or System.Text.Json.JsonException or ArgumentException) { ShowError("This entry has invalid formatting. Edit it as plain text before copying."); }
         finally { CryptographicOperations.ZeroMemory(value.Data); }
     }
     private static IEnumerable<T> Descendants<T>(DependencyObject parent) where T : DependencyObject
@@ -252,13 +256,14 @@ public partial class MainWindow
     }
     private void MoveEntry(Guid id, int offset)
     {
+        var positions = RowPositions();
         if (Change(d =>
         {
             var siblings = d.Items.Where(i => i.DeletedAt is null && i.FolderId == folder).OrderBy(i => i.Order).ToList();
-            var from = siblings.FindIndex(x => x.Id == id); var to = Math.Clamp(from + offset, 0, siblings.Count - 1);
-            if (from < 0) return; var item = siblings[from]; siblings.RemoveAt(from); siblings.Insert(to, item);
+            var from = siblings.FindIndex(x => x.Id == id); if (from < 0) return; var to = Math.Clamp(from + offset, 0, siblings.Count - 1);
+            var item = siblings[from]; siblings.RemoveAt(from); siblings.Insert(to, item);
             for (var i = 0; i < siblings.Count; i++) siblings[i].Order = i;
-        })) PopulateRows();
+        })) { PopulateRows(); AnimateRows(positions); }
     }
     private string FolderPath(Guid id)
     {

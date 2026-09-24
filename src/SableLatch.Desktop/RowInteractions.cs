@@ -16,7 +16,8 @@ internal sealed class InsertionMarker(UIElement host) : Adorner(host)
 
 public partial class MainWindow
 {
-    private Guid? pendingLogin;
+    private Guid? pendingLogin, activeDragItem;
+    private long lastDragScroll;
     private Button? hoverEdit, dragHandle;
     private CancellationTokenSource? hoverCancellation;
     private Point dragStart;
@@ -51,8 +52,11 @@ public partial class MainWindow
                 var handle = dragHandle; dragHandle = null; CancelEditHover();
                 if (handle.DataContext is RowModel moving)
                 {
+                    activeDragItem = moving.Item.Id; modalDepth++; Mouse.Capture(null);
+                    QueryContinueDragEventHandler cancel = (_, args) => { if (!vault.IsUnlocked || screen != "list") args.Action = DragAction.Cancel; };
+                    handle.QueryContinueDrag += cancel;
                     try { DragDrop.DoDragDrop(handle, new DataObject("SableLatch/item-id", moving.Item.Id.ToString()), DragDropEffects.Move); }
-                    finally { ClearDropMarker(); }
+                    finally { handle.QueryContinueDrag -= cancel; activeDragItem = null; modalDepth--; ClearDropMarker(); }
                 }
                 return;
             }
@@ -79,13 +83,13 @@ public partial class MainWindow
             armedDelete = null;
             if (entryList is not null) foreach (var row in entryList.Items.Cast<RowModel>()) { row.DeleteArmed = false; row.Refresh(); }
         }
-        if (!rearranging || button?.Tag as string != "drag" || !string.IsNullOrWhiteSpace(search)) return;
-        dragHandle = button; dragStart = e.GetPosition(entryList); button.Focus(); e.Handled = true;
+        if (button?.Tag as string != "copy" || !vault.IsUnlocked || busy || entryList is null) return;
+        dragHandle = button; dragStart = e.GetPosition(entryList); button.Focus();
     }
     private void PreviewRowDrop(object sender, DragEventArgs e)
     {
         e.Handled = true; e.Effects = DragDropEffects.None;
-        if (!vault.IsUnlocked || busy || !rearranging || entryList is null || !string.IsNullOrWhiteSpace(search) || !e.Data.GetDataPresent("SableLatch/item-id")) { ClearDropMarker(); return; }
+        if (!vault.IsUnlocked || busy || entryList is null || !string.IsNullOrWhiteSpace(search) || !OwnDrag(e.Data, out _)) { ClearDropMarker(); return; }
         var point = e.GetPosition(entryList);
         UpdateDropPoint(point); e.Effects = DragDropEffects.Move;
     }
@@ -106,7 +110,11 @@ public partial class MainWindow
         if (insertionMarker is null && insertionLayer is not null) { insertionMarker = new(entryList) { IsHitTestVisible = false }; insertionLayer.Add(insertionMarker); }
         if (insertionMarker is not null) { insertionMarker.Y = Math.Clamp(y, 2, Math.Max(2, entryList.ActualHeight - 2)); insertionMarker.InvalidateVisual(); }
         var scroll = Descendants<ScrollViewer>(entryList).FirstOrDefault();
-        if (point.Y < 18) scroll?.LineUp(); else if (point.Y > entryList.ActualHeight - 18) scroll?.LineDown();
+        if (Environment.TickCount64 - lastDragScroll >= 70 && (point.Y < 18 || point.Y > entryList.ActualHeight - 18))
+        {
+            lastDragScroll = Environment.TickCount64;
+            if (scroll is not null) SmoothScrolling.Wheel(scroll, point.Y < 18 ? 40 : -40);
+        }
     }
     private void ClearDropMarker()
     {
@@ -117,7 +125,7 @@ public partial class MainWindow
     {
         PreviewRowDrop(sender, e);
         var to = insertionIndex; ClearDropMarker();
-        if (to < 0 || !vault.IsUnlocked || busy || !Guid.TryParse(e.Data.GetData("SableLatch/item-id") as string, out var source)) return;
+        if (to < 0 || !vault.IsUnlocked || busy || !OwnDrag(e.Data, out var source)) return;
         PlaceRow(source, to);
     }
     private void PlaceRow(Guid source, int to)

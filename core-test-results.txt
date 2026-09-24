@@ -1,3 +1,4 @@
+Initial key derivation + create: 405 ms
 PASS: Recovery key has 256 bits and passes checksum
 PASS: Recovery typo rejected
 PASS: Labels, folders and custom payload encrypted at rest
@@ -31,6 +32,9 @@ PASS: Trash cleanup can be disabled
 PASS: Search excludes secret values
 PASS: Username copies its actual value and keeps panel open
 PASS: Password copies secret value and completes login flow
+PASS: Text preserves both formatted and plain representations through serialization
+PASS: Secret provider ignores HTML metadata
+PASS: Existing plain-text entries keep their original clipboard representation
 PASS: Session expires after configured duration
 PASS: Pin suspends time-based locking
 PASS: Unpin applies overdue timeout immediately
@@ -193,4 +197,4 @@ PASS: Don't ask again stores device-protected module consent
 PASS: Moving module approval to another device requires review again
 PASS: Reset module permissions revokes remembered approval
 
-194 checks passed.
+197 checks passed.

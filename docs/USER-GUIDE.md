@@ -1,4 +1,4 @@
-# SableLatch 0.7.1 — portable preview
+# SableLatch 0.7.2 — portable preview
 
 A compact, local clipboard vault for Windows. A native WPF window and tray icon; no browser engine, service, telemetry, or network listener.
 
@@ -23,7 +23,7 @@ The vault lives in `SableLatch-data` beside the app. A custom location can be op
 - A fixed compact window with the list filling the available space, smooth whole-row hover, dark context menus without an icon gutter, and active header fills that clear when switched off. Back follows the settings hierarchy and stays in a fixed position. The entry editor has a fixed Save button, a bottom list fade signals more rows, and the scrollbar is a slim rounded indicator.
 - Centered locked screen with a box-free typed PIN. Four to twelve digits are supported. Only the last three remaining attempts are shown; five rejected attempts require the full password.
 - Lightweight audit metadata: creation/modification timestamps on entries, 256 protected security-event records, and a static HTML report from Settings → Advanced → Activity & audit. No reporting server, background timer, or copied-value logging.
-- Click to copy with animated confirmation. Entry types use buttons; switching types preserves unfinished drafts. Right-side drag handles show an insertion line; arrow keys also move a focused handle in rearrange mode.
+- Click to copy with animated confirmation. Entry types use buttons; switching types preserves unfinished drafts. Drag the entry row to show an insertion line and reorder. Drop it onto a folder chip to move it there, or onto the parent breadcrumb to move up. Alt+Up/Down reorders a focused entry.
 - Click a login row once to copy its username and again to copy its password. The corresponding caption blinks. Username copy temporarily keeps the panel on top without activating another application. Password copy closes it unless pinned or close-after-copy is disabled.
 - A configurable 60-minute unlock session by default. Pin suspends the timeout; unpin applies any expired timeout immediately. Windows lock, unlock, sleep/resume, sign-out, explicit Lock, and Exit lock the vault regardless of pin.
 - Secret clipboard copies clear after 30 seconds by default if still owned by the app. Windows clipboard history/cloud exclusion flags are set. Other clipboard software can still read copied values.
@@ -75,7 +75,7 @@ The target is x64 Windows 10/11. Only the available Windows host has been used f
 
 The app uses one process; memory use is not zero. Argon2 intentionally uses 64 MiB while deriving a password key. Large collections use a virtualized list, but metadata is currently decrypted as one document and rewritten atomically on changes. Attachment maximum: 64 MiB each. Vault metadata and complete backup archive maximum: 256 MiB. A paged/chunked storage implementation can replace this behind the storage contracts later.
 
-Declarative ZIP installation, scoped operation prompts, signed official modules and beginner samples are shipped in 0.7.0; see the [module guide](../modules/README.md). Arbitrary executable plugins, screenshot capture UI, SSH keys, formatted-email copying, installer mode, automatic app updates, application code signing and additional translations are **not shipped**. The screenshot provider in `examples` demonstrates the storage/clipboard contract; it is not a capture plugin enabled in this app. English fallback/localization hooks exist, but full translation coverage still needs finishing before adding another language.
+Declarative ZIP installation, scoped operation prompts, signed official modules and beginner samples are shipped in 0.7.0; see the [module guide](../modules/README.md). Arbitrary executable plugins, screenshot capture UI, SSH keys, a rich-text composing editor, RDP connections, installer mode, automatic app updates, application code signing and additional translations are **not shipped**. The screenshot provider in `examples` demonstrates the storage/clipboard contract; it is not a capture plugin enabled in this app. English fallback/localization hooks exist, but full translation coverage still needs finishing before adding another language.
 
 Window coordinates and the global shortcut are stored unencrypted in `window.json` and `host.json`; they contain no vault values. Startup registration contains only the executable and vault-folder paths. The rest of the preferences, labels, folder names, and entry payloads are encrypted. Clipboard history exclusion and capture exclusion are best-effort platform features, not defenses against malware or an administrator.
 
@@ -157,3 +157,10 @@ The **+** beside the folder heading opens a small **New entry / New folder** men
 Installed modules show **✓** in Plugins and the catalog; opening the same package shows **Already installed** and a link to its settings. The online catalog checks the installed package against the signed catalog's archive hash. A different package still goes through verification and update review.
 
 Mouse-wheel scrolling eases over 160 milliseconds, including dropdowns, without changing their selection. Nested multiline fields scroll first; at their edge, scrolling continues on the page. It honors Windows' wheel line count and disabled animation preference, cancels on leaving the page, and does no animation work while idle. Scrollbar dragging and keyboard scrolling remain direct.
+## Formatted Text entries (0.7.2)
+
+Copy formatted text from an app that supplies HTML on the clipboard. Paste into an empty **Text** value box, or select the entire value before pasting. SableLatch stores a sanitized HTML representation alongside the plain text, inside the encrypted vault. Copying the entry offers both formats; Word, email editors and other supporting destinations can retain bold, italic, underline, lists, links, common inline styles and tables. Plain-text destinations receive plain text.
+
+The compact editor still displays plain text and shows **Formatting preserved**. This is preservation, not a rich-text composition editor. Typing or partially replacing the value clears its previous formatting to prevent outdated content being copied. Re-paste the formatted source to restore it. Sources offering only RTF or plain text do not preserve rich formatting in this version.
+
+Scripts, event attributes, forms, embedded objects and external images are removed. External resources are never fetched. CSS classes, arbitrary styles and images are not preserved, so complex email layouts are not pixel-perfect. HTML is capped at 100,000 characters, 5,000 DOM nodes and 64 levels. Secret/Login values remain plain text. The destination app ultimately decides which clipboard representation and styling to accept.

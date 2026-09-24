@@ -26,7 +26,6 @@ PASS: Top plus opens the compact entry/folder menu
 PASS: Unpinned window has the native Alt+Tab exclusion style
 PASS: Pinned window has the native Alt+Tab inclusion style
 PASS: Unpin removes active background even while focused
-PASS: Rearrange button clears active state when switched off
 PASS: Settings Back remains at the same position across subsections
 PASS: Settings subsection Back returns to settings
 PASS: Settings root Back returns to entries
@@ -261,6 +260,23 @@ PASS: Wheel scrolls the multiline field before its enclosing page
 PASS: Wheel continues on the editor page after a multiline field reaches its edge
 PASS: Leaving a page stops its scroll animation
 PASS: Ordinary context actions have no checkbox gutter
+PASS: Formatted paste retains bold, Unicode and tables with plain-text fallback
+PASS: Formatted paste strips scripts, event handlers, tracking images and CSS URLs
+PASS: Saved Text entry copies both CF_HTML and Unicode text with correct byte offsets
+PASS: Secret entries always use plain-text copying even if imported with HTML metadata
+PASS: Editing plain text removes stale formatting rather than copying outdated content
+PASS: HTML selection retains ancestor bold formatting without including unselected context
+PASS: HTML storage enforces a bounded input size
+PASS: Invalid HTML clipboard offsets are rejected
+PASS: Header has no arrange-mode button
+PASS: Create menu aligns its right edge with the plus button
+PASS: External item-ID drag data cannot move vault entries
+PASS: Only the active in-app drag is accepted
+PASS: Dragging into a folder persists the destination and removes the source row
+PASS: Folder receives a subtle success check after a drop
+PASS: Folder confirmation clears after the brief feedback
+PASS: Dropping into a nonexistent folder is rejected
+PASS: Folder entries can move back to the root
 PASS: Confirmed second Quit closes the app and releases the unlocked vault
 PASS: setup, list, login editor, settings, clipboard settings, rearrange, recovery and lock render.
 PASS: secret canaries absent from list text controls.

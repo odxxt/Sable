@@ -24,7 +24,7 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer heartbeat = new() { Interval = TimeSpan.FromSeconds(1) };
     private Forms.NotifyIcon? tray;
     private IntPtr handle;
-    private bool quitting, busy, holdForPassword, rearranging, contextOpen;
+    private bool quitting, busy, holdForPassword, contextOpen;
     private bool clearingEditors;
     private bool systemNotificationsReady;
     private int epoch, modalDepth;
@@ -184,7 +184,6 @@ public partial class MainWindow : Window
         if (vault.IsUnlocked && session.Expired(vault.Document!.Settings.SessionMinutes)) ForceLock("Session expired");
         else UpdateStatus();
     }
-    private void ToggleOrder(object sender, RoutedEventArgs e) { if (!vault.IsUnlocked) return; rearranging = !rearranging; armedDelete = null; ShowList(); }
     private void ToggleSearch(object sender, RoutedEventArgs e)
     {
         if (!vault.IsUnlocked || busy) return;
@@ -195,7 +194,7 @@ public partial class MainWindow : Window
     private void ForceLock(string reason)
     {
         if (session.IsUnlocked) Audit(AuditEvent.Locked);
-        epoch++; session.Lock(); ResetLoginCopy(); armedDelete = null; rearranging = false;
+        epoch++; session.Lock(); ResetLoginCopy(); armedDelete = null;
         heartbeat.Stop();
         search = ""; searchVisible = false;
         sessionCancellation.Cancel(); sessionCancellation.Dispose(); sessionCancellation = new();
@@ -295,8 +294,6 @@ public partial class MainWindow : Window
         pageFooter = null;
         pageSubmit = null;
         SearchButton.IsEnabled = vault.IsUnlocked;
-        OrderButton.IsEnabled = vault.IsUnlocked && mode == "list";
-        OrderButton.Background = mode == "list" && rearranging ? (Brush)FindResource("HoverSurface") : Brushes.Transparent;
         SearchButton.Background = mode == "list" && searchVisible ? (Brush)FindResource("HoverSurface") : Brushes.Transparent;
         SettingsButton.Background = mode is "settings" or "about" or "audit" or "pin-setup" ? (Brush)FindResource("HoverSurface") : Brushes.Transparent;
         PinButton.Background = session.IsPinned ? (Brush)FindResource("HoverSurface") : Brushes.Transparent;

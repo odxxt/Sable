@@ -88,7 +88,7 @@ public sealed class ClipboardService : IClipboardService
     {
         writers = extensions?.ClipboardWriters ?? [];
         timer.Tick += (_, _) => ClearOwned();
-        Register(new TextClipboardWriter()); Register(new PngClipboardWriter());
+        Register(new FormattedClipboardWriter()); Register(new TextClipboardWriter()); Register(new PngClipboardWriter());
     }
     public void Register(IClipboardWriter writer) => writers.Add(writer.MediaType, writer);
     public void Copy(CopyValue value, Preferences settings)

@@ -13,7 +13,7 @@ Modules add entry types and actions while keeping SableLatch small. Install a ZI
    ```
 
 4. Install the ZIP in SableLatch and review its permission summary.
-5. Choose **Add entry → More types**. Select your module, enter a name and its values, then save.
+5. Choose **+ → New entry → More**. Select your module, enter a name and its values, then save.
 
 You do not need Visual Studio, a compiler, a developer account or a signing certificate to make a community module. The sample ZIP in `packages/example.quick-note.zip` is ready to try. Community modules show **Not reviewed by SableLatch**.
 
@@ -69,7 +69,7 @@ SableLatch validates the result; an AI-generated package does not receive specia
 
 ## PuTTY SSH 1.0
 
-Install the included official PuTTY module, then use **Add entry → More types → PuTTY SSH**. Enter name, host, username and password. Advanced options include port, one expected server fingerprint, IPv4/IPv6 preference, SSH compression, keepalive (0-600 seconds) and terminal font/size.
+Install the included official PuTTY module, then use **+ → New entry → More → PuTTY SSH**. Enter name, host, username and password. Advanced options include port, one expected server fingerprint, IPv4/IPv6 preference, SSH compression, keepalive (0-600 seconds) and terminal font/size.
 
 Click the entry to view details. Its **Run** button launches PuTTY. The first connection reviews the destination, with an optional **Don't ask again for this connection**. Editing the destination/options, changing the module manifest, changing the PuTTY executable or moving to a new machine invalidates the remembered approval.
 
@@ -81,7 +81,7 @@ A temporary **non-secret** PuTTY session is created under the current user's PuT
 
 Locking cancels pending password delivery; the pending child process is stopped if delivery fails. Established SSH sessions stay open after SableLatch locks. The 15-second delivery timeout does not limit how long the SSH session may remain open.
 
-**Not in this release:** SSH private-key storage/authentication, existing PuTTY saved sessions, jump hosts/proxies, tunnels, remote commands, formatted-email copying, image/file attachments or arbitrary executable module code. These need separate host capabilities and tests. The next planned content module is formatted email with HTML and plain-text clipboard representations.
+**Not in this release:** SSH private-key storage/authentication, existing PuTTY saved sessions, jump hosts/proxies, tunnels, remote commands, rich-text composition, image/file attachments or arbitrary executable module code. These need separate host capabilities and tests. HTML clipboard preservation is now part of the built-in Text type. An RDP host capability is planned separately; see [RDP design](../docs/RDP-DESIGN.md).
 
 ## Updates, removal and recovery
 
@@ -95,6 +95,6 @@ Module settings use the vault's encrypted extension settings. Package manifests 
 
 The shipped publisher public key is `publisher.pub`. Official manifests and `catalog.json` are verified against it. The catalog envelope holds base64 `payload` and `signature`; its signed payload is a JSON array of name, description, URL and ZIP SHA-256. Downloads are restricted to HTTPS under the official `raw.githubusercontent.com/odxxt/SableLatch/` repository path, with no redirects. Packages must also have a verified official manifest signature. No automatic background catalog checks or updates occur.
 
-The included catalog files become available online after this source revision is published to GitHub. Until then the bundled module and local ZIP installation work offline.
+The signed PuTTY catalog is published and was verified online on 24 September 2026. See [Publishing](../docs/PUBLISHING.md) for updates. The bundled module and local ZIP installation also work offline.
 
 Official signing material must remain outside the repository and release archives. Back up the publisher private key and keep its unlock password separately. Losing the key requires an explicit trust-key transition in a future app version. A valid signature verifies publisher identity and package integrity; it is not an independent security audit.

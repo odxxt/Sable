@@ -75,6 +75,12 @@ var providers = ContentRegistry.BuiltIns(); var provider = providers.Find("sable
 var userCopy = provider.Copy(login, "Username"); var passCopy = provider.Copy(login, "Password");
 Check(userCopy.KeepPanelOpen && !userCopy.Sensitive && Encoding.UTF8.GetString(userCopy.Data) == "my-user", "Username copies its actual value and keeps panel open");
 Check(!passCopy.KeepPanelOpen && passCopy.Sensitive && Encoding.UTF8.GetString(passCopy.Data) == "needle-secret", "Password copies secret value and completes login flow");
+var formatted = new VaultItem { ContentType = "sable.text", Payload = JsonSerializer.SerializeToElement(new { text = "Hello", html = "<b>Hello</b>" }) };
+var formattedCopy = providers.Find("sable.text")!.Copy(Codec.Clone(formatted), "Copy");
+var formattedPayload = Codec.Decode<FormattedTextValue>(formattedCopy.Data);
+Check(formattedCopy.MediaType == "application/x-sable-formatted-text" && formattedPayload.Text == "Hello" && formattedPayload.Html == "<b>Hello</b>", "Text preserves both formatted and plain representations through serialization");
+Check(providers.Find("sable.secret")!.Copy(formatted, "Copy").MediaType == "text/plain", "Secret provider ignores HTML metadata");
+Check(providers.Find("sable.text")!.Copy(new() { Payload = JsonSerializer.SerializeToElement(new { text = "Legacy text" }) }, "Copy").MediaType == "text/plain", "Existing plain-text entries keep their original clipboard representation");
 var clock = new TestClock(); var policy = new SessionPolicy(clock); policy.Unlock(); clock.Advance(TimeSpan.FromMinutes(61)); Check(policy.Expired(60), "Session expires after configured duration"); policy.IsPinned = true; Check(!policy.Expired(60), "Pin suspends time-based locking"); policy.IsPinned = false; Check(policy.Expired(60), "Unpin applies overdue timeout immediately"); policy.IsPinned = true; policy.SystemLocked(); Check(!policy.IsUnlocked, "System lock overrides pin");
 var badFolders = new VaultDocument(); var a = new VaultFolder(); var b = new VaultFolder { ParentId = a.Id }; a.ParentId = b.Id; badFolders.Folders.AddRange([a,b]); Reject(badFolders.Validate, "Folder cycles rejected");
 var oldCount = vault.Document!.Items.Count; Reject(() => vault.Mutate(d => d.Items.Add(new() { FolderId = Guid.NewGuid() })), "Invalid mutation rejected before disk write"); Check(vault.Document.Items.Count == oldCount, "Failed mutation leaves active document unchanged");

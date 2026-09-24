@@ -5,6 +5,7 @@ public enum ExtensionPermission { None = 0, SelectedItem = 1, ClipboardWrite = 2
 public record ContentDescriptor(string Id, int Version, string Name, string Symbol, bool Sensitive);
 public enum EditorFieldKind { Text, Multiline, Secret }
 public record EditorField(string Key, string Label, EditorFieldKind Kind, bool Required = true);
+public record FormattedTextValue(string Text, string Html);
 public record CopyValue(string MediaType, byte[] Data, bool Sensitive, bool KeepPanelOpen);
 public record ToolbarContribution(string Id, string Label, string Symbol, Func<CancellationToken, Task> Execute);
 
@@ -54,7 +55,9 @@ public sealed class TextProvider(bool secret) : IContentProvider
     public ContentDescriptor Descriptor => new(secret ? "sable.secret" : "sable.text", 1, secret ? "Secret" : "Text", secret ? "\uE72E" : "\uE8A5", secret);
     public IReadOnlyList<string> CopyActions => ["Copy"];
     public IReadOnlyList<EditorField> EditorFields => [new("text", secret ? "Secret value" : "Text", secret ? EditorFieldKind.Secret : EditorFieldKind.Multiline)];
-    public CopyValue Copy(VaultItem item, string action) => new("text/plain", System.Text.Encoding.UTF8.GetBytes(item.Field("text")), secret || item.IsSensitive, false);
+    public CopyValue Copy(VaultItem item, string action) => !secret && item.Field("html") is { Length: > 0 } html
+        ? new("application/x-sable-formatted-text", Codec.Encode(new FormattedTextValue(item.Field("text"), html)), item.IsSensitive, false)
+        : new("text/plain", System.Text.Encoding.UTF8.GetBytes(item.Field("text")), secret || item.IsSensitive, false);
 }
 public sealed class LoginProvider : IContentProvider
 {
