@@ -254,6 +254,14 @@ PASS: More types lists the installed PuTTY module
 PASS: Back from More types restores the selected type and name
 PASS: Switching to a module preserves the shared entry name
 PASS: PuTTY rows use the terminal vector icon
+PASS: RDP editor masks credentials and keeps Save in the fixed footer
+PASS: RDP invalid port cannot save
+PASS: RDP entry retains encrypted-vault secret fields with clipboard off
+PASS: Clicking an RDP row requests connection consent without copying its secret or accepting queued Enter
+PASS: RDP review can be cancelled without starting a connection
+PASS: Uninstalling RDP preserves its encrypted entries
+PASS: Reinstalling RDP restores its entries
+PASS: Catalog marks the installed RDP module
 PASS: Editor wheel scrolling progresses smoothly to its destination
 PASS: Reversing the wheel reverses smoothly without a queued downward jump
 PASS: Wheel scrolls the multiline field before its enclosing page
@@ -278,10 +286,3 @@ PASS: Folder confirmation clears after the brief feedback
 PASS: Dropping into a nonexistent folder is rejected
 PASS: Folder entries can move back to the root
 PASS: Confirmed second Quit closes the app and releases the unlocked vault
-PASS: setup, list, login editor, settings, clipboard settings, rearrange, recovery and lock render.
-PASS: secret canaries absent from list text controls.
-PASS: editor Save persists a multiline text item.
-PASS: search filters the actual list.
-PASS: disabling a content module makes its rows unavailable.
-PASS: pin sets both session policy and the native topmost property.
-PASS: lock drops the document and list references even when pinned.

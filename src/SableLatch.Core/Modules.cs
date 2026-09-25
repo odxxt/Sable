@@ -27,10 +27,10 @@ public sealed class ModuleManifest
         if (!System.Version.TryParse(Version, out var v) || v.Major < 1 || Version.Length > 30) throw new InvalidDataException("Use a module version such as 1.0.0.");
         if (Name.Length is < 1 or > 48 || Author.Length is < 1 or > 80 || Description.Length > 500 || new[] { Name, Author, Description }.Any(s => s.Any(c => char.IsControl(c) && c != '\n')))
             throw new InvalidDataException("Invalid module name, author or description.");
-        if (Icon is not ("note" or "terminal" or "mail" or "lock") || Handler is not ("fields" or "putty")) throw new InvalidDataException("Unsupported module icon or action handler.");
+        if (Icon is not ("note" or "terminal" or "mail" or "lock" or "desktop") || Handler is not ("fields" or "putty" or "rdp")) throw new InvalidDataException("Unsupported module icon or action handler.");
         if (Fields.Count > 16 || Actions.Count > 6 || Fields.Select(f => f.Key).Distinct().Count() != Fields.Count || Actions.Select(a => a.Id).Distinct().Count() != Actions.Count || Actions.Select(a => a.Label).Distinct().Count() != Actions.Count)
             throw new InvalidDataException("Too many or duplicate module fields/actions.");
-        if (Handler == "putty" && (Fields.Count != 0 || Actions.Count != 0)) throw new InvalidDataException("PuTTY uses a protected host-owned editor and connection action.");
+        if (Handler is ("putty" or "rdp") && (Fields.Count != 0 || Actions.Count != 0)) throw new InvalidDataException("Connection modules use a protected host-owned editor and connection action.");
         if (Handler == "fields" && Fields.Count == 0) throw new InvalidDataException("Define at least one field.");
         foreach (var field in Fields)
             if (!Regex.IsMatch(field.Key, "^[a-z][a-z0-9_]{0,31}$") || field.Label.Length is < 1 or > 60 || field.Label.Any(char.IsControl) || field.Kind is not ("text" or "multiline" or "secret"))
@@ -148,8 +148,8 @@ public sealed class DeclarativeProvider(ModulePackage package) : IContentProvide
 {
     public ModulePackage Package => package;
     public ContentDescriptor Descriptor => new(package.Manifest.ContentType, 1, package.Manifest.Name,
-        package.Manifest.Icon switch { "terminal" => "\uE756", "mail" => "\uE715", "lock" => "\uE72E", _ => "\uE70B" },
-        package.Manifest.Handler == "putty" || package.Manifest.Fields.Any(f => f.Kind == "secret"));
+        package.Manifest.Icon switch { "terminal" => "\uE756", "mail" => "\uE715", "lock" => "\uE72E", "desktop" => "\uE7F4", _ => "\uE70B" },
+        package.Manifest.Handler is ("putty" or "rdp") || package.Manifest.Fields.Any(f => f.Kind == "secret"));
     public IReadOnlyList<EditorField> EditorFields => package.Manifest.Fields.Select(f => new EditorField(f.Key, f.Label, f.Kind switch { "secret" => EditorFieldKind.Secret, "multiline" => EditorFieldKind.Multiline, _ => EditorFieldKind.Text }, f.Required)).ToArray();
     public IReadOnlyList<string> CopyActions => package.Manifest.Actions.Select(a => a.Label).ToArray();
     public CopyValue Copy(VaultItem item, string action)

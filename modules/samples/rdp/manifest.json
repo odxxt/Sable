@@ -1,0 +1,1 @@
+{"apiVersion":1,"id":"sablelatch.rdp","version":"1.0.0","name":"Remote Desktop","author":"SableLatch","description":"Open saved Windows RDP connections in a local SableLatch session window. Requires SableLatch 0.8.0 or newer.","icon":"desktop","handler":"rdp","fields":[],"actions":[]}

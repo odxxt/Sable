@@ -19,7 +19,7 @@ public partial class MainWindow
         foreach (var package in installedModules)
         {
             var provider = new DeclarativeProvider(package); content.Register(provider);
-            extensions.RegisterEditor(new FieldEditorFactory(provider.Descriptor.Id, (item, save, _) => package.Manifest.Handler == "putty" ? BuildPuttyFields(provider, item, save) : BuildFields(provider, item, save)));
+            extensions.RegisterEditor(new FieldEditorFactory(provider.Descriptor.Id, (item, save, _) => package.Manifest.Handler switch { "putty" => BuildPuttyFields(provider, item, save), "rdp" => BuildRdpFields(provider, item, save), _ => BuildFields(provider, item, save) }));
         }
     }
     private bool ModuleAvailable(VaultItem item) => content.Find(item.ContentType) is not DeclarativeProvider provider || item.ModuleSchema == provider.Package.Manifest.SchemaFingerprint();
@@ -81,7 +81,7 @@ public partial class MainWindow
         stack.Children.Add(Text(package.Manifest.Author + " · " + package.Manifest.Version, 11, true));
         stack.Children.Add(Text(package.Manifest.Description, 12));
         stack.Children.Add(Text(package.Official ? "Verified SableLatch module" : "Not reviewed by SableLatch. Install only packages whose purpose you understand.", 12, !package.Official));
-        stack.Children.Add(Text(package.Manifest.Handler == "putty" ? "Can request a PuTTY connection to the host you configure. Passwords stay in SableLatch's protected launcher." : "Can define fields and request copying of its own non-secret fields. It cannot read other entries.", 12, true));
+        stack.Children.Add(Text(package.Manifest.Handler == "rdp" ? "Can request a Remote Desktop connection to the host you configure. The host owns credential delivery; the ZIP cannot read passwords." : package.Manifest.Handler == "putty" ? "Can request a PuTTY connection to the host you configure. Passwords stay in SableLatch's protected launcher." : "Can define fields and request copying of its own non-secret fields. It cannot read other entries.", 12, true));
         stack.Children.Add(Text("No executable code, background activity or direct internet access.", 11, true));
         var reviewedPage = Body.Content; var startEpoch = epoch;
         PageAction(Button(current is null ? "Install" : "Update", () =>
@@ -102,10 +102,13 @@ public partial class MainWindow
         if (!vault.IsUnlocked) return;
         var stack = Form("Module catalog", "", "settings", parent: ShowModules);
         stack.Children.Add(Text("Official modules", 12, true));
-        var included = ModulePackages.Read(ModuleTrust.Resource("putty.zip"), ModuleTrust.Verify);
-        var installedPutty = installedModules.FirstOrDefault(p => p.Manifest.Id == included.Manifest.Id);
-        stack.Children.Add(Button(installedPutty is null ? "PuTTY SSH  ›" : "PuTTY SSH  ✓", () => ReviewModule(included)));
-        if (installedPutty is not null) stack.Children.Add(Text("Already installed · " + installedPutty.Manifest.Version, 11, true));
+        foreach (var resource in new[] { "putty.zip", "rdp.zip" })
+        {
+            var included = ModulePackages.Read(ModuleTrust.Resource(resource), ModuleTrust.Verify);
+            var installed = installedModules.FirstOrDefault(p => p.Manifest.Id == included.Manifest.Id);
+            stack.Children.Add(Button(included.Manifest.Name + (installed is null ? "  ›" : "  ✓"), () => ReviewModule(included)));
+            if (installed is not null) stack.Children.Add(Text("Already installed · " + installed.Manifest.Version, 11, true));
+        }
         stack.Children.Add(Text("Included with this app. Installs without a download.", 11, true));
         var page = Body.Content; var startEpoch = epoch;
         stack.Children.Add(AsyncButton("Check GitHub catalog", async () =>
@@ -144,7 +147,7 @@ public partial class MainWindow
                 }
             }
             catch (Exception ex) when (ex is System.Net.Http.HttpRequestException or IOException or JsonException or CryptographicException or FormatException or OperationCanceledException)
-            { if (startEpoch == epoch && vault.IsUnlocked && ReferenceEquals(page, Body.Content)) ShowError("The signed GitHub catalog is unavailable. You can still install the included PuTTY module or a local ZIP."); }
+            { if (startEpoch == epoch && vault.IsUnlocked && ReferenceEquals(page, Body.Content)) ShowError("The signed GitHub catalog is unavailable. You can still install the included modules or a local ZIP."); }
         }, false));
     }
     private string ModuleSetting(ModulePackage package, string key) => vault.Document!.ExtensionSettings.TryGetValue(package.Manifest.Id, out var settings) && settings.ValueKind == JsonValueKind.Object && settings.TryGetProperty(key, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() ?? "" : "";
@@ -198,6 +201,15 @@ public partial class MainWindow
         if (!vault.IsUnlocked || content.Find(item.ContentType) is not DeclarativeProvider provider || !ModuleAvailable(item) || vault.Document!.Settings.DisabledModules.Contains(item.ContentType)) return;
         var stack = Form(item.Label, "", "module-details");
         stack.Children.Add(Text(provider.Descriptor.Name, 11, true));
+        if (provider.Package.Manifest.Handler == "rdp")
+        {
+            var profile = RdpProfile.From(item);
+            stack.Children.Add(Text(profile.Host + ":" + profile.Port, 15));
+            stack.Children.Add(Text(profile.Username, 12, true));
+            stack.Children.Add(Text("Password  ••••••••", 12, true));
+            PageAction(Button("Connect", () => RunRdp(item), true)); pageSubmit = null;
+        }
+        else
         if (provider.Package.Manifest.Handler == "putty")
         {
             var profile = PuttyProfile.From(item);

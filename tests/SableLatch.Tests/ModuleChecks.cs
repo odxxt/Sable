@@ -64,5 +64,19 @@ internal static class ModuleChecks
         reject(() => profile.Arguments("predictable-pipe"), "Only random host-created pipe names accepted");
         check(profile.Fingerprint("module", "binary", Guid.Empty) != (profile with { Host = "other.test" }).Fingerprint("module", "binary", Guid.Empty), "Connection approval binds destination");
         check(profile.Fingerprint("module", "binary", Guid.Empty) != profile.Fingerprint("module", "new binary", Guid.Empty), "Connection approval binds PuTTY binary");
+        var rdp = new RdpProfile("server.example", "DOMAIN\\operator"); rdp.Validate();
+        check(!rdp.Clipboard && rdp.Port == 3389, "RDP profile defaults to standard port with clipboard sharing off");
+        foreach (var host in new[] { "https://server", "server:3389", "server\nother", "", "-argument" }) reject(() => (rdp with { Host = host }).Validate(), "RDP rejects malformed destination: " + (host.Length == 0 ? "<empty>" : host).Replace('\n', ' '));
+        reject(() => (rdp with { Port = 0 }).Validate(), "RDP port zero rejected");
+        reject(() => (rdp with { Width = 100000 }).Validate(), "RDP desktop memory dimensions bounded");
+        reject(() => (rdp with { Domain = "OTHER" }).Validate(), "Conflicting RDP domain forms rejected");
+        reject(() => (rdp with { Username = "user\npassword" }).Validate(), "RDP username control characters rejected");
+        check(rdp.Fingerprint("module", "helper", Guid.Empty) != (rdp with { Clipboard = true }).Fingerprint("module", "helper", Guid.Empty), "Enabling RDP clipboard sharing requires new consent");
+        check(rdp.Fingerprint("module", "helper", Guid.Empty) != (rdp with { Host = "other.example" }).Fingerprint("module", "helper", Guid.Empty), "RDP approval binds destination");
+        check(rdp.Fingerprint("module", "helper", Guid.Empty) != rdp.Fingerprint("module", "new-helper", Guid.Empty), "RDP approval binds helper version");
+        var rdpManifest = new ModuleManifest { Id = "example.rdp", Name = "Remote Desktop", Author = "Test", Handler = "rdp", Icon = "desktop" }; rdpManifest.Validate();
+        check(new DeclarativeProvider(new(rdpManifest, [], "", false)).Descriptor.Sensitive, "RDP module is sensitive by default");
+        rdpManifest.Fields.Add(new() { Key = "password", Label = "Override", Kind = "text" });
+        reject(rdpManifest.Validate, "RDP manifest cannot override host-owned secret fields");
     }
 }

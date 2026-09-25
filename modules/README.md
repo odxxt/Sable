@@ -1,6 +1,6 @@
 # Modules for SableLatch
 
-Modules add entry types and actions while keeping SableLatch small. Install a ZIP from **Settings → Plugins & modules → Install ZIP**, or open **Catalog** to install the included PuTTY SSH module without a download. **Check GitHub catalog** fetches the signed catalog only when clicked.
+Modules add entry types and actions while keeping SableLatch small. Install a ZIP from **Settings → Plugins & modules → Install ZIP**, or open **Catalog** to install the included PuTTY SSH and Remote Desktop modules without a download. **Check GitHub catalog** fetches the signed catalog only when clicked.
 
 ## Start with a sample
 
@@ -81,7 +81,7 @@ A temporary **non-secret** PuTTY session is created under the current user's PuT
 
 Locking cancels pending password delivery; the pending child process is stopped if delivery fails. Established SSH sessions stay open after SableLatch locks. The 15-second delivery timeout does not limit how long the SSH session may remain open.
 
-**Not in this release:** SSH private-key storage/authentication, existing PuTTY saved sessions, jump hosts/proxies, tunnels, remote commands, rich-text composition, image/file attachments or arbitrary executable module code. These need separate host capabilities and tests. HTML clipboard preservation is now part of the built-in Text type. An RDP host capability is planned separately; see [RDP design](../docs/RDP-DESIGN.md).
+**Not in this release:** SSH private-key storage/authentication, existing PuTTY saved sessions, jump hosts/proxies, tunnels, remote commands, rich-text composition, image/file attachments or arbitrary executable module code. These need separate host capabilities and tests. HTML clipboard preservation is now part of the built-in Text type. The RDP host capability is available in 0.8.0; see [RDP implementation](../docs/RDP-DESIGN.md).
 
 ## Updates, removal and recovery
 
@@ -98,3 +98,11 @@ The shipped publisher public key is `publisher.pub`. Official manifests and `cat
 The signed PuTTY catalog is published and was verified online on 24 September 2026. See [Publishing](../docs/PUBLISHING.md) for updates. The bundled module and local ZIP installation also work offline.
 
 Official signing material must remain outside the repository and release archives. Back up the publisher private key and keep its unlock password separately. Losing the key requires an explicit trust-key transition in a future app version. A valid signature verifies publisher identity and package integrity; it is not an independent security audit.
+
+## Remote Desktop 1.0 (requires SableLatch 0.8.0)
+
+`handler: "rdp"` and `icon: "desktop"` request the host-owned RDP editor and launcher. Fields and actions must be empty, just like the protected PuTTY capability: ZIP authors cannot add credential extraction, arbitrary arguments, shell commands or executable files. See `samples/rdp/manifest.json`. A community example must use its own namespace rather than `sablelatch.*` and omit the official signature.
+
+Install Remote Desktop from the bundled catalog. Click its entry row to connect, or right-click for details. The first-use review is remembered only on this Windows environment; destination, account, clipboard option, helper or package changes require a new review. Disabling/uninstalling preserves encrypted entries. Server authentication is required. See the [user guide](../docs/USER-GUIDE.md#remote-desktop-080) for setup and limitations.
+
+The source catalog now includes the signed RDP ZIP as well as PuTTY. The RDP catalog update becomes available online only after this source version is pushed to GitHub. Until then, the bundled catalog and local ZIP installation work offline.

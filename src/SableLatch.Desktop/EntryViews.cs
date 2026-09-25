@@ -159,7 +159,7 @@ public partial class MainWindow
         if (action is not "edit" and not "confirm-delete") armedDelete = null;
         switch (action)
         {
-            case "entry-action": if (row.Available) { if (content.Find(row.Item.ContentType) is DeclarativeProvider module) { if (module.Package.Manifest.Handler == "putty") RunPutty(row.Item); else ShowModuleDetails(row.Item); } else ReviewEntryAction(row.Item); } break;
+            case "entry-action": if (row.Available) { if (content.Find(row.Item.ContentType) is DeclarativeProvider module) { if (module.Package.Manifest.Handler == "putty") RunPutty(row.Item); else if (module.Package.Manifest.Handler == "rdp") RunRdp(row.Item); else ShowModuleDetails(row.Item); } else ReviewEntryAction(row.Item); } break;
             case "edit":
                 if (row.DeleteReady) ArmDelete(row);
                 else if (row.Available) ShowEditor(row.Item);
@@ -169,7 +169,7 @@ public partial class MainWindow
             case "up": MoveEntry(row.Item.Id, -1); break;
             case "down": MoveEntry(row.Item.Id, 1); break;
             case "copy":
-                if (content.Find(row.Item.ContentType) is DeclarativeProvider) ShowModuleDetails(row.Item);
+                if (content.Find(row.Item.ContentType) is DeclarativeProvider selectedModule) { if (selectedModule.Package.Manifest.Handler == "rdp") RunRdp(row.Item); else ShowModuleDetails(row.Item); }
                 else if (row.Item.ContentType == "sable.login") await CopyEntry(row.Item, pendingLogin == row.Item.Id ? "Password" : "Username", b);
                 else if (content.Find(row.Item.ContentType)?.CopyActions.Count > 1) ShowContentActions(row.Item);
                 else await CopyEntry(row.Item, content.Find(row.Item.ContentType)?.CopyActions.FirstOrDefault() ?? "Copy", b);
@@ -234,10 +234,14 @@ public partial class MainWindow
     private ContextMenu BuildEntryContext(RowModel row)
     {
         var menu = new ContextMenu();
+        if (content.Find(row.Item.ContentType) is DeclarativeProvider { Package.Manifest.Handler: "rdp" })
+        {
+            var details = new MenuItem { Header = "Connection details", IsEnabled = row.Available }; details.Click += (_, _) => ShowModuleDetails(row.Item); menu.Items.Add(details);
+        }
         if (row.ActionVisibility == Visibility.Visible)
         {
             var run = new MenuItem { Header = row.ActionLabel, IsEnabled = row.Available };
-            run.Click += (_, _) => { if (content.Find(row.Item.ContentType) is DeclarativeProvider module) { if (module.Package.Manifest.Handler == "putty") RunPutty(row.Item); else ShowModuleDetails(row.Item); } else ReviewEntryAction(row.Item); }; menu.Items.Add(run); menu.Items.Add(new Separator());
+            run.Click += (_, _) => { if (content.Find(row.Item.ContentType) is DeclarativeProvider module) { if (module.Package.Manifest.Handler == "putty") RunPutty(row.Item); else if (module.Package.Manifest.Handler == "rdp") RunRdp(row.Item); else ShowModuleDetails(row.Item); } else ReviewEntryAction(row.Item); }; menu.Items.Add(run); menu.Items.Add(new Separator());
         }
         var edit = new MenuItem { Header = "Edit", IsEnabled = row.Available }; edit.Click += (_, _) => ShowEditor(row.Item); menu.Items.Add(edit);
         if (row.Item.Advanced is null) { var advanced = new MenuItem { Header = "Advanced options…", IsEnabled = row.Available }; advanced.Click += (_, _) => ShowEditor(row.Item, advanced: true); menu.Items.Add(advanced); }

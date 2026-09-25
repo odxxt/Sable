@@ -1,4 +1,4 @@
-# SableLatch 0.7.2 — portable preview
+# SableLatch 0.8.0 — portable preview
 
 A compact, local clipboard vault for Windows. A native WPF window and tray icon; no browser engine, service, telemetry, or network listener.
 
@@ -73,9 +73,9 @@ This is a first working preview, **not an independently audited password manager
 
 The target is x64 Windows 10/11. Only the available Windows host has been used for compilation and rendering; a Windows 10/11 compatibility matrix remains necessary before a public release. Microsoft's currently supported .NET Windows editions are listed in its [runtime support policy](https://github.com/dotnet/core/blob/main/release-notes/10.0/supported-os.md). Compatibility and vendor support are different claims.
 
-The app uses one process; memory use is not zero. Argon2 intentionally uses 64 MiB while deriving a password key. Large collections use a virtualized list, but metadata is currently decrypted as one document and rewritten atomically on changes. Attachment maximum: 64 MiB each. Vault metadata and complete backup archive maximum: 256 MiB. A paged/chunked storage implementation can replace this behind the storage contracts later.
+The tray app uses one process; each open RDP window uses an additional process until closed. Memory use is not zero. Argon2 intentionally uses 64 MiB while deriving a password key. Large collections use a virtualized list, but metadata is currently decrypted as one document and rewritten atomically on changes. Attachment maximum: 64 MiB each. Vault metadata and complete backup archive maximum: 256 MiB. A paged/chunked storage implementation can replace this behind the storage contracts later.
 
-Declarative ZIP installation, scoped operation prompts, signed official modules and beginner samples are shipped in 0.7.0; see the [module guide](../modules/README.md). Arbitrary executable plugins, screenshot capture UI, SSH keys, a rich-text composing editor, RDP connections, installer mode, automatic app updates, application code signing and additional translations are **not shipped**. The screenshot provider in `examples` demonstrates the storage/clipboard contract; it is not a capture plugin enabled in this app. English fallback/localization hooks exist, but full translation coverage still needs finishing before adding another language.
+Declarative ZIP installation, scoped operation prompts, signed official modules and beginner samples are shipped in 0.7.0; see the [module guide](../modules/README.md). Arbitrary executable plugins, screenshot capture UI, SSH keys, a rich-text composing editor, installer mode, automatic app updates, application code signing and additional translations are **not shipped**. The screenshot provider in `examples` demonstrates the storage/clipboard contract; it is not a capture plugin enabled in this app. English fallback/localization hooks exist, but full translation coverage still needs finishing before adding another language.
 
 Window coordinates and the global shortcut are stored unencrypted in `window.json` and `host.json`; they contain no vault values. Startup registration contains only the executable and vault-folder paths. The rest of the preferences, labels, folder names, and entry payloads are encrypted. Clipboard history exclusion and capture exclusion are best-effort platform features, not defenses against malware or an administrator.
 
@@ -164,3 +164,17 @@ Copy formatted text from an app that supplies HTML on the clipboard. Paste into 
 The compact editor still displays plain text and shows **Formatting preserved**. This is preservation, not a rich-text composition editor. Typing or partially replacing the value clears its previous formatting to prevent outdated content being copied. Re-paste the formatted source to restore it. Sources offering only RTF or plain text do not preserve rich formatting in this version.
 
 Scripts, event attributes, forms, embedded objects and external images are removed. External resources are never fetched. CSS classes, arbitrary styles and images are not preserved, so complex email layouts are not pixel-perfect. HTML is capped at 100,000 characters, 5,000 DOM nodes and 64 levels. Secret/Login values remain plain text. The destination app ultimately decides which clipboard representation and styling to accept.
+## Remote Desktop (0.8.0)
+
+1. Open **Settings → Plugins & modules → Catalog → Remote Desktop → Install**. The signed ZIP is included and installs offline.
+2. Use **+ → New entry → More → Remote Desktop**. Save a name, host, Windows username and password.
+3. Click the entry row or its Run button. Review the destination once; leave **Don't ask again for this connection** checked for direct launches afterward. Right-click → Connection details shows the saved destination without connecting.
+4. A separate SableLatch RDP window opens. Close it or click Disconnect to end the connection. Full screen/Window changes its size without changing the small vault panel.
+
+Use `DOMAIN\user`, `user@domain`, or a username plus the optional Advanced Domain field. Advanced also contains port, desktop resolution and optional clipboard sharing (off by default). Sharing the clipboard allows the remote computer to receive local clipboard contents. Drives, printers, smart cards, microphone and dynamic device redirection are disabled.
+
+The target must accept RDP and present a certificate trusted by Windows with a matching host name (or otherwise pass Windows server authentication). A certificate mismatch or untrusted certificate is rejected; no ignore-certificate switch is provided. Use the correct host name and have the server certificate configured by its administrator. Invalid credentials, expired passwords or unsupported authentication policy may prevent login; edit the entry and launch again. This first version supports direct password-based connections, not RD Gateway, Entra web authentication, smart cards or credential-changing dialogs.
+
+There is no SableLatch server, .rdp/password file or Credential Manager write. The helper uses Microsoft's RDP control and receives only the chosen connection through a protected one-use local pipe. Passwords still exist in local and Windows memory. Locking the vault cancels a pending handoff; already opened sessions remain independent. Automatic reconnection is disabled. A fresh connection requires an unlocked vault.
+
+Connections and native handoff were exercised against loopback with fictional credentials; successful remote sign-in has not been tested against a disposable server. See [verification](../VERIFICATION.md).

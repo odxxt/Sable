@@ -1,3 +1,4 @@
+using System.IO;
 using System.Diagnostics;
 using System.IO.Pipes;
 using System.Reflection;
@@ -6,6 +7,18 @@ using System.Text;
 using SableLatch.Core;
 using SableLatch.Desktop;
 
+if (args.FirstOrDefault() == "frame-client")
+{
+    using var pipe = new NamedPipeClientStream(".", args[1], PipeDirection.InOut, PipeOptions.Asynchronous);
+    using var deadline = new CancellationTokenSource(4000); await pipe.ConnectAsync(deadline.Token);
+    var header = new byte[4]; await pipe.ReadExactlyAsync(header, deadline.Token);
+    var count = System.Buffers.Binary.BinaryPrimitives.ReadInt32LittleEndian(header);
+    if (count is < 1 or > RdpBroker.MaxFrame) return;
+    var frame = new byte[count];
+    try { await pipe.ReadExactlyAsync(frame, deadline.Token); File.WriteAllText(args[2], Convert.ToHexString(SHA256.HashData(frame))); await pipe.WriteAsync(new byte[] { 0x53 }, deadline.Token); }
+    finally { CryptographicOperations.ZeroMemory(frame); }
+    return;
+}
 if (args.FirstOrDefault() == "client")
 {
     try
@@ -20,6 +33,29 @@ if (args.FirstOrDefault() == "client")
     return;
 }
 if (args.FirstOrDefault() == "idle") { await Task.Delay(8000); return; }
+if (args.FirstOrDefault() == "portable-rdp")
+{
+    using var pipe = new CredentialPipe();
+    var launch = new ProcessStartInfo(Path.GetFullPath(args[1])) { UseShellExecute = false, WindowStyle = ProcessWindowStyle.Hidden };
+    launch.ArgumentList.Add("--rdp-session"); launch.ArgumentList.Add(pipe.Name); launch.ArgumentList.Add(Environment.ProcessId.ToString());
+    launch.Environment["DOTNET_ROOT"] = Path.Combine(Path.GetTempPath(), "absent-sable-dotnet"); launch.Environment["DOTNET_ROOT_X64"] = launch.Environment["DOTNET_ROOT"];
+    using var process = Process.Start(launch)!; using var deadline = new CancellationTokenSource(15000);
+    var frame = RdpBroker.Frame(new RdpProfile("127.0.0.1", "fixture", Port: 1), Encoding.UTF8.GetBytes("fictional-portable-rdp-password"));
+    try
+    {
+        await pipe.DeliverFrame(process, frame, deadline.Token);
+        var ownRoot = Path.GetDirectoryName(launch.FileName)!;
+        var runtime = process.Modules.Cast<ProcessModule>().Where(m => m.ModuleName is "coreclr.dll" or "hostfxr.dll" or "hostpolicy.dll").ToArray();
+        if (runtime.Length != 3 || runtime.Any(m => !m.FileName.StartsWith(ownRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))) throw new Exception("Portable helper did not load the bundled runtime.");
+        for (var i = 0; i < 30 && process.MainWindowHandle == IntPtr.Zero; i++) { await Task.Delay(100); process.Refresh(); }
+        if (!process.CloseMainWindow()) throw new Exception("Portable helper window unavailable.");
+        await process.WaitForExitAsync(deadline.Token);
+        if (process.ExitCode != 0 || frame.Any(b => b != 0)) throw new Exception("Portable helper shutdown or frame clearing failed.");
+        Console.WriteLine("PASS: Extracted self-contained RDP helper receives the frame, uses its bundled runtime, and exits on window close.");
+    }
+    finally { CryptographicOperations.ZeroMemory(frame); if (!process.HasExited) process.Kill(); }
+    return;
+}
 var root = Path.GetFullPath(args.FirstOrDefault() ?? Path.Combine(Path.GetTempPath(), "sable-module-tests-" + Guid.NewGuid().ToString("N")));
 Directory.CreateDirectory(root);
 try
@@ -64,9 +100,36 @@ using (var deadline = new CancellationTokenSource(100))
     await Stop(expected); Check(cancelled, "Lock/timeout cancellation interrupts pending pipe connection");
 }
 var package = ModulePackages.Read(ModuleTrust.Resource("putty.zip"), ModuleTrust.Verify);
+using (var pipe = new CredentialPipe())
+using (var expected = Start("frame-client", pipe.Name, Path.Combine(root, "frame-result.txt")))
+using (var deadline = new CancellationTokenSource(5000))
+{
+    var frame = RdpBroker.Frame(new RdpProfile("fixture.example", "user"), canary); var hash = Convert.ToHexString(SHA256.HashData(frame));
+    await pipe.DeliverFrame(expected, frame, deadline.Token); await expected.WaitForExitAsync(deadline.Token);
+    Check(File.ReadAllText(Path.Combine(root, "frame-result.txt")) == hash && frame.All(b => b == 0), "Framed handoff delivers complete bytes only to launched client and clears sender frame");
+}
+using (var pipe = new CredentialPipe())
+using (var expected = Start("idle"))
+using (var wrong = Start("client", pipe.Name, Path.Combine(root, "wrong-frame-result.txt")))
+using (var deadline = new CancellationTokenSource(5000))
+{
+    var frame = RdpBroker.Frame(new RdpProfile("fixture.example", "user"), canary); var rejected = false;
+    try { await pipe.DeliverFrame(expected, frame, deadline.Token); } catch (InvalidOperationException) { rejected = true; }
+    pipe.Dispose(); await wrong.WaitForExitAsync(deadline.Token); await Stop(expected);
+    Check(rejected && File.ReadAllText(Path.Combine(root, "wrong-frame-result.txt")) == "empty" && frame.All(b => b == 0), "Framed handoff rejects wrong PID without sending bytes and clears rejected frame");
+}
+using (var pipe = new CredentialPipe())
+using (var expected = Start("idle"))
+using (var deadline = new CancellationTokenSource(100))
+{
+    var frame = RdpBroker.Frame(new RdpProfile("fixture.example", "user"), canary); var cancelled = false;
+    try { await pipe.DeliverFrame(expected, frame, deadline.Token); } catch (OperationCanceledException) { cancelled = true; }
+    await Stop(expected); Check(cancelled && frame.All(b => b == 0), "Cancelling framed handoff clears pending credentials");
+}
+await RdpChecks.Run(Check);
 Check(package.Official && package.Manifest.Handler == "putty", "Bundled PuTTY module passes actual publisher signature verification");
 var source = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../modules/catalog.json"));
-if (File.Exists(source)) Check(ModuleTrust.ReadCatalog(File.ReadAllBytes(source)).Count == 1, "Official GitHub catalog signature validates");
+if (File.Exists(source)) Check(ModuleTrust.ReadCatalog(File.ReadAllBytes(source)).Count == 2, "Official GitHub catalog signature validates both modules");
 var installed = PuttyBroker.Detect();
 if (installed.Length > 0)
 {

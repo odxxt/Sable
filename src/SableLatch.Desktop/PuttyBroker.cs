@@ -54,6 +54,25 @@ internal sealed class CredentialPipe : IDisposable
         finally { CryptographicOperations.ZeroMemory(password); }
     }
     public void Dispose() => stream.Dispose();
+    public async Task DeliverFrame(Process launched, byte[] frame, CancellationToken cancellation)
+    {
+        try
+        {
+            if (frame.Length is < 1 or > RdpBroker.MaxFrame) throw new InvalidDataException("Invalid session message size.");
+            _ = launched.SafeHandle;
+            await stream.WaitForConnectionAsync(cancellation).ConfigureAwait(false);
+            if (!GetNamedPipeClientProcessId(stream.SafePipeHandle, out var client) || client != launched.Id || launched.HasExited)
+                throw new InvalidOperationException("An unexpected process contacted the session channel. No credentials were sent.");
+            cancellation.ThrowIfCancellationRequested();
+            var length = new byte[4]; System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(length, frame.Length);
+            await stream.WriteAsync(length, cancellation).ConfigureAwait(false);
+            await stream.WriteAsync(frame, cancellation).ConfigureAwait(false);
+            CryptographicOperations.ZeroMemory(frame);
+            var ack = new byte[1]; await stream.ReadExactlyAsync(ack, cancellation).ConfigureAwait(false);
+            if (ack[0] != 0x53) throw new InvalidDataException("The RDP window rejected the session.");
+        }
+        finally { CryptographicOperations.ZeroMemory(frame); }
+    }
     [StructLayout(LayoutKind.Sequential)] private struct SecurityAttributes { public int Length; public IntPtr Descriptor; public int Inherit; }
     [DllImport("advapi32", CharSet = CharSet.Unicode, SetLastError = true)] private static extern bool ConvertStringSecurityDescriptorToSecurityDescriptor(string sddl, uint revision, out IntPtr descriptor, out uint size);
     [DllImport("kernel32")] private static extern IntPtr LocalFree(IntPtr memory);

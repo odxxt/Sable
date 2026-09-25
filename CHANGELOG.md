@@ -1,3 +1,11 @@
+# 0.8.0 — Local Remote Desktop module
+
+- Add a signed, offline-installable Remote Desktop ZIP and catalog entry. Saved RDP rows connect on click after first-use review; right-click offers connection details.
+- Add host-owned RDP editing with masked/reveal password, domain, port, desktop size and optional clipboard sharing. Preserve entries on uninstall/reinstall and reuse encrypted vault/export/backup storage.
+- Open one native Microsoft RDP control per dedicated SableLatch helper process. Deliver only the chosen connection through a bounded, single-use local pipe checked against the exact child process; no password arguments, clipboard injection, credential-store writes or .rdp files.
+- Require server authentication, enable CredSSP, disable credential saving/prompting, automatic reconnection, persistent bitmap caching and default redirection. Clear owned password buffers and close the helper when its window closes.
+- Add core, WPF, real ActiveX and real helper-handoff tests. Successful remote login against a disposable RDP server remains untested; the native failure path uses loopback and fictional data.
+
 # 0.7.2 — Direct dragging and formatted text
 
 - Align the top + menu to the right edge of its button, opening inward into the panel.

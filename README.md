@@ -4,7 +4,7 @@
 
 A compact encrypted clipboard vault for Windows. Save the text, secrets and logins you reach for every day, then copy them from a quiet tray popup and get back to what you were doing.
 
-[**Download v0.7.2 for Windows x64**](https://github.com/odxxt/SableLatch/releases/download/v0.7.2/SableLatch-v0.7.2-win-x64.zip) · [All releases](https://github.com/odxxt/SableLatch/releases) · [User guide](docs/USER-GUIDE.md) · [Roadmap](#whats-next)
+[**Download v0.8.0 for Windows x64**](https://github.com/odxxt/SableLatch/releases/download/v0.8.0/SableLatch-v0.8.0-win-x64.zip) · [All releases](https://github.com/odxxt/SableLatch/releases) · [User guide](docs/USER-GUIDE.md) · [Roadmap](#whats-next)
 
 <p align="center">
   <img src="docs/images/vault.png" width="310" alt="SableLatch compact tray vault with folders and click-to-copy entries">
@@ -23,8 +23,8 @@ A compact encrypted clipboard vault for Windows. Save the text, secrets and logi
 - **Keep useful formatting.** Paste formatted content into an empty Text entry to retain common HTML formatting and tables when copying to supporting apps. Plain text remains available as a fallback; no embedded browser.
 - **Lock when it matters.** A full password at startup, optional 4–12 digit quick PIN during that process session, configurable timed locking and Windows session locking. Five incorrect PINs require the full password. Pinning pauses the timer, but never overrides Windows locking.
 - **Thoughtful clipboard handling.** Secret copies clear after 30 seconds by default if still owned by SableLatch. The delay is configurable; Windows clipboard-history exclusion and supported screen-capture exclusion are requested.
-- **Your data stays local.** An encrypted vault, encrypted import/export and optional encrypted backups. Backups start **off**. No account, cloud service, telemetry, browser engine or resident background service.
-- **Add your own entry types.** Install declarative ZIP modules, use a protected PuTTY SSH entry, or start with the quick-note sample. See the [module guide](modules/README.md). No background module tasks or executable plugin code.
+- **Your data stays local.** An encrypted vault, encrypted import/export and optional encrypted backups. Backups start **off**. No account, cloud service, telemetry, browser engine or resident background service. Each open RDP session uses a separate local process.
+- **Add your own entry types.** Install declarative ZIP modules, use protected PuTTY SSH and Remote Desktop entries, or start with the quick-note sample. See the [module guide](modules/README.md). No background module tasks or executable plugin code.
 - **Recover and review.** A master recovery key, configurable encrypted Trash for secrets, entry timestamps and a small protected activity history that can be exported to an HTML report.
 
 ## Download and start
@@ -33,7 +33,7 @@ A compact encrypted clipboard vault for Windows. Save the text, secrets and logi
 
 Target: **Windows 10/11, x64**. The ZIP includes the .NET Desktop Runtime; you do not need to install .NET separately to run it. ARM64 and 32-bit packages are not currently provided. See [runtime OS support](https://github.com/dotnet/core/blob/main/release-notes/10.0/supported-os.md) and [verification limits](VERIFICATION.md) for platform details.
 
-1. Download **SableLatch-v0.7.2-win-x64.zip** from the [release page](https://github.com/odxxt/SableLatch/releases/tag/v0.7.2). GitHub's automatic **Source code** archives are for developers, not the runnable app.
+1. Download **SableLatch-v0.8.0-win-x64.zip** from the [release page](https://github.com/odxxt/SableLatch/releases/tag/v0.8.0). GitHub's automatic **Source code** archives are for developers, not the runnable app.
 2. Extract the **entire ZIP** to a writable folder. Keep all included files together.
 3. Open **SableLatch.exe**. Create a vault or restore an existing encrypted backup.
 4. Save your recovery key somewhere safe outside the app. It is shown during setup and is not available to reveal again later.
@@ -41,10 +41,10 @@ Target: **Windows 10/11, x64**. The ZIP includes the .NET Desktop Runtime; you d
 
 You can change the shortcut and startup behavior in Settings. **Enter** saves or continues; **Shift+Enter** adds a line. The close button hides the panel. Settings → **Quit → Confirm quit** exits the app.
 
-Checksums are included with each release as `SHA256SUMS-v0.7.2.txt`. To check a download in PowerShell:
+Checksums are included with each release as `SHA256SUMS-v0.8.0.txt`. To check a download in PowerShell:
 
 ```powershell
-Get-FileHash .\SableLatch-v0.7.2-win-x64.zip -Algorithm SHA256
+Get-FileHash .\SableLatch-v0.8.0-win-x64.zip -Algorithm SHA256
 ```
 
 ### Updating
@@ -83,8 +83,9 @@ This is a **preview**, not an independently audited password manager. Capture ex
 The direction is a small app with room to grow. Checked items are available now; unchecked items are planned without a promised release date:
 
 - [x] **Declarative ZIP modules:** installation, enable/disable controls, beginner samples, API 1 field/action contracts and the first PuTTY module.
+- [x] **Local Remote Desktop:** click a saved entry to open a dedicated RDP window, with protected local credential delivery and no password files.
 - [x] **Module trust and permissions:** signed official packages, community warnings and scoped host-operation consent.
-- [ ] **More module capabilities:** encrypted SSH-key authentication, RDP connections, and a separately reviewed sandbox for executable extensions.
+- [ ] **More module capabilities:** encrypted SSH-key authentication, additional RDP options, and a separately reviewed sandbox for executable extensions.
 - [ ] **More entry types:** image/screenshot and attachment providers that use the existing encrypted storage and clipboard contracts.
 - [ ] **A Windows installer:** alongside the portable version, with a straightforward upgrade path.
 - [ ] **Additional languages:** selectable translations with right-to-left and left-to-right layouts.
@@ -112,7 +113,7 @@ dotnet run --project tests/SableLatch.Tests
 dotnet run --project src/SableLatch.Desktop
 ```
 
-The v0.7.2 preview is covered by core/storage/package checks, WPF interaction checks and native credential-pipe tests, including a real PuTTY 0.85 pipe-reader check. Full registry-backed launch testing needs a normal Windows session. See [VERIFICATION.md](VERIFICATION.md) for what was tested and what remains unverified.
+The v0.8.0 preview is covered by core/storage/package checks, WPF interaction checks and native credential-pipe tests, including a real PuTTY 0.85 pipe-reader check. Full registry-backed launch testing needs a normal Windows session. See [VERIFICATION.md](VERIFICATION.md) for what was tested and what remains unverified.
 
 ## Explore and contribute
 

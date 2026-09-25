@@ -1,4 +1,4 @@
-Initial key derivation + create: 405 ms
+Initial key derivation + create: 592 ms
 PASS: Recovery key has 256 bits and passes checksum
 PASS: Recovery typo rejected
 PASS: Labels, folders and custom payload encrypted at rest
@@ -192,9 +192,24 @@ PASS: PuTTY port bounded
 PASS: Only random host-created pipe names accepted
 PASS: Connection approval binds destination
 PASS: Connection approval binds PuTTY binary
+PASS: RDP profile defaults to standard port with clipboard sharing off
+PASS: RDP rejects malformed destination https://server
+PASS: RDP rejects malformed destination server:3389
+PASS: RDP rejects malformed destination server other
+PASS: RDP rejects malformed destination
+PASS: RDP rejects malformed destination -argument
+PASS: RDP port zero rejected
+PASS: RDP desktop memory dimensions bounded
+PASS: Conflicting RDP domain forms rejected
+PASS: RDP username control characters rejected
+PASS: Enabling RDP clipboard sharing requires new consent
+PASS: RDP approval binds destination
+PASS: RDP approval binds helper version
+PASS: RDP module is sensitive by default
+PASS: RDP manifest cannot override host-owned secret fields
 PASS: New module connection requires explicit approval
 PASS: Don't ask again stores device-protected module consent
 PASS: Moving module approval to another device requires review again
 PASS: Reset module permissions revokes remembered approval
 
-197 checks passed.
+212 checks passed.
