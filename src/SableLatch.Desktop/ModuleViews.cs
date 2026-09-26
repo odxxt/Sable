@@ -79,7 +79,7 @@ public partial class MainWindow
         var stack = Form(current is null ? "Install module" : "Update module", "", "settings", parent: ShowModules);
         stack.Children.Add(Text(package.Manifest.Name, 17));
         stack.Children.Add(Text(package.Manifest.Author + " · " + package.Manifest.Version, 11, true));
-        stack.Children.Add(Text(package.Manifest.Description, 12));
+        stack.Children.Add(Text(package.Manifest.Handler == "rdp" ? "Copy saved RDP passwords and launch Windows Remote Desktop using temporary Windows-encrypted connection files." : package.Manifest.Description, 12));
         stack.Children.Add(Text(package.Official ? "Verified SableLatch module" : "Not reviewed by SableLatch. Install only packages whose purpose you understand.", 12, !package.Official));
         stack.Children.Add(Text(package.Manifest.Handler == "rdp" ? "Can request a Remote Desktop connection to the host you configure. The host owns credential delivery; the ZIP cannot read passwords." : package.Manifest.Handler == "putty" ? "Can request a PuTTY connection to the host you configure. Passwords stay in SableLatch's protected launcher." : "Can define fields and request copying of its own non-secret fields. It cannot read other entries.", 12, true));
         stack.Children.Add(Text("No executable code, background activity or direct internet access.", 11, true));
@@ -207,7 +207,11 @@ public partial class MainWindow
             stack.Children.Add(Text(profile.Host + ":" + profile.Port, 15));
             stack.Children.Add(Text(profile.Username, 12, true));
             stack.Children.Add(Text("Password  ••••••••", 12, true));
-            PageAction(Button("Connect", () => RunRdp(item), true)); pageSubmit = null;
+            stack.Children.Add(AsyncButton("Copy password", () => CopyEntry(item, "Password", new Button()), false));
+            var actions = new System.Windows.Controls.Primitives.UniformGrid { Columns = 2 };
+            actions.Children.Add(Button("Launch", () => RunRdp(item, false), true));
+            actions.Children.Add(Button("Launch & copy", () => RunRdp(item, true)));
+            PageAction(actions); pageSubmit = null;
         }
         else
         if (provider.Package.Manifest.Handler == "putty")

@@ -1,3 +1,23 @@
+# 0.8.3 — Native Remote Desktop display
+
+- Remove the forced 1280 × 800 resolution, dimension limits and forced smart sizing. Existing RDP entries automatically use native display sizing.
+- Start in full screen by default, with a simple per-entry option to start windowed. Let mstsc own window resizing and full-screen switching.
+- Keep the working password handoff, certificate warning/choice and clipboard settings. No module reinstall or vault migration is needed.
+- Document the native client's distinction between smart sizing and dynamic resolution.
+
+# 0.8.2 — Let Windows offer Connect anyway
+
+- Change generated RDP settings from strict certificate refusal to Windows warning mode (authentication level 2). The user can review the certificate and decide whether to connect, subject to Windows policy.
+- Keep NLA/CredSSP enabled and retain the separate unsigned-file publisher warning. No automatic certificate acceptance or system policy changes.
+- Refresh first-use consent for the changed launch policy; existing entries need no editing or module reinstall.
+
+# 0.8.1 — Windows Remote Desktop launch
+
+- Replace the embedded session helper with the system mstsc.exe, using a fresh temporary .rdp file with a DPAPI CurrentUser-protected password for each launch. No Credential Manager write or shell.
+- Add restricted local scratch storage, startup/failure/cancellation/exit cleanup, and method-specific first-use review. Document same-user decryption exposure and best-effort cleanup timing.
+- Clicking an RDP entry copies its password. Add Launch / Launch & copy selection, row tooltip/icon state, and both actions in the context menu and details. Sensitive clipboard settings apply.
+- Preserve existing entries and signed module compatibility. Current-Windows automatic sign-in remains unverified; no security policy is weakened to force it.
+
 # 0.8.0 — Local Remote Desktop module
 
 - Add a signed, offline-installable Remote Desktop ZIP and catalog entry. Saved RDP rows connect on click after first-use review; right-click offers connection details.

@@ -1,51 +1,45 @@
-# Local RDP module — implementation and limits (0.8.0)
+# Remote Desktop launch — 0.8.3
 
-Implemented 25 September 2026. The user selected local saved-password connections and a separate SableLatch RDP window. The signed module is included in v0.8.0. Real ActiveX configuration and the complete local handoff were exercised; successful login to a disposable remote server remains untested.
+SableLatch opens the Windows system Remote Desktop Connection application (mstsc.exe). It no longer hosts an RDP session window. The signed declarative RDP ZIP remains compatible; this change is implemented by trusted host code.
 
-## Implemented approach
+## Entry behavior
 
-Use Microsoft's Windows Remote Desktop ActiveX control inside a dedicated SableLatch connection helper. This gives a native remote desktop window without asking the user to open an .rdp file. The ZIP module defines the entry and requests a reviewed host capability. It never receives the password or a vault handle. The helper is trusted application code, not executable code supplied in the module ZIP.
+Clicking the row copies only the password with the existing sensitive clipboard policy. The play button uses the entry's Launch / Launch & copy preference. Right-click and Connection details offer both actions explicitly. Launch & copy copies the password after local startup, not after confirmed remote authentication. Pinning and close-after-copy preferences still apply. Clipboard sharing into the remote session is a separate setting, off by default.
 
-The password is encrypted on disk. The unlocked vault document currently holds its decrypted JSON in memory. On an explicit row click or Run:
+## Display behavior
 
-1. Validate the saved destination, port, username/domain and enabled module. Review first use on this PC and changed connection settings, as with PuTTY.
-2. Start the packaged RDP helper directly, with only a random IPC identifier and parent PID in arguments. Validate the helper binary and bind the one-use local channel to the actual launched process, with a current-user ACL, remote-client rejection and a delivery timeout.
-3. Send only this connection's data to the helper. It sets server, username/domain and the Microsoft control's write-only `IMsTscNonScriptable.ClearTextPassword` property in memory, then calls Connect.
-4. Zero buffers owned by SableLatch after delivery and dispose the channel. Do not use CMD/PowerShell, clipboard injection, environment credentials, cmdkey, Credential Manager writes, password files or an .rdp file.
-5. Keep the helper only for the lifetime of that visible RDP session; no resident RDP service. Each helper receives one connection, never the whole vault. Disconnect destroys the control and exits the helper.
+Start in full screen is enabled by default; turn it off in the entry's Advanced options to start in a normal window. The launch file selects only the initial screen mode. It no longer imposes desktopwidth, desktopheight, window placement or smart sizing. Windows chooses the initial desktop dimensions from the local display and owns all subsequent resizing and full-screen controls. Existing entries ignore their legacy width/height values and need no recreation or module reinstall.
 
-A native connection window is not a security boundary against an administrator or malware in the user's session. The selected password is plaintext in transfer/control memory; the decrypted vault document remains in the main process while unlocked and Microsoft may retain internal copies that SableLatch cannot zero. Write-only means the public API has no getter; it does not mean memory cannot be inspected. Standard password-based RDP also exposes credentials to the destination through the authentication system. Authentication must use a trusted destination.
+Native mstsc supports smart sizing (scaling the existing desktop) but not dynamic resolution renegotiation as its window is resized. SableLatch does not pretend to enable that unsupported feature with a dynamic-resolution flag. Users retain the native client's behavior; a restored window may use scrollbars unless Smart sizing is selected in the Remote Desktop window menu.
 
-## Connection defaults and behavior
+## Credential lifecycle
 
-- Enable CredSSP and require successful server authentication. Do not silently ignore invalid certificates, downgrade security, or disable Windows policy. AuthenticationLevel=1 rejects untrusted/mismatched certificates. Configure a trusted certificate on the target; no bypass is offered.
-- Use the supplied username/password without the local credential prompt in the successful path; disable credential-saving UI and persistent bitmap caching.
-- Invalid passwords, expired credentials, MFA and server policy can still require interaction. Do not promise that every server can log in without any prompt. Fail back to a clear connection error rather than reveal a saved password or silently retry indefinitely.
-- Disable clipboard, drive, printer and device redirection by default; clipboard sharing is an explicit per-entry option. Options include host, port, account/domain, password and desktop size; the session window supports fullscreen.
-- Locking SableLatch cancels unfinished credential delivery. An already established session is separate from vault unlock state, as with PuTTY; a new/reconnected session must not request fresh credentials from a locked vault.
-- Apply the existing supported capture-exclusion policy to the helper, with the same OS/recording-method limitations as the main panel.
-- Launch tests should use a disposable Windows RDP target and fictional credentials. Test valid and invalid server identity, NLA, wrong/expired password, cancellation, Windows lock, timeout, wrong pipe client, helper tampering, parallel connections, and no residual credential/file/argument/log artifacts. Runtime compatibility needs testing on both target Windows versions.
+1. Keep the connection settings and password encrypted in the existing vault. No permanent RDP file is stored. The unlocked vault still contains decrypted JSON in memory.
+2. Review first launch on this Windows account, including the destination and the temporary-file security tradeoff. Approvals bind the public profile, package, entry, system client hash, launch mode and new delivery-method identifier. Old helper approvals cannot silently authorize the new method.
+3. Convert bounded UTF-8 password bytes to UTF-16LE without an additional plaintext string. Protect them using Windows DPAPI CurrentUser with no application entropy, as required by the RDP password-51 format.
+4. Create a randomly named .rdp file in %LOCALAPPDATA%/SableLatch/RdpLaunch/<vault-id>. A protected current-user directory ACL limits access by other ordinary accounts. Reject network paths and reparse-point directories. The file holds public settings and the DPAPI blob; it never contains a plaintext password or SableLatch master key. Clear owned plaintext conversion/transfer arrays immediately after protection.
+5. Launch the fixed system mstsc.exe directly with only the settings-file path as an argument. No shell, DLL injection, Credential Manager write, environment password or automatic clipboard injection is used. Explicit Copy and Launch & copy are the only password clipboard operations.
+6. Wait for GUI initialization, then a 1.5-second grace period, bounded by a 15-second startup wait. Dispose the file and retry failed deletion briefly. Lock cancellation and launch failures also clean up. Startup and normal exit sweep only matching host-generated files for that vault. No permanent cleanup service is installed.
 
-## Alternatives considered
+## Limits
 
-| Method | Assessment |
-| --- | --- |
-| Microsoft RDP control in SableLatch helper | Recommended for saved credentials: supported write-only API, native engine already supplied by Windows, no password launch file or saved credential required. |
-| mstsc + cmdkey | Avoid. The common command pattern exposes the password in command arguments and creates a Windows saved credential. |
-| mstsc + CredWrite API | Avoid as the default. It avoids a password command argument but still places the secret in Windows' credential store and adds cleanup/race concerns. |
-| FreeRDP with private stdin | Viable alternative; stdin avoids password arguments, but adds another RDP engine and its distribution, patching and compatibility burden. Not necessary for this Windows-only app. |
-| Remote Credential Guard | Stronger protection from a compromised destination where Kerberos and policy requirements are met; not the first implementation for arbitrary saved server accounts selected by the user. |
-| Enterprise RDP proxy | Can keep the target password off the end-user PC, but needs a trusted server/service and changes SableLatch's local portable architecture. |
+mstsc has no supported file-read or authentication acknowledgment. Startup/grace timing is best effort; deletion may be too early on an unusual or slow installation. Process startup does not establish successful login. A crash can leave a DPAPI-protected file until the next startup, and filesystem denial can prevent cleanup. Deletion is not secure erasure.
 
-Delinea documents click-to-launch RDP and hiding the view-password permission. That establishes the desired user experience, not proof of its private implementation. A downloaded .rdp file is also not inherently evidence that a product exposes the real target password; enterprise products may connect through a proxy.
+DPAPI binds the blob to the Windows account, not to SableLatch: software running as that user can capture and decrypt it. A captured copy remains useful after SableLatch deletes its copy. This is convenience protection, not password withholding from the local user or administrator. Passwords also exist in Windows/client memory; SableLatch cannot wipe those copies.
 
-## Primary references
+The user reported a working real-server connection with 0.8.2. Automatic sign-in with password-51 files has not been independently tested here across Windows 10/11 or organizational policies and may still be rejected by policy. The app keeps NLA/CredSSP enabled, respects Windows policy and never silently falls back to Credential Manager. Server certificate verification uses warning mode, with the decision to proceed left to the user in Windows. Interactive prompts may still appear. Test against a disposable RDP target before relying on this feature.
 
-- [Microsoft write-only password API](https://learn.microsoft.com/en-us/windows/win32/termserv/imstscnonscriptable-cleartextpassword)
-- [Microsoft credential prompt control](https://learn.microsoft.com/en-us/windows/win32/termserv/imsrdpclientnonscriptable3-promptforcredentials)
-- [Microsoft credential-saving UI control](https://learn.microsoft.com/en-us/windows/win32/termserv/imsrdpclientnonscriptable4-allowcredentialsaving)
-- [Microsoft server authentication levels](https://learn.microsoft.com/en-us/windows/win32/termserv/imsrdpclientadvancedsettings4-authenticationlevel)
-- [Microsoft mstsc command interface](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/mstsc)
-- [Microsoft Remote Credential Guard](https://learn.microsoft.com/en-us/windows/security/identity-protection/remote-credential-guard)
-- [Delinea launch behavior](https://docs.delinea.com/online-help/secret-server/launcher-protocol-handler/launchers/procedures/launching-sessions/index.htm)
-- [FreeRDP client command interface](https://github.com/FreeRDP/FreeRDP/blob/master/client/common/cmdline.h)
+The generated file uses authentication level 2: Windows warns if the server cannot be authenticated and lets the user choose whether to connect, subject to policy. This replaces the strict refusal in 0.8.1; it does not silently accept an invalid certificate. Accepting a warning risks connecting to an impersonated server. CredSSP stays enabled. Unsigned-file publisher warnings are a separate Windows check and still appear. Clipboard redirection is opt-in. Drives, printers, ports, smart cards, devices, audio capture, automatic reconnection and persistent bitmap caching are disabled in the file. Windows owns the separate session, its credential dialogs, saving UI and any later user changes; SableLatch does not control or capture-protect that external window. Existing sessions may survive vault locking or exit.
+
+## Verification
+
+Core checks cover profile validation, injected-newline rejection, IPv6 formatting and host-owned sensitive password copying. Windows tests cover file ACLs, protected-blob-only serialization, launch arguments, cleanup on success/failure/cancellation, bounded secret handling and scoped stale-file cleanup. A deterministic protector is used for lifecycle tests; an independent real DPAPI test reports blocked when the execution account cannot use DPAPI. No test uses real credentials. See [verification](../VERIFICATION.md).
+
+## References
+
+- [Windows mstsc interface](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/mstsc)
+- [Windows DPAPI and user binding](https://learn.microsoft.com/en-us/windows/win32/api/dpapi/nf-dpapi-cryptprotectdata)
+- [Public RDP password-51 implementation](https://github.com/RedAndBlueEraser/rdp-file-password-encryptor)
+
+- [Supported RDP properties and defaults](https://learn.microsoft.com/en-us/azure/virtual-desktop/rdp-properties)
+- [Microsoft client comparison: dynamic resolution versus smart sizing](https://learn.microsoft.com/en-us/previous-versions/remote-desktop-client/compare-remote-desktop-clients)

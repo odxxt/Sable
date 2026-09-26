@@ -1,4 +1,4 @@
-# SableLatch 0.8.0 — portable preview
+# SableLatch 0.8.3 — portable preview
 
 A compact, local clipboard vault for Windows. A native WPF window and tray icon; no browser engine, service, telemetry, or network listener.
 
@@ -164,17 +164,13 @@ Copy formatted text from an app that supplies HTML on the clipboard. Paste into 
 The compact editor still displays plain text and shows **Formatting preserved**. This is preservation, not a rich-text composition editor. Typing or partially replacing the value clears its previous formatting to prevent outdated content being copied. Re-paste the formatted source to restore it. Sources offering only RTF or plain text do not preserve rich formatting in this version.
 
 Scripts, event attributes, forms, embedded objects and external images are removed. External resources are never fetched. CSS classes, arbitrary styles and images are not preserved, so complex email layouts are not pixel-perfect. HTML is capped at 100,000 characters, 5,000 DOM nodes and 64 levels. Secret/Login values remain plain text. The destination app ultimately decides which clipboard representation and styling to accept.
-## Remote Desktop (0.8.0)
+## Remote Desktop (0.8.3)
 
-1. Open **Settings → Plugins & modules → Catalog → Remote Desktop → Install**. The signed ZIP is included and installs offline.
-2. Use **+ → New entry → More → Remote Desktop**. Save a name, host, Windows username and password.
-3. Click the entry row or its Run button. Review the destination once; leave **Don't ask again for this connection** checked for direct launches afterward. Right-click → Connection details shows the saved destination without connecting.
-4. A separate SableLatch RDP window opens. Close it or click Disconnect to end the connection. Full screen/Window changes its size without changing the small vault panel.
+1. Install Remote Desktop from Settings → Plugins & modules → Catalog (included offline).
+2. Create an entry using + → New entry → More → Remote Desktop. Save the host, Windows username and password. Existing RDP entries continue to work.
+3. Click its row to copy the password. Use the play button to launch. In the editor choose Launch or Launch & copy for that button; both choices are also in the right-click menu and Connection details.
+4. Review the destination and temporary-file warning the first time. Windows Remote Desktop Connection opens in its own window. Launch & copy also copies the password using your secret clipboard settings.
 
-Use `DOMAIN\user`, `user@domain`, or a username plus the optional Advanced Domain field. Advanced also contains port, desktop resolution and optional clipboard sharing (off by default). Sharing the clipboard allows the remote computer to receive local clipboard contents. Drives, printers, smart cards, microphone and dynamic device redirection are disabled.
+Advanced options include domain, port, Start in full screen and remote clipboard sharing. Full screen is on by default and uses the local display size. Turn it off to start in a normal window. Fixed width/height fields and forced stretching have been removed, including for existing entries. Window resizing and full-screen switching use the native mstsc controls. Native mstsc can scale the desktop using Smart sizing, but does not dynamically change the remote resolution with each window resize. Clipboard sharing is separate from copying the password locally and defaults off. Launch defaults to no copy. Windows now lets you review an unverified server certificate and choose whether to connect. Verify the certificate with your administrator before accepting it; the unsigned-file publisher warning is separate. There is no SableLatch server or Credential Manager write.
 
-The target must accept RDP and present a certificate trusted by Windows with a matching host name (or otherwise pass Windows server authentication). A certificate mismatch or untrusted certificate is rejected; no ignore-certificate switch is provided. Use the correct host name and have the server certificate configured by its administrator. Invalid credentials, expired passwords or unsupported authentication policy may prevent login; edit the entry and launch again. This first version supports direct password-based connections, not RD Gateway, Entra web authentication, smart cards or credential-changing dialogs.
-
-There is no SableLatch server, .rdp/password file or Credential Manager write. The helper uses Microsoft's RDP control and receives only the chosen connection through a protected one-use local pipe. Passwords still exist in local and Windows memory. Locking the vault cancels a pending handoff; already opened sessions remain independent. Automatic reconnection is disabled. A fresh connection requires an unlocked vault.
-
-Connections and native handoff were exercised against loopback with fictional credentials; successful remote sign-in has not been tested against a disposable server. See [verification](../VERIFICATION.md).
+For each launch, SableLatch writes a temporary .rdp file with a Windows-encrypted password and removes it after client startup. Same-user software can capture and decrypt that file. Cleanup retries and next-start cleanup reduce leftovers but cannot guarantee secure deletion. No permanent .rdp file is stored in the vault. Current Windows policy may still prompt for credentials; real automatic login requires testing on your environment. SableLatch keeps NLA/CredSSP enabled and does not override organizational policy. An open Remote Desktop session can remain active when SableLatch locks or exits, and its screen is not covered by SableLatch's capture protection.

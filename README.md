@@ -4,7 +4,7 @@
 
 A compact encrypted clipboard vault for Windows. Save the text, secrets and logins you reach for every day, then copy them from a quiet tray popup and get back to what you were doing.
 
-[**Download v0.8.0 for Windows x64**](https://github.com/odxxt/SableLatch/releases/download/v0.8.0/SableLatch-v0.8.0-win-x64.zip) · [All releases](https://github.com/odxxt/SableLatch/releases) · [User guide](docs/USER-GUIDE.md) · [Roadmap](#whats-next)
+[**Download for Windows x64**](https://github.com/odxxt/SableLatch/releases) · [All releases](https://github.com/odxxt/SableLatch/releases) · [User guide](docs/USER-GUIDE.md) · [Roadmap](#whats-next)
 
 <p align="center">
   <img src="docs/images/vault.png" width="310" alt="SableLatch compact tray vault with folders and click-to-copy entries">
@@ -33,7 +33,7 @@ A compact encrypted clipboard vault for Windows. Save the text, secrets and logi
 
 Target: **Windows 10/11, x64**. The ZIP includes the .NET Desktop Runtime; you do not need to install .NET separately to run it. ARM64 and 32-bit packages are not currently provided. See [runtime OS support](https://github.com/dotnet/core/blob/main/release-notes/10.0/supported-os.md) and [verification limits](VERIFICATION.md) for platform details.
 
-1. Download **SableLatch-v0.8.0-win-x64.zip** from the [release page](https://github.com/odxxt/SableLatch/releases/tag/v0.8.0). GitHub's automatic **Source code** archives are for developers, not the runnable app.
+1. Download **SableLatch-v<version>-win-x64.zip** from the [release page](https://github.com/odxxt/SableLatch/releases). GitHub's automatic **Source code** archives are for developers, not the runnable app.
 2. Extract the **entire ZIP** to a writable folder. Keep all included files together.
 3. Open **SableLatch.exe**. Create a vault or restore an existing encrypted backup.
 4. Save your recovery key somewhere safe outside the app. It is shown during setup and is not available to reveal again later.
@@ -41,10 +41,10 @@ Target: **Windows 10/11, x64**. The ZIP includes the .NET Desktop Runtime; you d
 
 You can change the shortcut and startup behavior in Settings. **Enter** saves or continues; **Shift+Enter** adds a line. The close button hides the panel. Settings → **Quit → Confirm quit** exits the app.
 
-Checksums are included with each release as `SHA256SUMS-v0.8.0.txt`. To check a download in PowerShell:
+Checksums are included with each release as `SHA256SUMS-v<version>.txt`. To check a download in PowerShell:
 
 ```powershell
-Get-FileHash .\SableLatch-v0.8.0-win-x64.zip -Algorithm SHA256
+Get-FileHash .\SableLatch-v0.8.3-win-x64.zip -Algorithm SHA256
 ```
 
 ### Updating
@@ -83,7 +83,7 @@ This is a **preview**, not an independently audited password manager. Capture ex
 The direction is a small app with room to grow. Checked items are available now; unchecked items are planned without a promised release date:
 
 - [x] **Declarative ZIP modules:** installation, enable/disable controls, beginner samples, API 1 field/action contracts and the first PuTTY module.
-- [x] **Local Remote Desktop:** click a saved entry to open a dedicated RDP window, with protected local credential delivery and no password files.
+- [x] **Local Remote Desktop:** click to copy the password; use Launch or Launch & copy to open Windows Remote Desktop. A temporary Windows-encrypted connection file is used; see the [security limits](docs/RDP-DESIGN.md).
 - [x] **Module trust and permissions:** signed official packages, community warnings and scoped host-operation consent.
 - [ ] **More module capabilities:** encrypted SSH-key authentication, additional RDP options, and a separately reviewed sandbox for executable extensions.
 - [ ] **More entry types:** image/screenshot and attachment providers that use the existing encrypted storage and clipboard contracts.
@@ -113,14 +113,14 @@ dotnet run --project tests/SableLatch.Tests
 dotnet run --project src/SableLatch.Desktop
 ```
 
-The v0.8.0 preview is covered by core/storage/package checks, WPF interaction checks and native credential-pipe tests, including a real PuTTY 0.85 pipe-reader check. Full registry-backed launch testing needs a normal Windows session. See [VERIFICATION.md](VERIFICATION.md) for what was tested and what remains unverified.
+The preview is covered by core/storage/package checks, WPF interaction checks and native credential-pipe tests, including a real PuTTY 0.85 pipe-reader check. Full registry-backed launch testing needs a normal Windows session. See [VERIFICATION.md](VERIFICATION.md) for what was tested and what remains unverified.
 
 ## Explore and contribute
 
 Found a bug or have an idea? [Open an issue](https://github.com/odxxt/SableLatch/issues). Include the app version, Windows version and steps to reproduce. Use fictional entries in screenshots and examples; never attach your vault, passwords or recovery key.
 
 - [User guide](docs/USER-GUIDE.md) — everyday controls, settings and recovery.
-- [RDP design](docs/RDP-DESIGN.md) — the approved connection approach, not yet implemented.
+- [RDP design](docs/RDP-DESIGN.md) — native Windows launch, credential-file lifecycle and limitations.
 - [Publishing and catalog](docs/PUBLISHING.md) — source pushes, app releases and signed module updates.
 - [Architecture](ARCHITECTURE.md) — how the parts fit together.
 - [Security](SECURITY.md) — encryption, threat boundaries and verification limits.

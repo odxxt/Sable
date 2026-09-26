@@ -30,8 +30,10 @@ public sealed class RowModel : System.ComponentModel.INotifyPropertyChanged
     public Brush EntryBackground => EntryColors.Brush(Item.Advanced?.Color);
     public bool ModuleAction { get; init; }
     public Visibility ActionVisibility => !DeleteArmed && Available && (ModuleAction || Item.Advanced?.Action?.Enabled == true) ? Visibility.Visible : Visibility.Collapsed;
-    public string ActionLabel => Item.Advanced?.Action?.CopyOnRun == true ? "Run & copy" : "Run";
-    public Visibility ActionCopyVisibility => Item.Advanced?.Action?.CopyOnRun == true ? Visibility.Visible : Visibility.Collapsed;
+    public bool RdpAction { get; init; }
+    private bool CopiesOnAction => RdpAction ? Item.Field("copyOnLaunch") == "true" : Item.Advanced?.Action?.CopyOnRun == true;
+    public string ActionLabel => RdpAction ? (CopiesOnAction ? "Launch & copy" : "Launch") : Item.Advanced?.Action?.CopyOnRun == true ? "Run & copy" : "Run";
+    public Visibility ActionCopyVisibility => CopiesOnAction ? Visibility.Visible : Visibility.Collapsed;
 }
 
 public partial class MainWindow
@@ -147,7 +149,7 @@ public partial class MainWindow
                 Item = i, Title = string.IsNullOrWhiteSpace(i.Label) ? i.IsSensitive ? "Secret" : i.Field("text").Split('\n')[0] : i.Label,
                 Subtitle = !available ? "Module unavailable" : i.IsSensitive ? "Secret · ••••••••" : string.IsNullOrWhiteSpace(i.Label) ? "Text" : i.Field("text").Replace('\n', ' '),
                 Symbol = provider?.Descriptor.Symbol ?? "\uE74C", DeleteArmed = armedDelete == i.Id, Available = available, PendingPassword = pendingLogin == i.Id,
-                ModuleAction = provider is DeclarativeProvider,
+                ModuleAction = provider is DeclarativeProvider, RdpAction = provider is DeclarativeProvider { Package.Manifest.Handler: "rdp" },
                 LoginVisibility = i.ContentType == "sable.login" ? Visibility.Visible : Visibility.Collapsed
             };
         }).ToList();
@@ -169,7 +171,7 @@ public partial class MainWindow
             case "up": MoveEntry(row.Item.Id, -1); break;
             case "down": MoveEntry(row.Item.Id, 1); break;
             case "copy":
-                if (content.Find(row.Item.ContentType) is DeclarativeProvider selectedModule) { if (selectedModule.Package.Manifest.Handler == "rdp") RunRdp(row.Item); else ShowModuleDetails(row.Item); }
+                if (content.Find(row.Item.ContentType) is DeclarativeProvider selectedModule) { if (selectedModule.Package.Manifest.Handler == "rdp") await CopyEntry(row.Item, "Password", b); else ShowModuleDetails(row.Item); }
                 else if (row.Item.ContentType == "sable.login") await CopyEntry(row.Item, pendingLogin == row.Item.Id ? "Password" : "Username", b);
                 else if (content.Find(row.Item.ContentType)?.CopyActions.Count > 1) ShowContentActions(row.Item);
                 else await CopyEntry(row.Item, content.Find(row.Item.ContentType)?.CopyActions.FirstOrDefault() ?? "Copy", b);
@@ -182,6 +184,9 @@ public partial class MainWindow
     private async Task CopyEntry(VaultItem item, string action, Button source)
     {
         if (!vault.IsUnlocked || busy) return;
+        var current = vault.Document!.Items.FirstOrDefault(i => i.Id == item.Id && i.DeletedAt is null);
+        if (current is null || !ModuleAvailable(current) || vault.Document.Settings.DisabledModules.Contains(current.ContentType)) return;
+        item = current;
         var provider = content.Find(item.ContentType); if (provider is null) return;
         var value = provider.Copy(item, action); var startEpoch = epoch; var generation = ++copyGeneration;
         try
@@ -236,9 +241,12 @@ public partial class MainWindow
         var menu = new ContextMenu();
         if (content.Find(row.Item.ContentType) is DeclarativeProvider { Package.Manifest.Handler: "rdp" })
         {
+            var copyPassword = new MenuItem { Header = "Copy password", IsEnabled = row.Available }; copyPassword.Click += async (_, _) => await CopyEntry(row.Item, "Password", new Button()); menu.Items.Add(copyPassword);
+            var launch = new MenuItem { Header = "Launch", IsEnabled = row.Available }; launch.Click += (_, _) => RunRdp(row.Item, false); menu.Items.Add(launch);
+            var launchCopy = new MenuItem { Header = "Launch & copy", IsEnabled = row.Available }; launchCopy.Click += (_, _) => RunRdp(row.Item, true); menu.Items.Add(launchCopy);
             var details = new MenuItem { Header = "Connection details", IsEnabled = row.Available }; details.Click += (_, _) => ShowModuleDetails(row.Item); menu.Items.Add(details);
         }
-        if (row.ActionVisibility == Visibility.Visible)
+        if (row.ActionVisibility == Visibility.Visible && !row.RdpAction)
         {
             var run = new MenuItem { Header = row.ActionLabel, IsEnabled = row.Available };
             run.Click += (_, _) => { if (content.Find(row.Item.ContentType) is DeclarativeProvider module) { if (module.Package.Manifest.Handler == "putty") RunPutty(row.Item); else if (module.Package.Manifest.Handler == "rdp") RunRdp(row.Item); else ShowModuleDetails(row.Item); } else ReviewEntryAction(row.Item); }; menu.Items.Add(run); menu.Items.Add(new Separator());

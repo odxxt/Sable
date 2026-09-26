@@ -151,9 +151,12 @@ public sealed class DeclarativeProvider(ModulePackage package) : IContentProvide
         package.Manifest.Icon switch { "terminal" => "\uE756", "mail" => "\uE715", "lock" => "\uE72E", "desktop" => "\uE7F4", _ => "\uE70B" },
         package.Manifest.Handler is ("putty" or "rdp") || package.Manifest.Fields.Any(f => f.Kind == "secret"));
     public IReadOnlyList<EditorField> EditorFields => package.Manifest.Fields.Select(f => new EditorField(f.Key, f.Label, f.Kind switch { "secret" => EditorFieldKind.Secret, "multiline" => EditorFieldKind.Multiline, _ => EditorFieldKind.Text }, f.Required)).ToArray();
-    public IReadOnlyList<string> CopyActions => package.Manifest.Actions.Select(a => a.Label).ToArray();
+    public IReadOnlyList<string> CopyActions => package.Manifest.Handler == "rdp" ? ["Password"] : package.Manifest.Actions.Select(a => a.Label).ToArray();
     public CopyValue Copy(VaultItem item, string action)
     {
+        // Explicit host-owned RDP capability, never a module-defined secret-field action.
+        if (package.Manifest.Handler == "rdp" && action == "Password")
+            return new("text/plain", SecretBuffers.Utf8(item, "password"), true, false);
         var definition = package.Manifest.Actions.Single(a => a.Label == action);
         if (!package.Manifest.Fields.Any(f => f.Key == definition.Field && f.Kind != "secret")) throw new InvalidOperationException("Secret fields cannot be read by module actions.");
         return new("text/plain", Encoding.UTF8.GetBytes(item.Field(definition.Field)), item.IsSensitive, false);

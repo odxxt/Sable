@@ -32,10 +32,17 @@ public partial class MainWindow
         string Value(string key, string fallback) => existing?.Field(key) is { Length: > 0 } value ? value : fallback;
         var domain = Input(advancedFields, "Domain · optional", Value("domain", ""));
         var port = Input(advancedFields, "Port", Value("port", "3389"));
-        var width = Input(advancedFields, "Desktop width", Value("width", "1280"));
-        var height = Input(advancedFields, "Desktop height", Value("height", "800"));
+        var fullScreen = Check(advancedFields, "Start in full screen", Value("fullScreen", "true") != "false");
         var clipboard = Check(advancedFields, "Share clipboard with remote computer", Value("clipboard", "false") == "true");
         advancedFields.Children.Add(Text("Clipboard sharing exposes your local clipboard to the remote session. Drives, printers and devices stay disconnected.", 11, true));
+        stack.Children.Add(Text("Launch button", 11, true));
+        var modes = new System.Windows.Controls.Primitives.UniformGrid { Columns = 2 };
+        var group = "rdp-mode-" + Guid.NewGuid().ToString("N");
+        var launchOnly = new RadioButton { Content = "Launch", GroupName = group, Style = (Style)FindResource("SegmentChoice"), IsChecked = Value("copyOnLaunch", "false") != "true" };
+        var launchCopy = new RadioButton { Content = "Launch & copy", GroupName = group, Style = (Style)FindResource("SegmentChoice"), IsChecked = Value("copyOnLaunch", "false") == "true" };
+        modes.Children.Add(launchOnly); modes.Children.Add(launchCopy);
+        stack.Children.Add(new Border { Background = (Brush)FindResource("ControlSurface"), CornerRadius = new CornerRadius(10), Padding = new Thickness(3), Margin = new Thickness(0, 0, 0, 8), Child = modes });
+        stack.Children.Add(Text("Click the entry to copy its password. Launch & copy also copies the password when opening Remote Desktop.", 11, true));
         string ReadPassword() => visible.Visibility == Visibility.Visible ? visible.Text : password.Password;
         VaultItem Capture()
         {
@@ -44,7 +51,7 @@ public partial class MainWindow
             item.Payload = JsonSerializer.SerializeToElement(new Dictionary<string, string>
             {
                 ["host"] = host.Text.Trim(), ["username"] = username.Text.Trim(), ["password"] = ReadPassword(), ["domain"] = domain.Text.Trim(), ["port"] = port.Text.Trim(),
-                ["width"] = width.Text.Trim(), ["height"] = height.Text.Trim(), ["clipboard"] = clipboard.IsChecked == true ? "true" : "false"
+                ["fullScreen"] = fullScreen.IsChecked == true ? "true" : "false", ["clipboard"] = clipboard.IsChecked == true ? "true" : "false", ["copyOnLaunch"] = launchCopy.IsChecked == true ? "true" : "false"
             }); return item;
         }
         captureEditorDraft = Capture;
@@ -58,21 +65,22 @@ public partial class MainWindow
             var secret = ReadPassword();
             if (secret.Length == 0 || secret.Contains('\0') || Encoding.UTF8.GetByteCount(secret) > 4096) { RejectInput(visible.Visibility == Visibility.Visible ? visible : password, "Enter a password of up to 4,096 UTF-8 bytes."); return; }
             if (!int.TryParse(port.Text, out var p) || p is < 1 or > 65535) { RejectAdvanced(port, "Use a port from 1 to 65535."); return; }
-            if (!int.TryParse(width.Text, out var w) || w is < 640 or > 3840) { RejectAdvanced(width, "Use a width from 640 to 3840."); return; }
-            if (!int.TryParse(height.Text, out var h) || h is < 480 or > 2160) { RejectAdvanced(height, "Use a height from 480 to 2160."); return; }
             try { var item = Capture(); RdpProfile.From(item).Validate(); save(item); } catch (InvalidDataException ex) { RejectAdvanced(domain, ex.Message); }
         }, true));
         Dispatcher.BeginInvoke(() => label.Focus()); return stack;
     }
-    private void RunRdp(VaultItem item)
+#if DEBUG
+    private Func<RdpProfile, Task>? previewRdpLaunch;
+#endif
+    private void RunRdp(VaultItem item, bool? copyOnLaunch = null)
     {
         if (!vault.IsUnlocked || busy || moduleConnecting || content.Find(item.ContentType) is not DeclarativeProvider provider || !ModuleAvailable(item) || vault.Document!.Settings.DisabledModules.Contains(item.ContentType)) return;
         var current = vault.Document.Items.FirstOrDefault(i => i.Id == item.Id && i.DeletedAt is null); if (current is null) return; item = current;
         try
         {
-            var profile = RdpProfile.From(item); string hash;
-            using (var executable = new RdpExecutable()) hash = executable.Hash;
-            var digest = profile.Fingerprint(provider.Package.Fingerprint, hash, item.Id); var startEpoch = epoch;
+            var profile = RdpProfile.From(item); var copy = copyOnLaunch ?? profile.CopyOnLaunch; string hash;
+            using (var executable = new NativeRdpExecutable()) hash = executable.Hash;
+            var digest = profile.Fingerprint(provider.Package.Fingerprint + ":native-dpapi-v2-warn:" + copy, hash, item.Id); var startEpoch = epoch;
             async Task Launch(bool remember)
             {
                 if (!vault.IsUnlocked || epoch != startEpoch || moduleConnecting || busy) return;
@@ -81,30 +89,45 @@ public partial class MainWindow
                 {
                     var latest = vault.Document!.Items.FirstOrDefault(i => i.Id == item.Id && i.DeletedAt is null);
                     if (latest is null || !ModuleAvailable(latest) || vault.Document.Settings.DisabledModules.Contains(latest.ContentType)) throw new InvalidOperationException("This entry or module is no longer available.");
-                    using var executable = new RdpExecutable();
-                    if (RdpProfile.From(latest).Fingerprint(provider.Package.Fingerprint, executable.Hash, latest.Id) != digest) throw new InvalidOperationException("The connection changed. Review it again.");
+                    using var executable = new NativeRdpExecutable();
+                    if (RdpProfile.From(latest).Fingerprint(provider.Package.Fingerprint + ":native-dpapi-v2-warn:" + copy, executable.Hash, latest.Id) != digest) throw new InvalidOperationException("The connection changed. Review it again.");
                     var secret = SecretBuffers.Utf8(latest, "password");
-                    try { SetStatus("Opening Remote Desktop…"); await RdpBroker.Connect(executable, profile, secret, sessionCancellation.Token); }
+                    try
+                    {
+                        SetStatus("Opening Remote Desktop…");
+#if DEBUG
+                        if (App.PreviewMode)
+                        {
+                            if (previewRdpLaunch is null) throw new InvalidOperationException("RDP launch is disabled in this preview fixture.");
+                            await previewRdpLaunch(profile);
+                        }
+                        else
+#endif
+                        await NativeRdpLauncher.Connect(executable, NativeRdpLauncher.DirectoryFor(App.DataDirectory), profile, secret, sessionCancellation.Token);
+                    }
                     finally { CryptographicOperations.ZeroMemory(secret); }
                     if (epoch != startEpoch || !vault.IsUnlocked) return;
                     if (remember) moduleApprovals.Remember(digest);
-                    Audit(AuditEvent.EntryActionStarted); ShowList(); SetStatus("Remote Desktop opened"); if (!session.IsPinned) Hide();
+                    Audit(AuditEvent.EntryActionStarted); ShowList(); SetStatus("Remote Desktop opened");
+                    if (copy) await CopyEntry(latest, "Password", new Button());
+                    else if (!session.IsPinned) Hide();
                 }
                 catch (OperationCanceledException) { if (epoch == startEpoch && vault.IsUnlocked) ShowError("The RDP handoff timed out or was cancelled. Try again."); }
                 catch (Exception ex) when (ex is IOException or InvalidOperationException or UnauthorizedAccessException or CryptographicException or System.ComponentModel.Win32Exception)
-                { if (epoch == startEpoch && vault.IsUnlocked) ShowError(ex is InvalidOperationException ? ex.Message : "The RDP window could not receive this connection. Check your Windows Remote Desktop components."); }
+                { if (epoch == startEpoch && vault.IsUnlocked) ShowError(ex is InvalidOperationException ? ex.Message : "Remote Desktop could not start or prepare its encrypted connection file. Check Windows permissions and try again."); }
                 finally { moduleConnecting = false; modalDepth--; }
             }
             if (moduleApprovals.Contains(digest)) { _ = Launch(false); return; }
             var stack = Form("Connect with Remote Desktop", "", "module-permission", parent: () => ShowModuleDetails(item));
             stack.Children.Add(Text(profile.Host + ":" + profile.Port, 16));
             stack.Children.Add(Text(profile.Domain.Length > 0 ? profile.Domain + "\\" + profile.Username : profile.Username, 12, true));
-            stack.Children.Add(Text("SableLatch will send this entry's password to its local RDP window and authenticate with this computer.", 12, true));
-            stack.Children.Add(Text("Use a trusted server certificate and matching host name. Sessions stay open when the vault locks. Close the RDP window to disconnect.", 11, true));
+            stack.Children.Add(Text("Opens Windows Remote Desktop using a temporary .rdp file with a Windows-encrypted password. The file is removed after startup; other software running as you can capture and decrypt it.", 12, true));
+            stack.Children.Add(Text("Windows will let you review an unverified server certificate and choose whether to connect. Windows policy may still restrict connections. Sessions stay open when the vault locks.", 11, true));
+            if (copy) stack.Children.Add(Text("Also copies the password. Your sensitive clipboard cleanup settings apply.", 12, true));
             if (profile.Clipboard) stack.Children.Add(Text("Clipboard sharing is enabled for this connection.", 12, true));
             if (!provider.Package.Official) stack.Children.Add(Text("Community module · not reviewed by SableLatch", 11, true));
             var remember = Check(stack, "Don't ask again for this connection", true); var page = Body.Content;
-            PageAction(AsyncButton("Connect", async () => { if (ReferenceEquals(page, Body.Content) && epoch == startEpoch) await Launch(remember.IsChecked == true); })); pageSubmit = null;
+            PageAction(AsyncButton(copy ? "Launch & copy" : "Launch", async () => { if (ReferenceEquals(page, Body.Content) && epoch == startEpoch) await Launch(remember.IsChecked == true); })); pageSubmit = null;
         }
         catch (Exception ex) when (ex is IOException or InvalidOperationException or UnauthorizedAccessException or CryptographicException or System.ComponentModel.Win32Exception) { ShowError(ex.Message); }
     }

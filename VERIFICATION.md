@@ -1,6 +1,31 @@
-# Verification — SableLatch 0.8.0 preview
+# Verification — SableLatch 0.8.3 preview
 
-## Current release
+- Debug and self-contained Windows x64 Release builds passed with no warnings or errors. The portable output includes the .NET and Windows Desktop runtime; no separate runtime installation is required.
+- **222 core checks passed.** Display regressions verify full-screen startup, optional windowed startup, absence of fixed dimensions/forced scaling, legacy-entry compatibility and serialized display preference. Existing credential and certificate-policy checks pass.
+- **295 WPF interaction checks and 7 view checks passed** using fictional data and an isolated preview clipboard. The new checks verify that the editor has no dimension fields, starts with full screen selected, and preserves a windowed preference after saving/reopening. Launch execution is simulated. An initial fixture run used the wrong checkbox content selector; the fixture was corrected and the complete run passed.
+- User feedback confirms 0.8.2 connected successfully to their server. The new live-session fullscreen/window transitions have not been exercised against a remote server here. Native mstsc's dynamic-resolution limitation remains; removing the app's fixed dimensions does not add a new client capability.
+- Password handoff, file cleanup, certificate warning/choice and module signatures are unchanged by this release. Windows module lifecycle tests were not rerun for this display-only change; their prior results and environment limitations are below.
+- No real vault, clipboard, saved credentials or remote server was used for these checks.
+
+# Previous verification — SableLatch 0.8.2 preview
+
+- All 219 core checks passed. The RDP regression check verifies authentication level 2 (warning/choice), CredSSP enabled, no authentication-level-0 silent acceptance, and unchanged clipboard defaults.
+- Self-contained Windows x64 Release publish passed. This is a targeted setting/consent-text update; the prior UI and cleanup results below are from 0.8.1, not a new full run.
+- The user supplied screenshots confirming that mstsc reads the launch file and reaches server certificate verification. Version 0.8.2 changes strict certificate refusal to warning mode; successful login and the resulting live Windows dialog have not been tested here. Windows/organizational policy may still prevent proceeding. The unsigned-file publisher warning is unchanged.
+
+# Previous verification — SableLatch 0.8.1 preview
+
+- Debug and self-contained Windows x64 Release builds passed. A portable tray smoke check loaded coreclr, hostfxr and hostpolicy from the app folder with DOTNET_ROOT deliberately pointing to an absent runtime. Only an empty session-lock file was created in the disposable data directory.
+- **219 core checks passed**, including RDP profile validation, safe public-file formatting, host-owned sensitive password copying and launch preference serialization.
+- **294 WPF interaction checks passed** with fictional vault data and an isolated preview clipboard. RDP checks exercise row copy without launch, separate Launch / Launch & copy review, cancellation, saved action mode, row icon/tooltip state and module uninstall/reinstall. Launch execution is simulated for these UI checks.
+- **31 Windows module checks passed; 2 environment checks blocked.** RDP file-lifecycle checks use a deterministic test protector and simulated process startup; they verify ACLs, sharing, secret buffer clearing, cleanup on success/failure/cancellation/normal exit, and scoped crash-leftover cleanup. They do not establish actual remote login.
+- **Blocked:** real CurrentUser DPAPI protection is unavailable under this restricted execution account. The actual protection attempt failed closed, with no launch file. A normal Windows-user test is required. The pre-existing registry-backed PuTTY launch check is also blocked; PuTTY's actual pipe reader still passes.
+- **Not tested:** successful mstsc password-file authentication, real startup/file-read timing, certificate rejection against a live target, organizational policy, Windows 10, gateways, expired-password flows, or an RDP server. No live server/account was supplied. Windows may still show sign-in prompts. Do not confuse a started process with a successful login.
+- No existing user vault, real clipboard, saved Windows credentials or live remote credentials were used. The replacement uses temporary DPAPI-encrypted files and has a different same-user exposure boundary from 0.8.0. See [RDP design](docs/RDP-DESIGN.md).
+
+# Historical verification — SableLatch 0.8.0 preview
+
+## Previous release
 
 - **212 core/storage/module checks passed.** New RDP coverage validates destination/account/port/size constraints, consent binding, sensitive classification and protection of host-owned fields.
 - **288 WPF interaction checks passed, plus 7 view checks.** Added offline RDP install/catalog state, masked entry editing, fixed Save footer, validation, click-to-connect review, cancelled review without launch, uninstall preservation and reinstall. Screenshots use fictional data.
