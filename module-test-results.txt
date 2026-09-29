@@ -1,29 +1,31 @@
+Historical native module run (0.8.1): 31 passed; 2 environment-blocked. Credential transport is unchanged in 0.8.5; this suite was not rerun. See VERIFICATION.md.
+
 PASS: Exact launched process receives complete password line
 PASS: Transfer buffer cleared immediately after pipe write
 PASS: Unexpected pipe client receives no password
 PASS: Lock/timeout cancellation interrupts pending pipe connection
-PASS: Framed handoff delivers complete bytes only to launched client and clears sender frame
-PASS: Framed handoff rejects wrong PID without sending bytes and clears rejected frame
-PASS: Cancelling framed handoff clears pending credentials
-PASS: Bundled RDP module has a valid publisher signature
-PASS: RDP binary frame preserves Unicode password separately from public settings
-PASS: Truncated RDP frames are rejected
-PASS: Oversized RDP frames are rejected
-PASS: Oversized RDP password is rejected
-PASS: Null RDP password is rejected
-PASS: Helper arguments contain only application identity, random channel and parent PID
-PASS: Actual Microsoft RDP control requires server authentication and enables CredSSP
-PASS: Native control disables clipboard, drives, printers, ports and smart cards by default
-PASS: Native control disables reconnection and persistent bitmap caching
-PASS: Native control disables credential prompts and credential saving
-PASS: Native control disables dynamically attached devices and drives
-PASS: Microsoft write-only password interface accepts bounded Unicode BSTR without managed password string
-PASS: Native login, disconnect and error event subscriptions attach
-PASS: Explicit per-entry clipboard opt-in reaches the native control
-PASS: Real RDP helper accepts the one-use frame and sender clears its password buffer
-PASS: Failed loopback connection leaves a visible error window rather than opening a vault
-PASS: RDP helper owns a session window
-PASS: Closing the RDP window cleanly exits its helper process
+PASS: Bundled RDP module retains its valid publisher signature
+PASS: Native RDP launch targets system mstsc with only the file path argument
+PASS: RDP protection receives exact Unicode password bytes
+PASS: RDP file contains only the protected blob and clears the transfer buffer
+PASS: Launch directory disables inherited access and grants only the current user
+PASS: Prepared file cannot be replaced or written while handed to the client
+PASS: Disposal removes the temporary launch file
+PASS: RDP protection receives exact Unicode password bytes
+PASS: Application exit releases and deletes files still awaiting client startup
+PASS: RDP protection receives exact Unicode password bytes
+PASS: Launch file exists until simulated client startup finishes
+PASS: Successful launch cleanup leaves no RDP file or password buffer
+PASS: RDP protection receives exact Unicode password bytes
+PASS: Failed process launch removes the file and clears the secret
+PASS: RDP protection receives exact Unicode password bytes
+PASS: Cancelled launch removes the file and clears the secret
+PASS: Already locked/cancelled launch creates no file and clears password bytes
+PASS: Protection failure is closed: no plaintext fallback or residual secret
+PASS: Startup cleanup removes only host-named launch files
+BLOCKED: Actual CurrentUser DPAPI is unavailable in this execution account; real credential-file login must be tested in a normal Windows session.
+PASS: Unavailable DPAPI leaves no launch file
+PASS: RDP checks leave no temporary credential files
 PASS: Bundled PuTTY module passes actual publisher signature verification
 PASS: Official GitHub catalog signature validates both modules
 PASS: Installed PuTTY verifies publisher, file identity and version
@@ -31,4 +33,4 @@ PASS: Modified PuTTY executable cannot receive credentials
 BLOCKED: Full PuTTY launch requires Windows registry access, unavailable in this execution session.
 PASS: Denied launch still clears the host password transfer buffer
 PASS: Official PuTTY 0.85 consumes a single-use password pipe without a temporary password file
-32 checks passed; 1 blocked by environment.
+31 checks passed; 2 blocked by environment.

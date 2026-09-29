@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 namespace SableLatch.Core;
 
 // Public connection settings only. Never put passwords in profiles, approvals or arguments.
-public sealed record RdpProfile(string Host, string Username, string Domain = "", int Port = 3389, bool Clipboard = false, bool CopyOnLaunch = false, bool FullScreen = true)
+public sealed record RdpProfile(string Host, string Username, string Domain = "", int Port = 3389, bool CopyOnLaunch = false, bool FullScreen = true)
 {
     public void Validate()
     {
@@ -16,8 +16,8 @@ public sealed record RdpProfile(string Host, string Username, string Domain = ""
     public static RdpProfile From(VaultItem item)
     {
         int Number(string key, int fallback) => item.Field(key) is not { Length: > 0 } value ? fallback : int.TryParse(value, out var n) ? n : throw new InvalidDataException("Invalid RDP " + key + ".");
-        // Legacy width/height fields are deliberately ignored: mstsc chooses the display size.
-        var profile = new RdpProfile(item.Field("host"), item.Field("username"), item.Field("domain"), Number("port", 3389), item.Field("clipboard") == "true", item.Field("copyOnLaunch") == "true", item.Field("fullScreen") != "false");
+        // Ignore legacy dimension and clipboard restrictions; use native display and resource behavior.
+        var profile = new RdpProfile(item.Field("host"), item.Field("username"), item.Field("domain"), Number("port", 3389), item.Field("copyOnLaunch") == "true", item.Field("fullScreen") != "false");
         profile.Validate(); return profile;
     }
     public string Fingerprint(string moduleFingerprint, string helperHash, Guid entryId) => Convert.ToHexString(SHA256.HashData(Codec.Encode(new { Profile = this, moduleFingerprint, helperHash, entryId })));

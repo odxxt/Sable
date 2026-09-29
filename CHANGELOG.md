@@ -1,3 +1,17 @@
+# 0.8.5 — Native RDP, smoother organization and inline delete
+
+- Enable remote clipboard sharing for new and existing RDP entries. Remove the opt-in toggle and extra drive, device, audio, reconnection, cache and gateway restrictions; defer to native mstsc defaults and Windows/server policy.
+- Draw the folder success checkmark in a non-layout overlay. Fade the original content without replacing it or changing alignment, size or sibling positions.
+- Keep the existing encrypted credential handoff, display preference and Windows certificate choice.
+- Replace the old right-aligned DELETE control with a centered muted-red confirmation inside the same row, a cancel icon and Escape support. Preserve row height and position.
+
+# 0.8.4 — Folder organization and duplicate entries
+
+- Drag folders to reorder siblings or nest whole subtrees. Add insertion feedback, eased placement animations and Alt+Left/Right keyboard reordering. Reject self/descendant cycles and external drag data.
+- Add Move folder to the context menu and Parent folder to folder editing.
+- Center the folder-drop checkmark, fade the label out/in and retain the chip's dimensions.
+- Add Duplicate to entry menus. Open a separate unsaved draft, preserving content and settings with a fresh ID, independent timestamps and fresh action consent. Back cancels without creating an entry.
+
 # 0.8.3 — Native Remote Desktop display
 
 - Remove the forced 1280 × 800 resolution, dimension limits and forced smart sizing. Existing RDP entries automatically use native display sizing.

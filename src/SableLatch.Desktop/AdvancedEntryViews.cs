@@ -140,6 +140,6 @@ public partial class MainWindow
             catch (Exception ex) when (ex is InvalidDataException or InvalidOperationException or ArgumentException) { return Invalid(target, ex.Message); }
         }
         foreach (var box in new[] { target, arguments, directory }) box.TextChanged += (_, _) => { if (!clearingEditors) { box.SetResourceReference(Control.BackgroundProperty, "ControlSurface"); changed(); } };
-        return new() { Capture = Capture, Validate = Validate, RejectFailure = message => Invalid(target, message), Tested = !editorIsNew && existing?.Action is { Enabled: true } old ? AdvancedEditorState.Fingerprint(old) : null };
+        return new() { Capture = Capture, Validate = Validate, RejectFailure = message => Invalid(target, message), Tested = !editorIsNew && !editorIsDuplicate && existing?.Action is { Enabled: true } old ? AdvancedEditorState.Fingerprint(old) : null };
     }
 }

@@ -74,7 +74,7 @@ public partial class MainWindow : Window
             if (HandlePageEnter(e)) return;
             if (e.Key != Key.Escape || recordingShortcut) return;
             e.Handled = true;
-            if (armedDelete is not null) { armedDelete = null; ShowList(); }
+            if (armedDelete is not null) CancelDelete();
             else if (vault.IsUnlocked && screen != "list") GoBack();
             else Hide();
         };
@@ -276,7 +276,7 @@ public partial class MainWindow : Window
     }
     private void EraseEditors()
     {
-        CancelEditHover(); ClearDropMarker(); dragHandle = null;
+        CancelEditHover(); ClearDropMarker(); ClearFolderMarker(); folderChips = null; dragHandle = null;
         captureEditorDraft = null; toggleAdvancedEditor = null;
         clearingEditors = true;
         if (entryList is not null) { entryList.ItemsSource = null; entryList = null; }

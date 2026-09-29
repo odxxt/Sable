@@ -106,8 +106,14 @@ No external package is loaded as code or handed the internal IContentProvider/IE
 
 Text entries may carry an optional HTML field alongside plain text. The desktop adapter parses it with AngleSharp without a browsing context, permits a small formatting allowlist, and writes CF_HTML plus UnicodeText. Clipboard offsets are UTF-8 byte offsets. Import output is re-sanitized. No HTML is rendered or executed in the app. The plain-text editor invalidates the HTML representation on editing.
 
-## Local RDP sessions (0.8.1)
+## Local RDP sessions (0.8.5)
 
 RdpProfile validates public settings and the launch-and-copy preference. RdpConnectionFile serializes an allowlist of public settings. NativeRdpSettings is the Windows adapter: strict password encoding, DPAPI CurrentUser protection, a scoped current-user scratch directory, random files, read-only handoff and disposal/cleanup. NativeRdpExecutable resolves only the system mstsc.exe; NativeRdpLauncher coordinates startup and cleanup. There is no embedded RDP helper or RDP pipe protocol in this version.
 
 RdpViews owns editing, the new method-specific approval and launch workflow. DeclarativeProvider permits an explicit host-owned RDP Password copy capability; arbitrary module actions still cannot access secret fields. Launch & copy reuses CopyEntry and its sensitive clipboard handling. ZIP modules contain no code and receive no credentials. See [RDP design](docs/RDP-DESIGN.md) for cleanup timing and its limits.
+
+## Folder organization and entry drafts (0.8.5)
+
+FolderOperations validates destinations before mutation, rejects self/descendant cycles and normalizes sibling ordering. FolderInteractions accepts only the active local drag, uses edge insertion targets for ordering and center targets for nesting, and commits only on drop. Moving the parent preserves child and entry IDs. FolderConfirmationAdorner draws feedback outside layout measurement; the original label stays mounted and only its opacity changes.
+
+ItemOperations.DuplicateDraft deep-clones the entry with a fresh ID, unique label and cleared timestamps. The editor holds the draft until Save; cancellation creates no stored item. Immutable attachment references are shared, and orphan cleanup checks every entry before removing blobs. Action approvals remain bound to the new entry ID; enabled custom actions must be tested before saving. Inline delete changes the row state and keeps its dimensions; only explicit confirmation calls the existing delete/Trash policy. Cancel and Escape clear that state in place.

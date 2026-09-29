@@ -1,4 +1,4 @@
-Initial key derivation + create: 592 ms
+Initial key derivation + create: 405 ms
 PASS: Recovery key has 256 bits and passes checksum
 PASS: Recovery typo rejected
 PASS: Labels, folders and custom payload encrypted at rest
@@ -192,24 +192,51 @@ PASS: PuTTY port bounded
 PASS: Only random host-created pipe names accepted
 PASS: Connection approval binds destination
 PASS: Connection approval binds PuTTY binary
-PASS: RDP profile defaults to standard port with clipboard sharing off
-PASS: RDP rejects malformed destination https://server
-PASS: RDP rejects malformed destination server:3389
-PASS: RDP rejects malformed destination server other
-PASS: RDP rejects malformed destination
-PASS: RDP rejects malformed destination -argument
+PASS: RDP profile defaults to standard port
+PASS: RDP does not impose extra resource, audio, reconnection, cache or gateway restrictions
+PASS: Existing RDP entries no longer disable clipboard through a legacy field
+PASS: Native Remote Desktop settings carry the selected destination and username
+PASS: Native Remote Desktop offers certificate review while retaining CredSSP, protected-password separation and enabled clipboard
+PASS: Native Remote Desktop formats IPv6 hosts with a separate port
+PASS: Native Remote Desktop supports explicit interactive credential prompting
+PASS: RDP rejects malformed destination: https://server
+PASS: RDP rejects malformed destination: server:3389
+PASS: RDP rejects malformed destination: server other
+PASS: RDP rejects malformed destination: <empty>
+PASS: RDP rejects malformed destination: -argument
 PASS: RDP port zero rejected
-PASS: RDP desktop memory dimensions bounded
+PASS: RDP uses native full-screen defaults without fixed dimensions, forced scaling or unsupported dynamic resolution
+PASS: RDP can start in a native window
+PASS: Existing RDP entries automatically stop enforcing their old desktop dimensions
+PASS: RDP windowed preference survives document serialization
 PASS: Conflicting RDP domain forms rejected
 PASS: RDP username control characters rejected
-PASS: Enabling RDP clipboard sharing requires new consent
+PASS: RDP approval binds display preference
 PASS: RDP approval binds destination
 PASS: RDP approval binds helper version
 PASS: RDP module is sensitive by default
+PASS: Host-owned RDP copy returns only the password using sensitive clipboard policy
+PASS: RDP launch-and-copy preference survives encrypted document serialization
+PASS: RDP cannot copy an undeclared field
 PASS: RDP manifest cannot override host-owned secret fields
+PASS: Folder destinations exclude self and every descendant
+PASS: Folder cycle rejected before mutation
+PASS: Rejected folder move leaves hierarchy intact
+PASS: Unknown folder sources and destinations rejected
+PASS: Folder reorder normalizes sibling order
+PASS: Moving a folder preserves nested folders and entry membership
+PASS: Folder can move back to root after its siblings
+PASS: Folder moves across parents without changing entry identity
+PASS: Duplicate is an unsaved draft with a fresh ID and no inherited timestamps
+PASS: Duplicate preserves sensitive values, formatted payload, module schema and attachment references
+PASS: Duplicate mutable metadata and attachment lists do not alias the source
+PASS: Repeated duplicates receive distinct labels
+PASS: Saving a duplicate gets its own timestamps without editing the original
+PASS: Duplicate label respects the editor length limit
+PASS: Folder organization and duplicates survive document serialization
 PASS: New module connection requires explicit approval
 PASS: Don't ask again stores device-protected module consent
 PASS: Moving module approval to another device requires review again
 PASS: Reset module permissions revokes remembered approval
 
-212 checks passed.
+239 checks passed.

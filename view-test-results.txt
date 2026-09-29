@@ -33,7 +33,10 @@ PASS: Nested security Back returns to security settings
 PASS: First login click copies username, stays on list and holds topmost without pinning
 PASS: Second login click copies password and hides the unpinned panel
 PASS: Pinned login remains open after password copy
-PASS: Arming deletion shows DELETE without removing the entry
+PASS: Arming deletion shows an inline confirmation without copying or removing the entry
+PASS: Delete confirmation is centered horizontally and vertically in the unchanged row
+PASS: Cancel restores the row without deleting the entry
+PASS: Escape dismisses inline deletion safely
 PASS: DELETE confirmation sends a secret login to encrypted trash
 PASS: Editor Save is always visible outside the scrolling form
 PASS: Save position is consistent between login and text editors
@@ -255,10 +258,18 @@ PASS: Back from More types restores the selected type and name
 PASS: Switching to a module preserves the shared entry name
 PASS: PuTTY rows use the terminal vector icon
 PASS: RDP editor masks credentials and keeps Save in the fixed footer
+PASS: RDP editor defaults to native full screen without fixed dimension fields
 PASS: RDP invalid port cannot save
-PASS: RDP entry retains encrypted-vault secret fields with clipboard off
-PASS: Clicking an RDP row requests connection consent without copying its secret or accepting queued Enter
+PASS: RDP entry retains encrypted-vault secret fields with remote copy/paste enabled
+PASS: RDP row copies its password as sensitive data without launching a session
+PASS: RDP context menu offers both launch modes
+PASS: RDP launch requires explicit native-file consent and ignores queued Enter
 PASS: RDP review can be cancelled without starting a connection
+PASS: RDP Launch starts only the connection without copying
+PASS: Launch and copy requires its own clipboard-aware first-use review
+PASS: RDP Launch and copy uses sensitive password clipboard handling
+PASS: RDP launch preference saves and updates the row icon and tooltip
+PASS: RDP windowed startup preference saves and reopens correctly
 PASS: Uninstalling RDP preserves its encrypted entries
 PASS: Reinstalling RDP restores its entries
 PASS: Catalog marks the installed RDP module
@@ -281,8 +292,26 @@ PASS: Create menu aligns its right edge with the plus button
 PASS: External item-ID drag data cannot move vault entries
 PASS: Only the active in-app drag is accepted
 PASS: Dragging into a folder persists the destination and removes the source row
-PASS: Folder receives a subtle success check after a drop
-PASS: Folder confirmation clears after the brief feedback
+PASS: Folder label fade-out preserves exact chip sizes and sibling positions
+PASS: Centered folder check is a non-layout overlay with the original label still in place
+PASS: Folder fade-in restores the original label without resizing or leftover overlay state
 PASS: Dropping into a nonexistent folder is rejected
 PASS: Folder entries can move back to the root
+PASS: External folder-ID drags cannot move vault folders
+PASS: Folder dragging accepts only the active source
+PASS: Folder context menu offers Move folder
+PASS: Folder edges reorder while its center selects nesting
+PASS: Folder reorder has a visible insertion marker
+PASS: Folder drag reorders persisted siblings
+PASS: Folder drag rejects nesting into itself or a descendant
+PASS: Folder drop nests the whole subtree
+PASS: Folder drag can move a subtree to the root
+PASS: Folder move picker hides self and descendants
+PASS: Move folder form saves the selected destination
+PASS: Edit folder can change its parent
+PASS: Duplicate opens an independent unsaved editor immediately
+PASS: Cancelling a duplicate leaves no extra entry
+PASS: Saving a duplicate creates a separate entry and leaves its original intact
+PASS: Entry context menu includes Duplicate
+PASS: RDP duplication preserves masked credentials without saving or launching
 PASS: Confirmed second Quit closes the app and releases the unlocked vault

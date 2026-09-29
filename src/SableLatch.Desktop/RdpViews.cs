@@ -33,8 +33,6 @@ public partial class MainWindow
         var domain = Input(advancedFields, "Domain · optional", Value("domain", ""));
         var port = Input(advancedFields, "Port", Value("port", "3389"));
         var fullScreen = Check(advancedFields, "Start in full screen", Value("fullScreen", "true") != "false");
-        var clipboard = Check(advancedFields, "Share clipboard with remote computer", Value("clipboard", "false") == "true");
-        advancedFields.Children.Add(Text("Clipboard sharing exposes your local clipboard to the remote session. Drives, printers and devices stay disconnected.", 11, true));
         stack.Children.Add(Text("Launch button", 11, true));
         var modes = new System.Windows.Controls.Primitives.UniformGrid { Columns = 2 };
         var group = "rdp-mode-" + Guid.NewGuid().ToString("N");
@@ -51,7 +49,7 @@ public partial class MainWindow
             item.Payload = JsonSerializer.SerializeToElement(new Dictionary<string, string>
             {
                 ["host"] = host.Text.Trim(), ["username"] = username.Text.Trim(), ["password"] = ReadPassword(), ["domain"] = domain.Text.Trim(), ["port"] = port.Text.Trim(),
-                ["fullScreen"] = fullScreen.IsChecked == true ? "true" : "false", ["clipboard"] = clipboard.IsChecked == true ? "true" : "false", ["copyOnLaunch"] = launchCopy.IsChecked == true ? "true" : "false"
+                ["fullScreen"] = fullScreen.IsChecked == true ? "true" : "false", ["copyOnLaunch"] = launchCopy.IsChecked == true ? "true" : "false"
             }); return item;
         }
         captureEditorDraft = Capture;
@@ -80,7 +78,7 @@ public partial class MainWindow
         {
             var profile = RdpProfile.From(item); var copy = copyOnLaunch ?? profile.CopyOnLaunch; string hash;
             using (var executable = new NativeRdpExecutable()) hash = executable.Hash;
-            var digest = profile.Fingerprint(provider.Package.Fingerprint + ":native-dpapi-v2-warn:" + copy, hash, item.Id); var startEpoch = epoch;
+            var digest = profile.Fingerprint(provider.Package.Fingerprint + ":native-dpapi-v3-native-resources:" + copy, hash, item.Id); var startEpoch = epoch;
             async Task Launch(bool remember)
             {
                 if (!vault.IsUnlocked || epoch != startEpoch || moduleConnecting || busy) return;
@@ -90,7 +88,7 @@ public partial class MainWindow
                     var latest = vault.Document!.Items.FirstOrDefault(i => i.Id == item.Id && i.DeletedAt is null);
                     if (latest is null || !ModuleAvailable(latest) || vault.Document.Settings.DisabledModules.Contains(latest.ContentType)) throw new InvalidOperationException("This entry or module is no longer available.");
                     using var executable = new NativeRdpExecutable();
-                    if (RdpProfile.From(latest).Fingerprint(provider.Package.Fingerprint + ":native-dpapi-v2-warn:" + copy, executable.Hash, latest.Id) != digest) throw new InvalidOperationException("The connection changed. Review it again.");
+                    if (RdpProfile.From(latest).Fingerprint(provider.Package.Fingerprint + ":native-dpapi-v3-native-resources:" + copy, executable.Hash, latest.Id) != digest) throw new InvalidOperationException("The connection changed. Review it again.");
                     var secret = SecretBuffers.Utf8(latest, "password");
                     try
                     {
@@ -124,7 +122,7 @@ public partial class MainWindow
             stack.Children.Add(Text("Opens Windows Remote Desktop using a temporary .rdp file with a Windows-encrypted password. The file is removed after startup; other software running as you can capture and decrypt it.", 12, true));
             stack.Children.Add(Text("Windows will let you review an unverified server certificate and choose whether to connect. Windows policy may still restrict connections. Sessions stay open when the vault locks.", 11, true));
             if (copy) stack.Children.Add(Text("Also copies the password. Your sensitive clipboard cleanup settings apply.", 12, true));
-            if (profile.Clipboard) stack.Children.Add(Text("Clipboard sharing is enabled for this connection.", 12, true));
+            stack.Children.Add(Text("Copy/paste is enabled. Other resource settings follow Windows Remote Desktop defaults and policy.", 12, true));
             if (!provider.Package.Official) stack.Children.Add(Text("Community module · not reviewed by SableLatch", 11, true));
             var remember = Check(stack, "Don't ask again for this connection", true); var page = Body.Content;
             PageAction(AsyncButton(copy ? "Launch & copy" : "Launch", async () => { if (ReferenceEquals(page, Body.Content) && epoch == startEpoch) await Launch(remember.IsChecked == true); })); pageSubmit = null;

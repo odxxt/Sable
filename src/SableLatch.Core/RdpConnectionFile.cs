@@ -15,14 +15,11 @@ public static class RdpConnectionFile
             "full address:s:" + host + ":" + profile.Port.ToString(CultureInfo.InvariantCulture),
             "username:s:" + account,
             // Leave resolution, scaling and window placement to the native client.
-            "screen mode id:i:" + (profile.FullScreen ? "2" : "1"), "session bpp:i:32",
+            "screen mode id:i:" + (profile.FullScreen ? "2" : "1"),
             "authentication level:i:2", "enablecredsspsupport:i:1", "negotiate security layer:i:1",
             "prompt for credentials:i:" + (promptForPassword ? "1" : "0"),
-            "redirectclipboard:i:" + (profile.Clipboard ? "1" : "0"),
-            "redirectdrives:i:0", "drivestoredirect:s:", "redirectprinters:i:0", "redirectcomports:i:0",
-            "redirectsmartcards:i:0", "devicestoredirect:s:", "usbdevicestoredirect:s:",
-            "audiocapturemode:i:0", "audiomode:i:2", "autoreconnection enabled:i:0",
-            "bitmapcachepersistenable:i:0", "gatewayusagemethod:i:0", "gatewayprofileusagemethod:i:1", ""
+            // Allow normal copy/paste. Leave other resource/performance settings to mstsc.
+            "redirectclipboard:i:1", ""
         });
     }
 }

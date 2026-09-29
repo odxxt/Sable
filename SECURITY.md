@@ -126,10 +126,12 @@ The catalog is queried only on demand. No polling, module service or third-party
 ## Formatted clipboard content
 Text HTML is stored inside the encrypted payload. AngleSharp parses it as data only; SableLatch does not create a browsing context, script engine or HTML renderer. Output is reconstructed from an element/style allowlist. Scripts, event handlers, remote images and active embedding are discarded. The clipboard writer sanitizes imported HTML again. Plain-text and HTML representations travel together; the receiving application's paste behavior is outside SableLatch's control.
 
-## Local RDP capability (0.8.2)
+## Local RDP capability (0.8.5)
 
 The saved password remains encrypted in the vault. On explicit launch, host code creates a temporary .rdp file containing a DPAPI CurrentUser-encrypted password and opens the system mstsc.exe. The current-user scratch directory is outside vault backups/exports. No plaintext password file, Credential Manager write, process injection or shell is used. Ordinary row clicks copy the password; Launch & copy intentionally places it on the sensitive clipboard.
 
 This replaces the earlier in-memory ActiveX helper design and changes its exposure boundary. Same-user software can capture the temporary blob and decrypt it. Deleting the original file neither revokes a captured copy nor guarantees secure erasure. Startup/cancellation/failure/exit cleanup is best effort, with a next-start sweep for crash leftovers. Launch detection is not proof that mstsc read the file or authenticated. Current Windows policy may refuse embedded credentials; no NLA/CredSSP downgrade or alternate credential-store fallback is attempted. Version 0.8.2 uses authentication level 2 so Windows can offer an explicit certificate-warning override; accepting an unverified certificate reduces protection against server impersonation. The app never automatically accepts it, and Windows policy can still block the connection.
 
 The unlocked document still holds decrypted JSON; mutable conversion arrays are cleared, but Windows/client memory, paging and dumps are outside SableLatch's control. First-use approval includes the new delivery method and copy mode. Modules never receive the password. The external mstsc session and its saving/capture behavior are controlled by Windows, not SableLatch; existing sessions survive vault locking. See [full lifecycle and limitations](docs/RDP-DESIGN.md).
+
+Host 0.8.5 enables normal RDP clipboard sharing and removes its previous resource/performance overrides. Windows/client defaults and server policy apply. First-use review is refreshed to describe that resource behavior. This is separate from SableLatch's local sensitive-copy clearing policy.

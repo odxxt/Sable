@@ -1,4 +1,22 @@
-# Verification — SableLatch 0.8.3 preview
+# Verification — SableLatch 0.8.5 preview
+
+- Debug and self-contained Windows x64 Release builds passed with no warnings or errors.
+- **239 core checks passed.** RDP regression coverage verifies clipboard enabled for new entries and legacy clipboard=false entries, absence of resource/audio/reconnection/cache/gateway overrides, and retention of the existing display and authentication behavior.
+- **316 WPF interaction checks and 7 view checks passed.** Folder feedback checks compare the exact rendered sizes and positions of every sibling chip during fade-out, checkmark display and restoration. The original content object is retained throughout and the overlay is removed afterward. Folder and delete confirmations were visually reviewed. New delete checks verify horizontal/vertical centering, unchanged row height, cancel behavior, Escape behavior and the existing secret-to-Trash policy.
+- The release UI run passed in full after fixing Escape to clear the confirmation in place instead of rebuilding the list. An earlier pre-release run had a PIN timing assertion fail after a prolonged execution delay; unchanged PIN checks passed on subsequent full runs.
+- Live bidirectional clipboard transfer against an RDP server has not been tested here. These checks validate the generated file and editor behavior; Windows/client/server policies still apply. Reconnect from the updated app to use the new settings.
+- The previous Windows module file-lifecycle checks were not rerun; credential transport/cleanup is unchanged. No real vault, real clipboard contents or remote credentials were used.
+
+# Previous verification — SableLatch 0.8.4 preview
+
+- Debug and self-contained Windows x64 Release builds passed with no warnings or errors.
+- **237 core checks passed.** New organization tests cover self/descendant-cycle prevention, rejected moves without mutation, root/cross-parent moves, preservation of subtrees and entry membership, sibling ordering, serialization, independent duplicate IDs/timestamps/payload metadata and bounded unique labels.
+- **312 WPF interaction checks and 7 view checks passed** using fictional vault data and an isolated clipboard. Added folder drag ownership, edge/center targeting, insertion marker, reorder/nesting, move-picker filtering, parent editing, centered label/checkmark feedback, duplicate cancellation/save and masked RDP duplication without launch. An initial fixture used an ambiguous folder name; it was corrected to select the folder by ID and the full run passed.
+- Reviewed rendered folder insertion, centered drop feedback and duplicate editor images. The harness calls the drop/placement logic directly; a physical mouse drag, Escape cancellation during the native drag loop and varied DPI/reduced-motion combinations still need manual confirmation.
+- No vault migration or module reinstall is needed. No RDP credential-handling changes were made; module lifecycle and live remote-session tests were not rerun for this organization update.
+- No real vault, real clipboard contents or remote credentials were used. Existing security and platform limitations below remain applicable.
+
+# Previous verification — SableLatch 0.8.3 preview
 
 - Debug and self-contained Windows x64 Release builds passed with no warnings or errors. The portable output includes the .NET and Windows Desktop runtime; no separate runtime installation is required.
 - **222 core checks passed.** Display regressions verify full-screen startup, optional windowed startup, absence of fixed dimensions/forced scaling, legacy-entry compatibility and serialized display preference. Existing credential and certificate-policy checks pass.

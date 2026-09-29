@@ -272,6 +272,7 @@ using var multilineTransfer = Transfers.Open(Transfers.Create(advancedStore, exp
 Transfers.Import(importedStore, multilineTransfer);
 Check(importedStore.Document!.Items.Any(i => i.Field("password") == multilineSecret && i.Advanced?.Action?.KeepTerminalOpen == true), "Multiline secrets and terminal options survive encrypted export and import");
 ModuleChecks.Run(Check, Reject, root);
+OrganizationChecks.Run(Check, Reject);
 var moduleConsentDirectory = TestDir("module-approvals"); Directory.CreateDirectory(moduleConsentDirectory);
 var moduleConsent = new ModuleApprovals(moduleConsentDirectory, device);
 var moduleDigest = new PuttyProfile("localhost", "test").Fingerprint("package", "executable", Guid.NewGuid());

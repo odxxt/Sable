@@ -35,6 +35,11 @@ public partial class MainWindow
         CancelEditHover(); armedDelete = row.Item.Id;
         if (entryList is not null) foreach (var model in entryList.Items.Cast<RowModel>()) { model.DeleteArmed = model.Item.Id == row.Item.Id; model.Refresh(); }
     }
+    private void CancelDelete()
+    {
+        armedDelete = null;
+        if (entryList is not null) foreach (var model in entryList.Items.Cast<RowModel>()) { model.DeleteArmed = false; model.Refresh(); }
+    }
     private void CancelEditHover()
     {
         hoverCancellation?.Cancel(); hoverCancellation?.Dispose(); hoverCancellation = null;
@@ -78,7 +83,7 @@ public partial class MainWindow
     private void BeginRowDrag(object sender, MouseButtonEventArgs e)
     {
         var button = FindParent<Button>(e.OriginalSource as DependencyObject);
-        if (armedDelete is not null && button?.Tag as string != "confirm-delete")
+        if (armedDelete is not null && button?.Tag as string is not ("confirm-delete" or "cancel-delete"))
         {
             armedDelete = null;
             if (entryList is not null) foreach (var row in entryList.Items.Cast<RowModel>()) { row.DeleteArmed = false; row.Refresh(); }

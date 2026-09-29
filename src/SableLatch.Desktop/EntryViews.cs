@@ -19,6 +19,7 @@ public sealed class RowModel : System.ComponentModel.INotifyPropertyChanged
     public string EditSymbol => Copied ? "\uE73E" : DeleteReady ? "\uE74D" : "\uE70F";
     public Visibility EditVisibility => DeleteArmed ? Visibility.Collapsed : Visibility.Visible;
     public Visibility DeleteVisibility => DeleteArmed ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility ContentVisibility => DeleteArmed ? Visibility.Collapsed : Visibility.Visible;
     public Visibility SubtitleVisibility => LoginVisibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
     public double UsernameOpacity => PendingPassword ? .45 : .85;
     public double PasswordOpacity => PendingPassword ? .95 : .45;
@@ -42,7 +43,7 @@ public partial class MainWindow
     private static readonly string RowTemplate = """
     <DataTemplate xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
       <Border x:Name="Row" Background="{Binding EntryBackground}" CornerRadius="10" Height="56">
-        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <Grid><Grid Visibility="{Binding ContentVisibility}"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
           <Border x:Name="HoverShade" Grid.ColumnSpan="3" Background="#12FFFFFF" CornerRadius="9" Opacity="0" IsHitTestVisible="False"/>
           <Button Tag="copy" Style="{DynamicResource RowButton}" HorizontalContentAlignment="Stretch" Padding="9,7" IsEnabled="{Binding Available}">
             <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="27"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
@@ -56,8 +57,19 @@ public partial class MainWindow
           <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
             <Button Tag="entry-action" Visibility="{Binding ActionVisibility}" Opacity=".7" Style="{DynamicResource RowIcon}" ToolTip="{Binding ActionLabel}" AutomationProperties.Name="{Binding ActionLabel}"><Grid Width="18" Height="18"><Path Data="M 2,5 L 10,10 2,15 Z" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.3" StrokeLineJoin="Round"/><Path Visibility="{Binding ActionCopyVisibility}" Data="M 11,1 L 16,1 16,6 M 9,3 L 14,3 14,8 9,8 Z" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.1" StrokeLineJoin="Round"/></Grid></Button>
             <Button Tag="edit" Content="{Binding EditSymbol}" Visibility="{Binding EditVisibility}" Opacity=".45" Style="{DynamicResource RowIcon}" ToolTip="Edit · hold here for delete"/>
-            <Button Tag="confirm-delete" Content="DELETE" Style="{DynamicResource DangerButton}" Visibility="{Binding DeleteVisibility}" Foreground="White" Padding="8,7" FontSize="10" FontWeight="SemiBold"/>
           </StackPanel>
+        </Grid>
+          <Border Visibility="{Binding DeleteVisibility}" Background="{DynamicResource ControlSurface}" CornerRadius="10">
+            <Grid>
+              <Button Tag="confirm-delete" Style="{DynamicResource InlineDeleteButton}" HorizontalAlignment="Center" VerticalAlignment="Center" ToolTip="{Binding Title}" AutomationProperties.Name="Confirm delete entry">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                  <Path Width="13" Height="14" Margin="0,0,7,0" VerticalAlignment="Center" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.1" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Data="M 1,3 L 12,3 M 4,3 L 4,1 9,1 9,3 M 2,3 L 3,13 10,13 11,3 M 5,6 L 5,10 M 8,6 L 8,10"/>
+                  <TextBlock Text="Delete" FontSize="12" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                </StackPanel>
+              </Button>
+              <Button Tag="cancel-delete" Content="&#xE711;" Style="{DynamicResource RowIcon}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,7,0" Opacity=".65" ToolTip="Cancel delete · Esc" AutomationProperties.Name="Cancel delete"/>
+            </Grid>
+          </Border>
         </Grid>
       </Border>
       <DataTemplate.Triggers><DataTrigger Binding="{Binding Item.ContentType}" Value="module.sablelatch.putty"><Setter TargetName="SymbolGlyph" Property="Visibility" Value="Collapsed"/><Setter TargetName="SshIcon" Property="Visibility" Value="Visible"/></DataTrigger><DataTrigger Binding="{Binding Item.ContentType}" Value="sable.text"><Setter TargetName="SymbolGlyph" Property="Visibility" Value="Collapsed"/><Setter TargetName="NoteIcon" Property="Visibility" Value="Visible"/></DataTrigger><Trigger SourceName="Row" Property="IsMouseOver" Value="True"><Trigger.EnterActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="HoverShade" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.12"/></Storyboard></BeginStoryboard></Trigger.EnterActions><Trigger.ExitActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="HoverShade" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.18"/></Storyboard></BeginStoryboard></Trigger.ExitActions></Trigger><Trigger SourceName="Row" Property="IsKeyboardFocusWithin" Value="True"><Setter TargetName="HoverShade" Property="Opacity" Value=".45"/></Trigger></DataTemplate.Triggers>
@@ -83,7 +95,7 @@ public partial class MainWindow
         {
             var parent = vault.Document!.Folders.Single(x => x.Id == folder).ParentId;
             var breadcrumb = Button("‹  " + FolderPath(folder.Value), () => { folder = parent; ShowList(); });
-            AttachFolderDrop(breadcrumb, parent); navRow.Children.Add(breadcrumb);
+            AttachFolderDrop(breadcrumb, parent); navRow.Children.Add(new System.Windows.Documents.AdornerDecorator { Child = breadcrumb });
         }
         var createMenu = new ContextMenu { MinWidth = 160, Placement = System.Windows.Controls.Primitives.PlacementMode.Custom, CustomPopupPlacementCallback = (popup, target, offset) => [new(new Point(target.Width - popup.Width, target.Height), System.Windows.Controls.Primitives.PopupPrimaryAxis.Horizontal)] };
         var addEntry = new MenuItem { Header = "New entry" }; addEntry.Click += (_, _) => ShowEditor(advanced: false);
@@ -93,11 +105,15 @@ public partial class MainWindow
         System.Windows.Automation.AutomationProperties.SetName(create, "Create entry or folder");
         createMenu.PlacementTarget = create; create.ContextMenu = createMenu;
         create.HorizontalAlignment = HorizontalAlignment.Right; navRow.Children.Add(create);
-        var chips = new WrapPanel(); navigation.Children.Add(chips);
+        var chips = new WrapPanel(); folderChips = chips;
+        navigation.Children.Add(new System.Windows.Documents.AdornerDecorator { Child = chips });
+        AttachFolderPanelDrop(chips);
         foreach (var f in vault.Document!.Folders.Where(f => f.ParentId == folder).OrderBy(f => f.Order))
         {
-            var chip = Button(f.Name, () => { folder = f.Id; search = ""; ShowList(); }); chip.Content = FolderIcons.Label(f); chip.MaxWidth = 150; chip.ToolTip = f.Name; AttachFolderDrop(chip, f.Id);
+            var chip = Button(f.Name, () => { folder = f.Id; search = ""; ShowList(); }); chip.Tag = f.Id; chip.Content = FolderIcons.Label(f); chip.MaxWidth = 150; chip.ToolTip = f.Name; AttachFolderDrop(chip, f.Id); AttachFolderDrag(chip, f.Id);
             var menu = new ContextMenu(); var rename = new MenuItem { Header = "Edit folder" }; rename.Click += (_, _) => ShowFolderEditor(f); menu.Items.Add(rename);
+            var moveFolder = new MenuItem { Header = "Move folder…" }; moveFolder.Click += (_, _) => ShowMoveFolder(f); menu.Items.Add(moveFolder);
+            menu.Opened += (_, _) => contextOpen = true; menu.Closed += (_, _) => contextOpen = false;
             var delete = new MenuItem { Header = "Delete empty folder" }; delete.Click += (_, _) =>
             {
                 if (vault.Document.Items.Any(i => i.FolderId == f.Id) || vault.Document.Folders.Any(i => i.ParentId == f.Id)) { ShowError("Move the folder's entries and subfolders first, including trashed entries."); return; }
@@ -168,6 +184,7 @@ public partial class MainWindow
                 else ShowError("Enable or install the matching content provider to edit this entry.");
                 break;
             case "confirm-delete": if (armedDelete == row.Item.Id) DeleteEntry(row.Item); break;
+            case "cancel-delete": CancelDelete(); break;
             case "up": MoveEntry(row.Item.Id, -1); break;
             case "down": MoveEntry(row.Item.Id, 1); break;
             case "copy":
@@ -252,6 +269,7 @@ public partial class MainWindow
             run.Click += (_, _) => { if (content.Find(row.Item.ContentType) is DeclarativeProvider module) { if (module.Package.Manifest.Handler == "putty") RunPutty(row.Item); else if (module.Package.Manifest.Handler == "rdp") RunRdp(row.Item); else ShowModuleDetails(row.Item); } else ReviewEntryAction(row.Item); }; menu.Items.Add(run); menu.Items.Add(new Separator());
         }
         var edit = new MenuItem { Header = "Edit", IsEnabled = row.Available }; edit.Click += (_, _) => ShowEditor(row.Item); menu.Items.Add(edit);
+        var duplicate = new MenuItem { Header = "Duplicate", IsEnabled = row.Available }; duplicate.Click += (_, _) => DuplicateEntry(row.Item); menu.Items.Add(duplicate);
         if (row.Item.Advanced is null) { var advanced = new MenuItem { Header = "Advanced options…", IsEnabled = row.Available }; advanced.Click += (_, _) => ShowEditor(row.Item, advanced: true); menu.Items.Add(advanced); }
         var move = new MenuItem { Header = "Move to folder…" }; move.Click += (_, _) => ShowMove(row.Item); menu.Items.Add(move);
         var del = new MenuItem { Header = "Delete…" }; del.Click += (_, _) => ArmDelete(row); menu.Items.Add(del);
@@ -265,6 +283,12 @@ public partial class MainWindow
             armedDelete = null; vault.CleanOrphanAttachments(); ShowList();
             SetStatus(item.IsSensitive && vault.Document!.Settings.TrashSecrets || !item.IsSensitive && vault.Document!.Settings.TrashNormal ? "Moved to encrypted Trash" : "Entry deleted");
         }
+    }
+    private void DuplicateEntry(VaultItem item)
+    {
+        if (!vault.IsUnlocked || busy || !ModuleAvailable(item)) return;
+        editorTestedAction = null;
+        ShowEditor(ItemOperations.DuplicateDraft(vault.Document!, item.Id));
     }
     private void MoveEntry(Guid id, int offset)
     {
@@ -299,10 +323,16 @@ public partial class MainWindow
             System.Windows.Automation.AutomationProperties.SetName(choice, pair.Value + " icon"); choices.Add(pair.Key, choice); options.Children.Add(choice);
         }
         stack.Children.Add(Button("Customize", () => options.Visibility = options.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible)); stack.Children.Add(options);
+        var destinations = FolderDestinations(existing?.Id);
+        var currentParent = existing?.ParentId ?? folder;
+        // Root is a real destination, including when editing a root-level folder from search.
+        if (existing is not null) currentParent = existing.ParentId;
+        var parent = Select(stack, "Parent folder", destinations.Keys, destinations.First(p => p.Value == currentParent).Key);
         PageAction(Button("Save folder", () =>
         {
             var text = name.Text.Trim(); if (text.Length is < 1 or > 100) { ShowError("Use a folder name with 1–100 characters."); return; }
-            if (Change(d => { if (existing is null) d.Folders.Add(new() { Name = text, Icon = selected, ParentId = folder, Order = d.Folders.Count }); else { var item = d.Folders.Single(x => x.Id == existing.Id); item.Name = text; item.Icon = selected; } })) ShowList();
+            var destination = destinations[(string)parent.SelectedItem];
+            if (Change(d => { if (existing is null) d.Folders.Add(new() { Name = text, Icon = selected, ParentId = destination, Order = d.Folders.Count }); else { var item = d.Folders.Single(x => x.Id == existing.Id); item.Name = text; item.Icon = selected; if (item.ParentId != destination) FolderOperations.Move(d, item.Id, destination); } })) ShowList();
         }, true));
     }
     private void ShowMove(VaultItem item)

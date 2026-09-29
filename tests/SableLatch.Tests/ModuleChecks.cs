@@ -65,10 +65,14 @@ internal static class ModuleChecks
         check(profile.Fingerprint("module", "binary", Guid.Empty) != (profile with { Host = "other.test" }).Fingerprint("module", "binary", Guid.Empty), "Connection approval binds destination");
         check(profile.Fingerprint("module", "binary", Guid.Empty) != profile.Fingerprint("module", "new binary", Guid.Empty), "Connection approval binds PuTTY binary");
         var rdp = new RdpProfile("server.example", "DOMAIN\\operator"); rdp.Validate();
-        check(!rdp.Clipboard && rdp.Port == 3389, "RDP profile defaults to standard port with clipboard sharing off");
+        check(rdp.Port == 3389, "RDP profile defaults to standard port");
         var nativeSettings = RdpConnectionFile.Create(rdp, false);
+        var resourceOverrides = new[] { "redirectdrives:", "drivestoredirect:", "redirectprinters:", "redirectcomports:", "redirectsmartcards:", "devicestoredirect:", "usbdevicestoredirect:", "audiocapturemode:", "audiomode:", "autoreconnection enabled:", "bitmapcachepersistenable:", "gatewayusagemethod:", "gatewayprofileusagemethod:" };
+        check(resourceOverrides.All(key => !nativeSettings.Contains(key)), "RDP does not impose extra resource, audio, reconnection, cache or gateway restrictions");
+        var legacyClipboard = new VaultItem { Payload = System.Text.Json.JsonSerializer.SerializeToElement(new { host = "fixture.test", username = "user", clipboard = "false" }) };
+        check(RdpConnectionFile.Create(RdpProfile.From(legacyClipboard), false).Contains("redirectclipboard:i:1\r\n"), "Existing RDP entries no longer disable clipboard through a legacy field");
         check(nativeSettings.Contains("username:s:DOMAIN\\operator\r\n") && nativeSettings.Contains("full address:s:server.example:3389\r\n"), "Native Remote Desktop settings carry the selected destination and username");
-        check(!nativeSettings.Contains("password", StringComparison.OrdinalIgnoreCase) && nativeSettings.Contains("authentication level:i:2\r\n") && nativeSettings.Contains("enablecredsspsupport:i:1\r\n") && !nativeSettings.Contains("authentication level:i:0") && nativeSettings.Contains("redirectclipboard:i:0\r\n"), "Native Remote Desktop offers certificate review while retaining CredSSP, protected-password separation and clipboard defaults");
+        check(!nativeSettings.Contains("password", StringComparison.OrdinalIgnoreCase) && nativeSettings.Contains("authentication level:i:2\r\n") && nativeSettings.Contains("enablecredsspsupport:i:1\r\n") && !nativeSettings.Contains("authentication level:i:0") && nativeSettings.Contains("redirectclipboard:i:1\r\n"), "Native Remote Desktop offers certificate review while retaining CredSSP, protected-password separation and enabled clipboard");
         check(RdpConnectionFile.Create(rdp with { Host = "::1", Port = 3390 }, true).Contains("full address:s:[::1]:3390\r\n"), "Native Remote Desktop formats IPv6 hosts with a separate port");
         check(RdpConnectionFile.Create(rdp, true).Contains("prompt for credentials:i:1\r\n"), "Native Remote Desktop supports explicit interactive credential prompting");
         foreach (var host in new[] { "https://server", "server:3389", "server\nother", "", "-argument" }) reject(() => (rdp with { Host = host }).Validate(), "RDP rejects malformed destination: " + (host.Length == 0 ? "<empty>" : host).Replace('\n', ' '));
@@ -81,7 +85,7 @@ internal static class ModuleChecks
         check(!RdpProfile.From(Codec.Clone(windowedRdp)).FullScreen, "RDP windowed preference survives document serialization");
         reject(() => (rdp with { Domain = "OTHER" }).Validate(), "Conflicting RDP domain forms rejected");
         reject(() => (rdp with { Username = "user\npassword" }).Validate(), "RDP username control characters rejected");
-        check(rdp.Fingerprint("module", "helper", Guid.Empty) != (rdp with { Clipboard = true }).Fingerprint("module", "helper", Guid.Empty), "Enabling RDP clipboard sharing requires new consent");
+        check(rdp.Fingerprint("module", "helper", Guid.Empty) != (rdp with { FullScreen = false }).Fingerprint("module", "helper", Guid.Empty), "RDP approval binds display preference");
         check(rdp.Fingerprint("module", "helper", Guid.Empty) != (rdp with { Host = "other.example" }).Fingerprint("module", "helper", Guid.Empty), "RDP approval binds destination");
         check(rdp.Fingerprint("module", "helper", Guid.Empty) != rdp.Fingerprint("module", "new-helper", Guid.Empty), "RDP approval binds helper version");
         var rdpManifest = new ModuleManifest { Id = "example.rdp", Name = "Remote Desktop", Author = "Test", Handler = "rdp", Icon = "desktop" }; rdpManifest.Validate();

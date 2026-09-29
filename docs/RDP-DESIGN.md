@@ -1,10 +1,10 @@
-# Remote Desktop launch — 0.8.3
+# Remote Desktop launch — 0.8.5
 
 SableLatch opens the Windows system Remote Desktop Connection application (mstsc.exe). It no longer hosts an RDP session window. The signed declarative RDP ZIP remains compatible; this change is implemented by trusted host code.
 
 ## Entry behavior
 
-Clicking the row copies only the password with the existing sensitive clipboard policy. The play button uses the entry's Launch / Launch & copy preference. Right-click and Connection details offer both actions explicitly. Launch & copy copies the password after local startup, not after confirmed remote authentication. Pinning and close-after-copy preferences still apply. Clipboard sharing into the remote session is a separate setting, off by default.
+Clicking the row copies only the password with the existing sensitive clipboard policy. The play button uses the entry's Launch / Launch & copy preference. Right-click and Connection details offer both actions explicitly. Launch & copy copies the password after local startup, not after confirmed remote authentication. Pinning and close-after-copy preferences still apply. Remote-session clipboard sharing is enabled for normal copy/paste in both directions. Legacy clipboard-off fields are ignored; there is no separate SableLatch redirection toggle. Remote clipboard sharing and the Launch & copy button are separate behaviors.
 
 ## Display behavior
 
@@ -29,7 +29,7 @@ DPAPI binds the blob to the Windows account, not to SableLatch: software running
 
 The user reported a working real-server connection with 0.8.2. Automatic sign-in with password-51 files has not been independently tested here across Windows 10/11 or organizational policies and may still be rejected by policy. The app keeps NLA/CredSSP enabled, respects Windows policy and never silently falls back to Credential Manager. Server certificate verification uses warning mode, with the decision to proceed left to the user in Windows. Interactive prompts may still appear. Test against a disposable RDP target before relying on this feature.
 
-The generated file uses authentication level 2: Windows warns if the server cannot be authenticated and lets the user choose whether to connect, subject to policy. This replaces the strict refusal in 0.8.1; it does not silently accept an invalid certificate. Accepting a warning risks connecting to an impersonated server. CredSSP stays enabled. Unsigned-file publisher warnings are a separate Windows check and still appear. Clipboard redirection is opt-in. Drives, printers, ports, smart cards, devices, audio capture, automatic reconnection and persistent bitmap caching are disabled in the file. Windows owns the separate session, its credential dialogs, saving UI and any later user changes; SableLatch does not control or capture-protect that external window. Existing sessions may survive vault locking or exit.
+The generated file uses authentication level 2: Windows warns if the server cannot be authenticated and lets the user choose whether to connect, subject to policy. This replaces the strict refusal in 0.8.1; it does not silently accept an invalid certificate. Accepting a warning risks connecting to an impersonated server. CredSSP stays enabled. Unsigned-file publisher warnings are a separate Windows check and still appear. The generated file enables clipboard redirection and no longer overrides drive, printer, port, smart-card, device, audio, reconnection, cache or gateway settings. These follow mstsc defaults and Windows/server policy; this does not automatically redirect every local device or import settings from a separately saved connection. The first-use review is refreshed for this resource-policy change. Windows owns the separate session, its credential dialogs, saving UI and any later user changes; SableLatch does not control or capture-protect that external window. Existing sessions may survive vault locking or exit.
 
 ## Verification
 

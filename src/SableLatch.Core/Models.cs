@@ -104,6 +104,22 @@ public sealed class VaultDocument
 
 public static class ItemOperations
 {
+    public static VaultItem DuplicateDraft(VaultDocument doc, Guid id)
+    {
+        var source = doc.Items.Single(i => i.Id == id && i.DeletedAt is null);
+        var copy = Codec.Clone(source);
+        copy.Id = Guid.NewGuid(); copy.CreatedAt = null; copy.UpdatedAt = null; copy.DeletedAt = null;
+        copy.Order = doc.Items.Where(i => i.FolderId == source.FolderId && i.DeletedAt is null).Select(i => i.Order).DefaultIfEmpty(-1).Max() + 1;
+        var name = string.IsNullOrWhiteSpace(source.Label) ? "Entry" : source.Label;
+        for (var number = 1; ; number++)
+        {
+            var suffix = number == 1 ? " (copy)" : " (copy " + number + ")";
+            copy.Label = name[..Math.Min(name.Length, 300 - suffix.Length)] + suffix;
+            if (!doc.Items.Any(i => i.FolderId == copy.FolderId && i.DeletedAt is null && i.Label == copy.Label)) break;
+        }
+        // Attachments are immutable blobs; shared references remain protected by orphan cleanup.
+        return copy;
+    }
     public static void Delete(VaultDocument doc, Guid id, DateTimeOffset now)
     {
         var item = doc.Items.Single(x => x.Id == id);

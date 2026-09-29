@@ -15,6 +15,7 @@ public partial class MainWindow
     private readonly Dictionary<string, VaultItem> editorDrafts = [];
     private string editorSharedLabel = "";
     private bool editorIsNew;
+    private bool editorIsDuplicate;
     private AdvancedEntry? advancedDraft;
     private string? editorTestedAction;
     private void ShowEditor(VaultItem? existing = null, string? selectedType = null, bool? advanced = null)
@@ -25,6 +26,7 @@ public partial class MainWindow
             var draft = captureEditorDraft(); editorDrafts[draft.ContentType] = draft; advancedDraft = draft.Advanced; editorSharedLabel = draft.Label;
         }
         editorIsNew = existing is null;
+        editorIsDuplicate = existing is not null && !vault.Document!.Items.Any(i => i.Id == existing.Id);
         advancedEditor = advanced ?? (existing is not null ? existing.Advanced?.Action?.Enabled == true : screen == "editor" && advancedEditor);
         var types = content.All.Where(p => !vault.Document!.Settings.DisabledModules.Contains(p.Descriptor.Id)).ToList();
         if (types.Count == 0) { ShowError("Enable at least one content module in Settings."); return; }
@@ -34,7 +36,7 @@ public partial class MainWindow
         var advancedSwitch = new CheckBox { Content = "Advanced", IsChecked = advancedEditor, Style = (Style)FindResource("CompactSwitch"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0, 0, 0) };
         System.Windows.Automation.AutomationProperties.SetName(advancedSwitch, "Advanced options");
         advancedSwitch.Click += (_, _) => { if (advancedSwitch.IsChecked != advancedEditor) toggleAdvancedEditor?.Invoke(); };
-        var stack = Form(existing is null ? "New entry" : "Edit entry", "", "editor", accessory: advancedSwitch);
+        var stack = Form(existing is null ? "New entry" : editorIsDuplicate ? "Duplicate entry" : "Edit entry", "", "editor", accessory: advancedSwitch);
         {
             var picker = new System.Windows.Controls.Primitives.UniformGrid { Columns = existing is null ? types.Count(p => p is not DeclarativeProvider) + 1 : 1 };
             var group = "entry-type-" + Guid.NewGuid().ToString("N");

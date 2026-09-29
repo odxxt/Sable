@@ -25,7 +25,7 @@ https://raw.githubusercontent.com/odxxt/SableLatch/main/modules/catalog.json
 
 Each catalog entry points to a ZIP under the same repository and specifies its SHA-256. The catalog payload is signed using the SableLatch publisher key; the ZIP's manifest is independently signed. The client checks both and the archive hash. Uploading an unsigned JSON list or editing signed bytes invalidates the catalog.
 
-The PuTTY catalog and ZIP were fetched from public GitHub on 24 September 2026; the catalog signature and ZIP hash matched. No separate hosting or server is needed. Pushing a compatible, correctly signed catalog/package update to main makes it available on the next explicit catalog check. The included PuTTY module also works offline.
+The PuTTY catalog and ZIP were fetched from public GitHub on 24 September 2026; the catalog signature and ZIP hash matched. No separate hosting or server is needed. Pushing a compatible, correctly signed catalog/package update to main makes it available on the next explicit catalog check. Both included PuTTY and RDP modules also work offline.
 
 For a new official module:
 
@@ -36,3 +36,9 @@ For a new official module:
 5. Verify the signature, package and download hashes locally; commit only public artifacts and push them.
 
 Keep the encrypted publisher private key and its unlock password outside Git and release ZIPs, backed up separately. The repository contains only the public verification key. See [the module author guide](../modules/README.md).
+
+## v0.8.5 release inventory
+
+Publish the final UI-polished build, not an earlier local ZIP with the same version. Release assets are `SableLatch-v0.8.5-win-x64.zip`, `SableLatch-v0.8.5-source.zip` and `SHA256SUMS-v0.8.5.txt`. The version tag must point to the clean source commit used for these assets. The source ZIP excludes Git metadata, build output, vault data and private publisher keys. The standalone ZIP includes the desktop runtime, current documentation and verification reports.
+
+The signed API 1 module ZIPs and catalog remain compatible with this host update. Changing host UI, native RDP clipboard settings or folder behavior does not require re-signing an unchanged manifest. Do not change signed package bytes solely to update prose in the source documentation.
