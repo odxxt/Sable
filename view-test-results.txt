@@ -13,8 +13,17 @@ PASS: Enter invokes the setup Next action
 PASS: Setup does not create files before its final step
 PASS: PIN setup Back returns to the hidden recovery step
 PASS: Enter invokes the setup Next action
-PASS: Enter finishes setup from the PIN confirmation field
-PASS: Setup Finish creates the vault, enrolls PIN and opens the list
+PASS: Enter advances setup from the PIN confirmation field
+PASS: Setup offers a first secret before creating the vault
+PASS: An empty first-secret submission cannot create the vault
+PASS: First secret is optional and its finish button remains outside the scroll area
+PASS: Back from first secret preserves the PIN draft
+PASS: Returning to first secret preserves the unfinished value
+PASS: First-secret eye reveal/hide retains the value and restores masking
+PASS: Enter saves the first secret and finishes setup
+PASS: Setup Finish creates the vault, enrolls PIN and shows completion
+PASS: First secret is saved as protected content
+PASS: Completion opens the vault with Enter
 PASS: All items is a plain label with no button hover
 PASS: Text has a subtle contrast shadow
 PASS: Position reset returns to the default bottom-right placement
@@ -39,6 +48,7 @@ PASS: Cancel restores the row without deleting the entry
 PASS: Escape dismisses inline deletion safely
 PASS: DELETE confirmation sends a secret login to encrypted trash
 PASS: Editor Save is always visible outside the scrolling form
+PASS: Secret is selected by default and Text is absent from entry choices
 PASS: Save position is consistent between login and text editors
 PASS: Drag shows an insertion marker after the lower half of the target row
 PASS: Drop inserts at the displayed position
@@ -52,6 +62,9 @@ PASS: Shortcut setting uses a record control
 PASS: Shortcut recorder enters capture mode
 PASS: Restore default resets the shortcut capture control
 PASS: Lock retains only a PIN ticket and shows typed PIN input
+PASS: Locking an active panel focuses the PIN immediately
+PASS: Opening a locked panel through the shortcut path restores PIN keyboard focus
+PASS: Shortcut on an already visible locked panel focuses the PIN instead of hiding
 PASS: PIN screen has no number pad
 PASS: Locked screen is centered and explicitly marked locked
 PASS: PIN input has no filled box
@@ -197,7 +210,7 @@ PASS: Test action uses one third and Save two thirds while sharing height and ve
 PASS: Changing terminal lifetime invalidates the tested action
 PASS: Text entries save Run and copy and keep-terminal settings
 PASS: Entry context menus have native capture exclusion
-PASS: Right-click Run and copy launches then copies ordinary text with its normal clipboard policy
+PASS: Right-click Run and copy keeps the unified secret clipboard policy
 PASS: Action dropdowns have native capture exclusion
 PASS: Switching away from a script clears and hides keep-terminal settings
 PASS: Tooltips use the shared dark theme
@@ -279,10 +292,10 @@ PASS: Wheel scrolls the multiline field before its enclosing page
 PASS: Wheel continues on the editor page after a multiline field reaches its edge
 PASS: Leaving a page stops its scroll animation
 PASS: Ordinary context actions have no checkbox gutter
-PASS: Formatted paste retains bold, Unicode and tables with plain-text fallback
+PASS: Formatted secret paste retains bold, Unicode and tables while the editor stays masked
 PASS: Formatted paste strips scripts, event handlers, tracking images and CSS URLs
 PASS: Saved Text entry copies both CF_HTML and Unicode text with correct byte offsets
-PASS: Secret entries always use plain-text copying even if imported with HTML metadata
+PASS: Formatted secret copying retains secret clipboard protection
 PASS: Editing plain text removes stale formatting rather than copying outdated content
 PASS: HTML selection retains ancestor bold formatting without including unselected context
 PASS: HTML storage enforces a bounded input size
@@ -298,6 +311,18 @@ PASS: Folder fade-in restores the original label without resizing or leftover ov
 PASS: Dropping into a nonexistent folder is rejected
 PASS: Folder entries can move back to the root
 PASS: External folder-ID drags cannot move vault folders
+PASS: Folder movement below the system drag threshold remains a click
+PASS: Routed folder gesture starts an owned modal drag and releases button capture
+PASS: Handled button movement starts a folder drag and resets modal ownership afterward
+PASS: One held folder gesture cannot start two drag loops
+PASS: Released mouse movement cannot start a folder drag
+PASS: Mouse-up cancels the pending folder gesture
+PASS: Lost capture cancels the pending folder gesture
+PASS: Busy state prevents starting a pending folder drag
+PASS: Routed folder drag can reorder siblings
+PASS: Folder gesture reorder persists the new sibling order
+PASS: Routed folder drag can nest into another folder
+PASS: Folder gesture nesting preserves descendants
 PASS: Folder dragging accepts only the active source
 PASS: Folder context menu offers Move folder
 PASS: Folder edges reorder while its center selects nesting

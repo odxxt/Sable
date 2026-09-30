@@ -33,7 +33,7 @@ public static class AuditReport
             .Append(document.Items.Count(i => i.DeletedAt is not null)).Append("</strong>In trash</div></div><h2>Entries</h2><div class=table><table><thead><tr><th>Entry</th><th>Type</th><th>Created</th><th>Modified</th><th>Status</th></tr></thead><tbody>");
         foreach (var item in document.Items.OrderBy(i => i.DeletedAt is not null).ThenBy(i => i.Order))
         {
-            var type = item.ContentType switch { "sable.login" => "Login · sensitive", "sable.secret" => "Secret", "sable.text" => "Text", _ => item.IsSensitive ? "Extension · sensitive" : "Extension" };
+            var type = item.ContentType switch { "sable.login" => "Login · sensitive", "sable.secret" or "sable.text" => "Secret", _ => item.IsSensitive ? "Extension · sensitive" : "Extension" };
             html.Append("<tr><td>").Append(WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(item.Label) ? "Unlabelled entry" : item.Label))
                 .Append("<small>").Append(item.Id.ToString("D")).Append("</small></td><td class=type>").Append(type)
                 .Append("</td><td><time>").Append(Date(item.CreatedAt)).Append("</time></td><td><time>").Append(Date(item.UpdatedAt))

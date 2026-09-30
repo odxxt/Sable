@@ -36,7 +36,7 @@ public interface IExtensionContext
 public sealed class ContentRegistry
 {
     private readonly Dictionary<string, IContentProvider> providers = [];
-    public IEnumerable<IContentProvider> All => providers.Values;
+    public IEnumerable<IContentProvider> All => providers.Values.Where(p => p.Descriptor.Id != "sable.text");
     public void Register(IContentProvider provider)
     {
         if (!providers.TryAdd(provider.Descriptor.Id, provider)) throw new InvalidOperationException("Content type already registered.");
@@ -55,8 +55,8 @@ public sealed class TextProvider(bool secret) : IContentProvider
     public ContentDescriptor Descriptor => new(secret ? "sable.secret" : "sable.text", 1, secret ? "Secret" : "Text", secret ? "\uE72E" : "\uE8A5", secret);
     public IReadOnlyList<string> CopyActions => ["Copy"];
     public IReadOnlyList<EditorField> EditorFields => [new("text", secret ? "Secret value" : "Text", secret ? EditorFieldKind.Secret : EditorFieldKind.Multiline)];
-    public CopyValue Copy(VaultItem item, string action) => !secret && item.Field("html") is { Length: > 0 } html
-        ? new("application/x-sable-formatted-text", Codec.Encode(new FormattedTextValue(item.Field("text"), html)), item.IsSensitive, false)
+    public CopyValue Copy(VaultItem item, string action) => item.Field("html") is { Length: > 0 } html
+        ? new("application/x-sable-formatted-text", Codec.Encode(new FormattedTextValue(item.Field("text"), html)), secret || item.IsSensitive, false)
         : new("text/plain", System.Text.Encoding.UTF8.GetBytes(item.Field("text")), secret || item.IsSensitive, false);
 }
 public sealed class LoginProvider : IContentProvider

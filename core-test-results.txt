@@ -1,4 +1,4 @@
-Initial key derivation + create: 405 ms
+Initial key derivation + create: 1495 ms
 PASS: Recovery key has 256 bits and passes checksum
 PASS: Recovery typo rejected
 PASS: Labels, folders and custom payload encrypted at rest
@@ -27,13 +27,17 @@ PASS: Tampered backup rejected
 PASS: Tampered attachment rejected
 PASS: Seven-day expiry affects only old trashed entries
 PASS: Secrets go to encrypted Trash by default
-PASS: Ordinary entries delete permanently by default
+PASS: Non-sensitive module entries delete permanently by default
 PASS: Trash cleanup can be disabled
 PASS: Search excludes secret values
 PASS: Username copies its actual value and keeps panel open
 PASS: Password copies secret value and completes login flow
 PASS: Text preserves both formatted and plain representations through serialization
-PASS: Secret provider ignores HTML metadata
+PASS: Secret provider preserves formatting with sensitive clipboard protection
+PASS: Only Secret and Login are exposed as built-in choices
+PASS: New entries default to protected secrets
+PASS: Legacy text upgrade preserves identity, formatted payload, timestamp and order without exposing its value in a label
+PASS: Repeated upgrade is safe and former text values are excluded from search
 PASS: Existing plain-text entries keep their original clipboard representation
 PASS: Session expires after configured duration
 PASS: Pin suspends time-based locking
@@ -239,4 +243,4 @@ PASS: Don't ask again stores device-protected module consent
 PASS: Moving module approval to another device requires review again
 PASS: Reset module permissions revokes remembered approval
 
-239 checks passed.
+243 checks passed.

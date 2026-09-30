@@ -1,4 +1,22 @@
-# Verification — SableLatch 0.8.5 preview
+# Verification — SableLatch 0.8.7 preview
+
+- Debug and self-contained Windows x64 Release builds passed with zero warnings/errors. **243 core checks passed**, including the unified built-in choices, sensitive formatted copying, default Secret metadata and legacy text conversion with payload/identity/timestamp/order preservation and value-search exclusion.
+- **341 WPF interaction checks and 7 view checks passed** using a disposable fixture vault and fake clipboard. Setup checks cover draft preservation through Back, recovery masking, required first-secret fields, optional-skip availability, reveal/hide without losing the value, encrypted first-secret saving and completion navigation. Entry checks cover the Secret-only replacement, masked formatted paste, sanitized HTML output, changed-value invalidation and sensitive Run & copy.
+- Keyboard focus assertions passed for direct locking, reopening through the tray/shortcut handler and invoking that handler on an already-visible locked panel. They check WPF keyboard focus; no physical global-hotkey or Windows lock/unlock cycle was automated here.
+- Visually reviewed the welcome, password, recovery, first-secret and completion screens at the app's fixed 342 × 411 size, after animations finish. Save/Next remains outside scrolling content. Animations honor the Windows preference; other DPI/text-scaling combinations need manual coverage.
+- Earlier UI runs stopped at legacy test assumptions (one Secret row; optional labels for former Text entries). The fixtures were updated to the new behavior and the full run passed. Production fixes also ensure hiding the onboarding eye does not clear the secret and locked shortcut invocation does not hide an active panel.
+- No real vault, clipboard contents or remote credentials were used. No browser-login feature, credential transport, module package or cryptographic format was changed. Prior module environment limitations remain below.
+
+# Previous verification — SableLatch 0.8.6 preview
+
+- Debug and self-contained Windows x64 Release builds passed with no warnings or errors. Version-only display metadata was updated to 0.8.6 after the Debug interaction run; the packaged Release uses 0.8.6.
+- **239 core checks passed** in a fresh run of the unchanged core suite.
+- **328 WPF interaction checks and 7 view checks passed.** New checks raise routed mouse events already marked handled, reproducing the event state that previously prevented folder dragging. They verify threshold behavior, owned drag data, mouse capture release, modal-state cleanup, no repeated starts, mouse-up/lost-capture cancellation, busy-state rejection, sibling reordering and nesting with descendants preserved.
+- The input position/pressed-state providers and native modal drag loop are replaced only in the Debug harness. The real event registrations execute; these test hooks are absent from the Release build. Physical mouse dragging, native OLE drag/drop and Escape during that loop still need a manual check on the user's desktop. Earlier placement-only tests missed this initiation bug.
+- Existing insertion-line, cycle prevention, folder move/edit, fixed-size success overlay and duplicate-entry checks pass. No credential transport, vault format or module package changed. No real vault, clipboard contents or remote credentials were used.
+- Browser sign-in is research only; see [options and exposure boundaries](docs/WEB-SIGNIN-OPTIONS.md). No extension or browser automation was installed or implemented.
+
+# Previous verification — SableLatch 0.8.5 preview
 
 - Debug and self-contained Windows x64 Release builds passed with no warnings or errors.
 - **239 core checks passed.** RDP regression coverage verifies clipboard enabled for new entries and legacy clipboard=false entries, absence of resource/audio/reconnection/cache/gateway overrides, and retention of the existing display and authentication behavior.

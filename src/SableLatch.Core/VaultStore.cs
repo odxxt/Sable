@@ -108,7 +108,7 @@ public sealed class VaultStore(string directory, IDeviceProtector device) : IAtt
         var bytes = Crypto.Open(key, e.Data, $"SableLatch/1/{e.VaultId:D}/data");
         try
         {
-            var doc = Codec.Decode<VaultDocument>(bytes); doc.Validate();
+            var doc = Codec.Decode<VaultDocument>(bytes); doc.Validate(); ItemOperations.UpgradeTextEntries(doc);
             envelope = e; dataKey = key; Document = doc;
         }
         finally { CryptographicOperations.ZeroMemory(bytes); }
@@ -160,7 +160,7 @@ public sealed class VaultStore(string directory, IDeviceProtector device) : IAtt
     }
     private void Commit(VaultDocument next, VaultEnvelope? candidate = null)
     {
-        next.Validate(); next.Revision++;
+        next.Validate(); ItemOperations.UpgradeTextEntries(next); next.Revision++;
         var bytes = Codec.Encode(next);
         try
         {

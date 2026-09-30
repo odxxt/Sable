@@ -4,7 +4,7 @@
 
 A compact encrypted clipboard vault for Windows. Save the text, secrets and logins you reach for every day, then copy them from a quiet tray popup and get back to what you were doing.
 
-[**Download v0.8.5 for Windows x64**](https://github.com/odxxt/SableLatch/releases/tag/v0.8.5) · [All releases](https://github.com/odxxt/SableLatch/releases) · [User guide](docs/USER-GUIDE.md) · [Roadmap](#whats-next)
+[**Downloads for Windows x64**](https://github.com/odxxt/SableLatch/releases) · [User guide](docs/USER-GUIDE.md) · [Roadmap](#whats-next)
 
 <p align="center">
   <img src="docs/images/vault.png" width="310" alt="SableLatch compact tray vault with folders and click-to-copy entries">
@@ -16,18 +16,28 @@ A compact encrypted clipboard vault for Windows. Save the text, secrets and logi
 
 ## A little vault for everyday things
 
-- **One click to copy.** Store ordinary text, masked secrets or logins. A login copies its username first and password on the next click, keeping the panel available between them.
+- **Two simple choices.** A Secret keeps any text private, including multiline notes and formatted content. A Login copies its username first and password on the next click, keeping the panel available between them.
 - **Small, calm and close at hand.** A rounded dark panel, subtle feedback, a configurable keyboard shortcut and a pin to keep it open. Unpinned, it stays out of the taskbar and Alt+Tab by default.
 - **Organize your own way.** Nested folders with drag-to-move/reorder, search, direct row dragging and folder drops, entry duplication, compact entry colors and multiline text or secrets. Reveal a secret only when you choose.
 - **Useful advanced actions.** Open an application, find Windows Settings or Control Panel pages, use a Windows+R-style command, or run CMD/PowerShell. Choose Run or Run & copy, test before saving, with terminals staying open by default.
-- **Keep useful formatting.** Paste formatted content into an empty Text entry to retain common HTML formatting and tables when copying to supporting apps. Plain text remains available as a fallback; no embedded browser.
+- **Keep useful formatting.** Paste formatted content into an empty Secret to retain common HTML formatting and tables when copying to supporting apps. The editor stays masked, plain text remains available as a fallback, and secret clipboard protection applies to both formats.
 - **Lock when it matters.** A full password at startup, optional 4–12 digit quick PIN during that process session, configurable timed locking and Windows session locking. Five incorrect PINs require the full password. Pinning pauses the timer, but never overrides Windows locking.
 - **Thoughtful clipboard handling.** Secret copies clear after 30 seconds by default if still owned by SableLatch. The delay is configurable; Windows clipboard-history exclusion and supported screen-capture exclusion are requested.
 - **Your data stays local.** An encrypted vault, encrypted import/export and optional encrypted backups. Backups start **off**. No account, cloud service, telemetry, browser engine or resident background service. Each open RDP session uses a separate local process.
 - **Add your own entry types.** Install declarative ZIP modules, use protected PuTTY SSH and Remote Desktop entries, or start with the quick-note sample. See the [module guide](modules/README.md). No background module tasks or executable plugin code.
 - **Recover and review.** A master recovery key, configurable encrypted Trash for secrets, entry timestamps and a small protected activity history that can be exported to an HTML report.
 
-## New in v0.8.5
+## New in v0.8.7 preview
+
+- **A warmer first run:** a welcome preview, four compact guided steps, optional first-secret creation and a completion screen. Back keeps drafts; tooltips explain controls, and brief transitions respect Windows animation preferences.
+- **Secret and Login:** Text is no longer a separate choice. Existing Text entries become Secrets while retaining values, formatting, identity and timestamps. Their values are masked and excluded from search; secret clipboard and Trash preferences now apply.
+- **Ready to type:** opening the locked panel or pressing Lock focuses the PIN/password immediately. The shortcut also focuses an already-visible lock screen.
+
+### Included from v0.8.6
+
+- **Folder dragging repaired:** held folder buttons now start dragging correctly. Move to another folder's edge to reorder, or its center to nest. Existing folder contents move with it.
+
+### Included from v0.8.5
 
 - **Native Remote Desktop:** launch the Windows RDP app with saved credentials, use full screen or a normal window, and copy/paste between computers. Existing entries adopt the new defaults. Windows/server policy still applies.
 - **Folders that move with you:** drag edges to reorder, drop in the center to nest, or use right-click → Move folder. Drop confirmations fade in place without shifting the layout.
@@ -53,7 +63,7 @@ You can change the shortcut and startup behavior in Settings. **Enter** saves or
 Checksums are included with each release as `SHA256SUMS-v<version>.txt`. To check a download in PowerShell:
 
 ```powershell
-Get-FileHash .\SableLatch-v0.8.5-win-x64.zip -Algorithm SHA256
+Get-FileHash .\SableLatch-v0.8.7-win-x64.zip -Algorithm SHA256
 ```
 
 ### Updating

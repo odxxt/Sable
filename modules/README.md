@@ -81,7 +81,7 @@ A temporary **non-secret** PuTTY session is created under the current user's PuT
 
 Locking cancels pending password delivery; the pending child process is stopped if delivery fails. Established SSH sessions stay open after SableLatch locks. The 15-second delivery timeout does not limit how long the SSH session may remain open.
 
-**Not in this release:** SSH private-key storage/authentication, existing PuTTY saved sessions, jump hosts/proxies, tunnels, remote commands, rich-text composition, image/file attachments or arbitrary executable module code. These need separate host capabilities and tests. HTML clipboard preservation is now part of the built-in Text type. The RDP host capability is available in 0.8.0; see [RDP implementation](../docs/RDP-DESIGN.md).
+**Not in this release:** SSH private-key storage/authentication, existing PuTTY saved sessions, jump hosts/proxies, tunnels, remote commands, rich-text composition, image/file attachments or arbitrary executable module code. These need separate host capabilities and tests. HTML clipboard preservation is now part of the built-in Secret type (including sensitive clipboard handling). The RDP host capability is available in 0.8.0; see [RDP implementation](../docs/RDP-DESIGN.md).
 
 ## Updates, removal and recovery
 

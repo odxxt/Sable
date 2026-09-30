@@ -66,7 +66,8 @@ public partial class MainWindow : Window
         ReloadModules();
         SourceInitialized += (_, _) => InitializePlatform();
         Loaded += (_, _) => { PositionWindow(); if (!App.PreviewMode) ShowUnlock(); };
-        IsVisibleChanged += (_, _) => { if (!IsVisible) ResetLoginCopy(); else ApplyTaskbarVisibility(); };
+        IsVisibleChanged += (_, _) => { if (!IsVisible) ResetLoginCopy(); else { ApplyTaskbarVisibility(); FocusLockInput(); } };
+        Activated += (_, _) => FocusLockInput();
         Deactivated += (_, _) => { if (screen == "list" && !session.IsPinned && !holdForPassword && !busy && !contextOpen && modalDepth == 0) Hide(); };
         PreviewKeyDown += (_, e) =>
         {
@@ -167,12 +168,16 @@ public partial class MainWindow : Window
         while (obj is not null) { if (obj is T result) return result; obj = obj is Visual ? VisualTreeHelper.GetParent(obj) : LogicalTreeHelper.GetParent(obj); }
         return null;
     }
-    private void ToggleVisibility() { if (IsVisible && IsActive) Hide(); else OpenPanel(); }
+    private void ToggleVisibility()
+    {
+        if (!vault.IsUnlocked && vault.Exists) { OpenPanel(); return; }
+        if (IsVisible && IsActive) Hide(); else OpenPanel();
+    }
     private void OpenPanel()
     {
         if (!IsVisible && vault.IsUnlocked && vault.Document!.Settings.LockEveryOpen && !session.IsPinned) ForceLock("Unlock to continue");
         if (vault.IsUnlocked && session.Expired(vault.Document!.Settings.SessionMinutes)) ForceLock("Session expired");
-        ApplyTaskbarVisibility(); Show(); Activate();
+        ApplyTaskbarVisibility(); Show(); Activate(); FocusLockInput();
     }
     private void TogglePin(object sender, RoutedEventArgs e)
     {
@@ -202,7 +207,7 @@ public partial class MainWindow : Window
         clipboard.ClearOwned();
         if (!busy) vault.Lock();
         if (tray is not null) tray.Text = "SableLatch · locked";
-        ShowUnlock(); SetStatus(reason);
+        ShowUnlock(); SetStatus(reason); FocusLockInput();
         if (!busy) ReleaseUnlockMemory();
     }
     private void Tick()
@@ -300,6 +305,8 @@ public partial class MainWindow : Window
         SettingsButton.IsEnabled = vault.IsUnlocked;
         LockButton.IsEnabled = vault.IsUnlocked;
         PinButton.IsEnabled = vault.IsUnlocked || App.PreviewMode;
+        var onboarding = mode == "onboarding-ready" || !vault.Exists && mode is "setup" or "recovery-key";
+        foreach (var command in new[] { SearchButton, PinButton, LockButton, SettingsButton }) command.Visibility = onboarding ? Visibility.Collapsed : Visibility.Visible;
         ExtensionToolbar.Children.Clear();
         if (session.IsUnlocked && vault.IsUnlocked && extensions.Toolbar.Count > 0)
         {

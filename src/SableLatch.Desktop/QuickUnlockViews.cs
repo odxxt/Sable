@@ -7,6 +7,18 @@ namespace SableLatch.Desktop;
 public partial class MainWindow
 {
     private bool pinAttemptRunning;
+    private void FocusLockInput()
+    {
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input, new Action(() =>
+        {
+            if (!IsVisible || !IsActive || busy || screen is not ("pin" or "unlock")) return;
+            if (FindLockInput(Body) is { IsVisible: true, IsEnabled: true } input)
+            {
+                FocusManager.SetFocusedElement(this, input);
+                Keyboard.Focus(input);
+            }
+        }));
+    }
     private static PasswordBox? FindLockInput(DependencyObject root)
     {
         if (root is PasswordBox input) return input;
@@ -40,7 +52,8 @@ public partial class MainWindow
         };
         var attempts = new TextBlock { FontSize = 11, Foreground = new SolidColorBrush(Color.FromRgb(230, 131, 141)), Height = 20, HorizontalAlignment = HorizontalAlignment.Center };
         stack.Children.Add(attempts);
-        Dispatcher.BeginInvoke(() => input.Focus());
+        input.Loaded += (_, _) => FocusLockInput();
+        FocusLockInput();
         return (stack, input, attempts);
     }
     private void ShowPinUnlock()

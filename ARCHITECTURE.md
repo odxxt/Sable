@@ -104,7 +104,15 @@ Modules.cs owns declarative manifests, bounded ZIP inspection, signature hooks, 
 
 No external package is loaded as code or handed the internal IContentProvider/IExtensionContext contracts. DeclarativeProvider is host code interpreting validated definitions. Built-in composition interfaces remain separate. VaultItem.ModuleSchema records field-security/handler identity; unknown, disabled or incompatible modules cannot edit or reinterpret their entries. Backups and transfers preserve that field through the existing item serialization. The manifest remains public while fields and extension settings remain under existing vault encryption.
 
-Text entries may carry an optional HTML field alongside plain text. The desktop adapter parses it with AngleSharp without a browsing context, permits a small formatting allowlist, and writes CF_HTML plus UnicodeText. Clipboard offsets are UTF-8 byte offsets. Import output is re-sanitized. No HTML is rendered or executed in the app. The plain-text editor invalidates the HTML representation on editing.
+Secrets may carry an optional HTML field alongside their text value. The desktop adapter parses it with AngleSharp without a browsing context, permits a small formatting allowlist, and writes CF_HTML plus UnicodeText with sensitive clipboard handling. Clipboard offsets are UTF-8 byte offsets. Import output is re-sanitized. No HTML is rendered or executed in the app. Changes to the value invalidate mismatched HTML.
+
+## Guided onboarding and unified secrets (0.8.7)
+
+`OnboardingViews` owns the step shell, brief page transitions, first-secret draft and completion screen. `SetupViews` composes password, hidden recovery-key and optional PIN steps into it. The vault is created only at final confirmation; skipping the first secret is explicit. Drafts survive Back without a plaintext draft file. Animations respect `ClientAreaAnimation`, finish within 260 ms and stop when their page unloads; no background renderer is added.
+
+`ItemOperations.UpgradeTextEntries` maps the legacy `sable.text` identifier to `sable.secret` after authenticated document loading and before a validated commit. Payloads and IDs are preserved; unlabelled text receives a neutral label that never includes its value. The registry retains the old reader internally but omits it from enumerated choices and module settings. Imports use the normal commit path; backups use normal restore/unlock. On-disk changes remain encrypted and are persisted with the next write. No cryptographic format changes are required.
+
+Lock focus is queued at input priority after activation and layout. It only targets a visible, active, enabled lock input outside a busy operation. No foreground activation is requested by a background timeout; explicit tray/shortcut opening activates the window normally.
 
 ## Local RDP sessions (0.8.5)
 

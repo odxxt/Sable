@@ -8,6 +8,7 @@ internal sealed class MaskedSecretBox : TextBox
 {
     private string value = "";
     private bool updating;
+    internal Action<IDataObject>? WholeValuePasted;
     public string Password
     {
         get => value;
@@ -23,7 +24,12 @@ internal sealed class MaskedSecretBox : TextBox
             CommandBindings.Add(new CommandBinding(command, (_, e) => e.Handled = true, (_, e) => { e.CanExecute = false; e.Handled = true; }));
         DataObject.AddPastingHandler(this, (_, e) =>
         {
-            if (e.DataObject.GetDataPresent(DataFormats.UnicodeText) && e.DataObject.GetData(DataFormats.UnicodeText) is string text) ReplaceSelection(text);
+            if (e.DataObject.GetDataPresent(DataFormats.UnicodeText) && e.DataObject.GetData(DataFormats.UnicodeText) is string text)
+            {
+                var whole = SelectionLength == value.Length && text.Length <= MaxLength;
+                ReplaceSelection(text);
+                if (whole) WholeValuePasted?.Invoke(e.DataObject);
+            }
             e.CancelCommand();
         });
     }

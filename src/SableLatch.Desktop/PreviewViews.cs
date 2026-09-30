@@ -72,10 +72,34 @@ public partial class MainWindow
             Descendants<CheckBox>(Body).Single().IsChecked = true;
             CheckView(PressEnter(), "Enter invokes the setup Next action");
             UpdateLayout(); foreach (var input in Descendants<PasswordBox>(Body)) input.Password = "803194";
-            CheckView(PressEnter(), "Enter finishes setup from the PIN confirmation field");
+            CheckView(PressEnter(), "Enter advances setup from the PIN confirmation field");
+            UpdateLayout();
+            CheckView(!vault.Exists && Descendants<MaskedSecretBox>(Body).Any(), "Setup offers a first secret before creating the vault");
+            PressEnter();
+            CheckView(!vault.Exists && screen == "setup", "An empty first-secret submission cannot create the vault");
+            CheckView(Descendants<Button>(Body).Any(b => b.Content as string == "I'll add one later") && FindParent<ScrollViewer>(pageSubmit!) is null,
+                "First secret is optional and its finish button remains outside the scroll area");
+            var firstLabel = Descendants<TextBox>(Body).Single(b => System.Windows.Automation.AutomationProperties.GetName(b) == "Label");
+            firstLabel.Text = "My first secret";
+            Descendants<MaskedSecretBox>(Body).Single().Password = "onboarding-value-canary";
+            await Render("83-first-secret");
+            GoBack(); UpdateLayout();
+            CheckView(Descendants<PasswordBox>(Body).All(b => b.Password == "803194"), "Back from first secret preserves the PIN draft");
+            PressEnter(); UpdateLayout();
+            CheckView(Descendants<MaskedSecretBox>(Body).Single().Password == "onboarding-value-canary", "Returning to first secret preserves the unfinished value");
+            var firstEye = Descendants<Button>(Body).Single(b => System.Windows.Automation.AutomationProperties.GetName(b) == "Reveal first secret");
+            firstEye.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
+            firstEye.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
+            CheckView(Descendants<MaskedSecretBox>(Body).Single().Password == "onboarding-value-canary" && !Descendants<TextBox>(Body).Any(b => b.IsVisible && b.Text.Contains("onboarding-value-canary")),
+                "First-secret eye reveal/hide retains the value and restores masking");
+            CheckView(PressEnter(), "Enter saves the first secret and finishes setup");
             for (var wait = 0; wait < 100 && busy; wait++) await Task.Delay(100);
             await Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
-            CheckView(vault.IsUnlocked && screen == "list" && vault.Document!.QuickUnlock is not null, "Setup Finish creates the vault, enrolls PIN and opens the list");
+            CheckView(vault.IsUnlocked && screen == "onboarding-ready" && vault.Document!.QuickUnlock is not null, "Setup Finish creates the vault, enrolls PIN and shows completion");
+            CheckView(vault.Document!.Items.Single().ContentType == "sable.secret" && vault.Document.Items.Single().IsSensitive && vault.Document.Items.Single().Field("text") == "onboarding-value-canary", "First secret is saved as protected content");
+            await Render("84-setup-ready"); PressEnter();
+            CheckView(screen == "list", "Completion opens the vault with Enter");
+            vault.Mutate(d => d.Items.Clear());
             vault.Mutate(d =>
             {
                 d.Settings.Startup = false;
@@ -155,7 +179,8 @@ public partial class MainWindow
             var save = Descendants<Button>(Body).Single(b => b.Content as string == "Save entry");
             var savePosition = save.TranslatePoint(new Point(), Body).Y;
             CheckView(save.IsVisible && FindParent<ScrollViewer>(save) is null && savePosition + save.ActualHeight <= Body.ActualHeight + 1, "Editor Save is always visible outside the scrolling form");
-            ShowEditor(null, "sable.text"); UpdateLayout();
+            ShowEditor(null, "sable.secret"); UpdateLayout();
+            CheckView(!Descendants<RadioButton>(Body).Any(b => b.Content as string == "Text") && Descendants<RadioButton>(Body).Any(b => b.Content as string == "Secret" && b.IsChecked == true), "Secret is selected by default and Text is absent from entry choices");
             CheckView(Descendants<Button>(Body).Single(b => b.Content as string == "Save entry").TranslatePoint(new Point(), Body).Y == savePosition, "Save position is consistent between login and text editors");
             ShowSettings(); await Render("04-settings");
             ShowClipboardSettings(); await Render("05-clipboard-settings");
@@ -174,10 +199,10 @@ public partial class MainWindow
             var secretCanaries = new[] { "fictional-demo-secret", "fictional-wifi-secret" };
             var labels = Descendants<TextBlock>(this).Select(x => x.Text).Concat(Descendants<TextBox>(this).Select(x => x.Text)).ToArray();
             if (labels.Any(x => secretCanaries.Any(x.Contains))) throw new InvalidOperationException("Secret leaked in list rendering.");
-            ShowEditor(null, "sable.text"); UpdateLayout();
+            ShowEditor(null, "sable.secret"); UpdateLayout();
             var fields = Descendants<TextBox>(Body).ToList();
-            fields.Single(x => System.Windows.Automation.AutomationProperties.GetName(x) == "Label · optional").Text = "View-save fixture";
-            fields.Single(x => System.Windows.Automation.AutomationProperties.GetName(x) == "Text").Text = "First line\nSecond line";
+            fields.Single(x => System.Windows.Automation.AutomationProperties.GetName(x) == "Label").Text = "View-save fixture";
+            ((MaskedSecretBox)fields.Single(x => System.Windows.Automation.AutomationProperties.GetName(x) == "Secret value")).Password = "First line\nSecond line";
             await Render("12-new-entry");
             CheckView(!Descendants<ComboBox>(Body).Any(c => c.IsVisible), "New entry uses type buttons instead of a dropdown");
             ShowEditor(null, "sable.login"); UpdateLayout();
@@ -185,15 +210,15 @@ public partial class MainWindow
             CheckView(Descendants<RadioButton>(Body).Single(r => r.IsChecked == true && r.GroupName.StartsWith("entry-type-")).Content as string == "Login", "Exactly the selected entry type is marked active");
             ShowEditor(null, "sable.secret"); UpdateLayout();
             CheckView(Descendants<TextBox>(Body).Single(x => System.Windows.Automation.AutomationProperties.GetName(x) == "Label").Text == "View-save fixture", "Switching to secret preserves the entry name");
-            ShowEditor(null, "sable.text"); UpdateLayout();
-            CheckView(Descendants<TextBox>(Body).Single(x => System.Windows.Automation.AutomationProperties.GetName(x) == "Text").Text == "First line\nSecond line", "Switching entry types preserves unfinished drafts");
+            ShowEditor(null, "sable.secret"); UpdateLayout();
+            CheckView(Descendants<MaskedSecretBox>(Body).Single(x => System.Windows.Automation.AutomationProperties.GetName(x) == "Secret value").Password == "First line\nSecond line", "Switching entry types preserves unfinished drafts");
             CheckView(PressEnter(), "Enter saves a multiline entry through the shared page action");
             if (!vault.Document!.Items.Any(i => i.Label == "View-save fixture" && i.Field("text") == "First line\nSecond line")) throw new InvalidOperationException("View save did not persist the multiline entry.");
             search = "View-save fixture"; ShowList();
             if (entryList!.Items.Count != 1) throw new InvalidOperationException("Search did not filter the list.");
             search = "";
             vault.Mutate(d => d.Settings.DisabledModules.Add("sable.secret")); ShowList();
-            if (entryList!.Items.Cast<RowModel>().Single(r => r.Item.ContentType == "sable.secret").Available) throw new InvalidOperationException("Disabled module remained available.");
+            if (entryList!.Items.Cast<RowModel>().Any(r => r.Item.ContentType == "sable.secret" && r.Available)) throw new InvalidOperationException("Disabled module remained available.");
             vault.Mutate(d => d.Settings.DisabledModules.Clear());
             ShowAppearanceSettings(); UpdateLayout(); await Render("13-shortcut-recorder");
             CheckView(Descendants<Button>(Body).Any(b => b.ToolTip as string == "Record a shortcut") && !Descendants<TextBox>(Body).Any(), "Shortcut setting uses a record control");
@@ -209,6 +234,12 @@ public partial class MainWindow
             ForceLock("Locked"); await Render("08-locked");
             if (vault.Document is not null || entryList is not null || session.IsUnlocked) throw new InvalidOperationException("Lock retained active document or list references.");
             CheckView(screen == "pin" && quickUnlock?.Available == true, "Lock retains only a PIN ticket and shows typed PIN input");
+            Activate(); FocusLockInput(); await Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            CheckView(Descendants<PasswordBox>(Body).Single().IsKeyboardFocused, "Locking an active panel focuses the PIN immediately");
+            Hide(); ToggleVisibility(); await Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            CheckView(Descendants<PasswordBox>(Body).Single().IsKeyboardFocused, "Opening a locked panel through the shortcut path restores PIN keyboard focus");
+            pageSubmit!.Focus(); ToggleVisibility(); await Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            CheckView(IsVisible && Descendants<PasswordBox>(Body).Single().IsKeyboardFocused, "Shortcut on an already visible locked panel focuses the PIN instead of hiding");
             CheckView(!Descendants<System.Windows.Controls.Primitives.UniformGrid>(Body).Any() && !Descendants<Button>(Body).Any(b => b.Content as string == "Number pad"), "PIN screen has no number pad");
             var centered = Descendants<StackPanel>(Body).First();
             CheckView(centered.VerticalAlignment == VerticalAlignment.Center && Descendants<TextBlock>(Body).Any(t => t.Text == "Locked"), "Locked screen is centered and explicitly marked locked");
@@ -368,10 +399,11 @@ public partial class MainWindow
             advancedSwitch.IsChecked = true; advancedSwitch.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent)); UpdateLayout();
             CheckView(FindParent<ScrollViewer>(advancedSwitch) is null && !Descendants<Button>(Body).Any(b => b.Content as string == "Advanced"), "Advanced is a fixed header switch, separate from content type tabs");
             await Render("44-advanced-switch");
+            MaskedSecretBox NamedSecret() => LogicalDescendants(Body).OfType<MaskedSecretBox>().Single(t => System.Windows.Automation.AutomationProperties.GetName(t) == "Secret value");
             TextBox NamedInput(string name) => LogicalDescendants(Body).OfType<TextBox>().Single(t => System.Windows.Automation.AutomationProperties.GetName(t) == name);
             CheckView(advancedEditor && screen == "editor", "Advanced button opens the advanced entry editor");
-            NamedInput("Label · optional").Text = "Custom note";
-            NamedInput("Text").Text = "copy only this value";
+            NamedInput("Label").Text = "Custom note";
+            NamedSecret().Password = "copy only this value";
             Descendants<Button>(Body).Single(b => System.Windows.Automation.AutomationProperties.GetName(b) == "Entry color sage").RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
             await Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle); UpdateLayout();
             var initialKind = LogicalDescendants(Body).OfType<ComboBox>().Single();
@@ -385,10 +417,10 @@ public partial class MainWindow
             Button TestButton() => Descendants<Button>(Body).Single(b => b.Content as string == "Test action");
             void ClickTest() => TestButton().RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
             CheckView(pageSubmit!.Content as string == "Save entry" && pageSubmit.Opacity < .5, "Untested actions keep Save entry named consistently and dimmed");
-            PressEnter(NamedInput("Text"));
+            PressEnter(NamedSecret());
             CheckView(launchCount == 0 && TestButton().RenderTransform is TranslateTransform && screen == "editor", "Pressing dimmed Save shakes Test action without launching or saving");
             var pathInput = NamedInput("Action target or script"); ClickTest(); UpdateLayout();
-            CheckView(pathInput.RenderTransform is TranslateTransform && NamedInput("Label · optional").RenderTransform is not TranslateTransform && launchCount == 0, "Missing action path shakes the path field and prevents launch");
+            CheckView(pathInput.RenderTransform is TranslateTransform && NamedInput("Label").RenderTransform is not TranslateTransform && launchCount == 0, "Missing action path shakes the path field and prevents launch");
             ClickTest(); UpdateLayout();
             CheckView(!Descendants<TextBlock>(Body).Any(t => t.Text == "Add a destination or script." && t.IsVisible), "First two field failures show animation without inline error text");
             ClickTest(); UpdateLayout();
@@ -436,8 +468,8 @@ public partial class MainWindow
             CheckView(pageSubmit!.IsVisible && FindParent<ScrollViewer>(pageSubmit) is null, "Advanced entry Save remains fixed outside the scrolling options");
             ShowEditor(null, "sable.login"); UpdateLayout();
             CheckView(NamedInput("Action target or script").Text == "Write-Output 'fictional-action'", "Changing content type preserves advanced color and action drafts");
-            ShowEditor(null, "sable.text"); UpdateLayout();
-            CheckView(NamedInput("Text").Text == "copy only this value", "Changing type back preserves the text draft");
+            ShowEditor(null, "sable.secret"); UpdateLayout();
+            CheckView(NamedSecret().Password == "copy only this value", "Changing type back preserves the text draft");
             previewActionLaunch = _ => throw new System.ComponentModel.Win32Exception("Fixture launch failed.");
             ClickTest();
             CheckView(pageSubmit!.Opacity < .5 && launchCount == 0 && NamedInput("Action target or script").RenderTransform is TranslateTransform, "A failed launch keeps Save dimmed and marks the action field");
@@ -448,7 +480,7 @@ public partial class MainWindow
             CheckView(pageSubmit!.Opacity < .5 && pageSubmit.Content as string == "Save entry", "Changing a tested script dims Save again");
             NamedInput("Action target or script").Text = "Write-Output 'fictional-action'";
             CheckView(pageSubmit.Opacity == 1, "Unchanged tested action does not require a redundant test");
-            CheckView(PressEnter(NamedInput("Text")), "Enter saves the tested advanced entry");
+            CheckView(PressEnter(NamedSecret()), "Enter saves the tested advanced entry");
             var custom = vault.Document.Items.Single(i => i.Label == "Custom note");
             CheckView(custom.Advanced is { Color: "sage", Action.Kind: "powershell" } && custom.FolderId == folder, "Advanced save persists color, action and current folder");
             entryList!.ScrollIntoView(entryList.Items.Cast<RowModel>().Single(r => r.Item.Id == custom.Id)); await Render("40-advanced-row");
@@ -503,9 +535,10 @@ public partial class MainWindow
             CheckView(WindowsSettingsCatalog.Search(catalog, "microphone privacy").Any(c => c.Target == "ms-settings:privacy-microphone") && WindowsSettingsCatalog.Search(catalog, "wifi").Any(c => c.Target == "ms-settings:network-wifi"), "Settings search accepts multiword and alternate keyword queries");
             CheckView(catalog.Select(c => c.Target).Distinct().Count() == catalog.Count && catalog.All(c => EntryActions.Prepare(new EntryAction { Kind = "windows", Target = c.Target }) is not null), "Every built-in destination has a unique valid Windows launch plan");
             ShowEditor(advanced: false); UpdateLayout();
-            NamedInput("Text").Text = "ordinary colored text";
+            NamedInput("Label").Text = "Colored secret";
+            NamedSecret().Password = "ordinary colored text";
             Descendants<Button>(Body).Single(b => System.Windows.Automation.AutomationProperties.GetName(b) == "Entry color blue").RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
-            PressEnter(NamedInput("Text"));
+            PressEnter(NamedSecret());
             var colored = vault.Document.Items.Single(i => i.Field("text") == "ordinary colored text");
             CheckView(colored.Advanced is { Color: "blue", Action: null }, "Ordinary entries save their color without enabling Advanced");
             ShowEditor(colored); UpdateLayout();
@@ -585,8 +618,8 @@ public partial class MainWindow
             PressEnter(NamedInput("Label"));
             var runOnlySecret = vault.Document.Items.Single(i => i.Id == secretAction.Id); ReviewEntryAction(runOnlySecret);
             CheckView(!runOnlySecret.Advanced!.Action!.CopyOnRun && ((PreviewClipboard)clipboard).LastText == clipboardBeforeRunOnly, "Selecting Run disables copying while preserving the secret action");
-            ShowList(); ShowEditor(null, "sable.text", true); UpdateLayout();
-            NamedInput("Label · optional").Text = "Text run and copy fixture"; NamedInput("Text").Text = "ordinary-copy-canary";
+            ShowList(); ShowEditor(null, "sable.secret", true); UpdateLayout();
+            NamedInput("Label").Text = "Text run and copy fixture"; NamedSecret().Password = "ordinary-copy-canary";
             var textKind = LogicalDescendants(Body).OfType<ComboBox>().Single(); textKind.SelectedItem = "CMD";
             NamedInput("Action target or script").Text = "echo terminal-fixture";
             var keepTerminal = LogicalDescendants(Body).OfType<CheckBox>().Single(c => c.Content is TextBlock { Text: "Keep terminal open when finished" });
@@ -597,9 +630,9 @@ public partial class MainWindow
             var testFooter = Descendants<Button>(Body).Single(b => b.Content as string == "Test action");
             CheckView(testFooter.ActualHeight == pageSubmit!.ActualHeight && Math.Abs(testFooter.ActualWidth * 2 - pageSubmit.ActualWidth) <= 2 && Math.Abs(testFooter.TranslatePoint(new Point(), Body).Y - pageSubmit.TranslatePoint(new Point(), Body).Y) < .1, "Test action uses one third and Save two thirds while sharing height and vertical alignment");
             await Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle); UpdateLayout();
-            var editorScroll = FindParent<ScrollViewer>(NamedInput("Text"))!; editorScroll.ScrollToEnd(); await Render("51-action-options");
+            var editorScroll = FindParent<ScrollViewer>(NamedSecret())!; editorScroll.ScrollToEnd(); await Render("51-action-options");
             keepTerminal.IsChecked = false; CheckView(pageSubmit!.Opacity < .5, "Changing terminal lifetime invalidates the tested action"); keepTerminal.IsChecked = true;
-            PressEnter(NamedInput("Text"));
+            PressEnter(NamedSecret());
             var textAction = vault.Document.Items.Single(i => i.Label == "Text run and copy fixture");
             CheckView(textAction.Advanced!.Action is { CopyOnRun: true, KeepTerminalOpen: true }, "Text entries save Run and copy and keep-terminal settings");
             var textRow = entryList!.Items.Cast<RowModel>().Single(r => r.Item.Id == textAction.Id);
@@ -610,7 +643,7 @@ public partial class MainWindow
             await Render("52-context-action", actionMenu);
             var contextAction = actionMenu.Items.OfType<MenuItem>().Single(i => i.Header as string == "Run & copy"); actionMenu.IsOpen = false;
             contextAction.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent)); await Task.Delay(800);
-            CheckView(((PreviewClipboard)clipboard).LastText == "ordinary-copy-canary" && !((PreviewClipboard)clipboard).LastSensitive, "Right-click Run and copy launches then copies ordinary text with its normal clipboard policy");
+            CheckView(((PreviewClipboard)clipboard).LastText == "ordinary-copy-canary" && ((PreviewClipboard)clipboard).LastSensitive, "Right-click Run and copy keeps the unified secret clipboard policy");
             ShowEditor(textAction); UpdateLayout(); textKind = LogicalDescendants(Body).OfType<ComboBox>().Single(); textKind.IsDropDownOpen = true;
             await Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle); UpdateLayout();
             var actionPopup = (System.Windows.Controls.Primitives.Popup)textKind.Template.FindName("PART_Popup", textKind);
@@ -827,8 +860,8 @@ public partial class MainWindow
             SmoothScrolling.Wheel(smoothPage, -120); SmoothScrolling.Wheel(smoothPage, 120);
             await Task.Delay(220); UpdateLayout();
             CheckView(smoothPage.VerticalOffset < endOffset, "Reversing the wheel reverses smoothly without a queued downward jump");
-            ShowList(); ShowEditor(null, "sable.text"); UpdateLayout();
-            var multilineField = NamedInput("Text"); multilineField.Text = string.Join("\n", Enumerable.Range(0, 60).Select(i => "Scrollable fixture line " + i));
+            ShowList(); ShowEditor(null, "sable.secret"); UpdateLayout();
+            var multilineField = NamedSecret(); multilineField.Password = string.Join("\n", Enumerable.Range(0, 60).Select(i => "Scrollable fixture line " + i));
             await Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle); UpdateLayout();
             var outerScroller = Descendants<ScrollViewer>(Body).First();
             var innerScroller = Descendants<ScrollViewer>(multilineField).First();
@@ -850,22 +883,22 @@ public partial class MainWindow
             CheckView(Descendants<TextBlock>(menu).Where(t => t.Name == "Check").All(t => t.Visibility == Visibility.Collapsed), "Ordinary context actions have no checkbox gutter");
             await Render("21-context-menu", menu);
             // Local clipboard fixture: no access to the user's actual clipboard.
-            ShowList(); ShowEditor(null, "sable.text"); UpdateLayout();
-            NamedInput("Label · optional").Text = "Formatted email fixture";
-            var formattedBox = NamedInput("Text");
+            ShowList(); ShowEditor(null, "sable.secret"); UpdateLayout();
+            NamedInput("Label").Text = "Formatted email fixture";
+            var formattedBox = NamedSecret();
             var richData = new DataObject(); richData.SetText("Hello café\nCell one\tCell two", TextDataFormat.UnicodeText);
             richData.SetData(DataFormats.Html, FormattedText.ClipboardHtml("<b>Hello café</b><table><tr><td>Cell one</td><td><i>Cell two</i></td></tr></table><script>alert(1)</script><img src='https://invalid.example/tracker'><span onclick='bad()' style='font-weight:bold;background-image:url(https://invalid.example/x)'>end</span>"), false);
             formattedBox.SelectAll(); formattedBox.RaiseEvent(new DataObjectPastingEventArgs(richData, false, DataFormats.Html));
             var richDraft = captureEditorDraft!();
-            CheckView(System.Net.WebUtility.HtmlDecode(richDraft.Field("html")).Contains("<b>Hello café</b>") && richDraft.Field("html").Contains("<table>") && formattedBox.Text.StartsWith("Hello café"), "Formatted paste retains bold, Unicode and tables with plain-text fallback");
+            CheckView(System.Net.WebUtility.HtmlDecode(richDraft.Field("html")).Contains("<b>Hello café</b>") && richDraft.Field("html").Contains("<table>") && formattedBox.Password.StartsWith("Hello café") && !formattedBox.Text.Contains("café"), "Formatted secret paste retains bold, Unicode and tables while the editor stays masked");
             CheckView(!richDraft.Field("html").Contains("script") && !richDraft.Field("html").Contains("onclick") && !richDraft.Field("html").Contains("invalid.example"), "Formatted paste strips scripts, event handlers, tracking images and CSS URLs");
             PressEnter(formattedBox);
             var richSaved = vault.Document!.Items.Single(i => i.Label == "Formatted email fixture");
-            var formattedCopy = content.Find("sable.text")!.Copy(richSaved, "Copy");
+            var formattedCopy = content.Find("sable.secret")!.Copy(richSaved, "Copy");
             var outputData = new DataObject(); new FormattedClipboardWriter().Write(outputData, formattedCopy.Data);
             CheckView(outputData.GetDataPresent(DataFormats.Html, false) && outputData.GetText().Contains("café") && System.Net.WebUtility.HtmlDecode(FormattedText.ReadClipboardHtml((string)outputData.GetData(DataFormats.Html, false)!)).Contains("<b>Hello café</b>"), "Saved Text entry copies both CF_HTML and Unicode text with correct byte offsets");
-            CheckView(!content.Find("sable.secret")!.Copy(new VaultItem { Payload = richSaved.Payload, IsSensitive = true }, "Copy").MediaType.Contains("formatted"), "Secret entries always use plain-text copying even if imported with HTML metadata");
-            ShowEditor(richSaved); UpdateLayout(); NamedInput("Text").Text = "Changed plain text";
+            CheckView(formattedCopy.Sensitive, "Formatted secret copying retains secret clipboard protection");
+            ShowEditor(richSaved); UpdateLayout(); NamedSecret().Password = "Changed plain text";
             CheckView(captureEditorDraft!().Field("html") == "", "Editing plain text removes stale formatting rather than copying outdated content");
             var selectionHtml = FormattedText.ClipboardHtml("<b>excluded-before selected-value excluded-after</b>");
             var selectionStart = System.Text.Encoding.UTF8.GetByteCount(selectionHtml[..selectionHtml.IndexOf("selected-value", StringComparison.Ordinal)]);
@@ -906,6 +939,62 @@ public partial class MainWindow
             Change(d => d.Folders.AddRange([folderA, folderB, folderC, folderChild])); ShowList(); UpdateLayout();
             var folderData = new DataObject("SableLatch/folder-id", folderA.Id.ToString());
             CheckView(!OwnFolderDrag(folderData, out _), "External folder-ID drags cannot move vault folders");
+            var gestureChip = folderChips!.Children.OfType<Button>().Single(b => b.Tag is Guid id && id == folderA.Id);
+            var pointer = new Point(); var pressed = true; var dragStarts = 0; var initialModalDepth = modalDepth;
+            previewFolderPointer = _ => pointer; previewFolderPressed = _ => pressed;
+            previewFolderDrag = (source, data) =>
+            {
+                dragStarts++;
+                CheckView(ReferenceEquals(source, gestureChip) && OwnFolderDrag(data, out var dragged) && dragged == folderA.Id
+                    && modalDepth == initialModalDepth + 1 && Mouse.Captured is null,
+                    "Routed folder gesture starts an owned modal drag and releases button capture");
+            };
+            void FolderDown()
+            {
+                pointer = new Point();
+                gestureChip.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left)
+                    { RoutedEvent = UIElement.PreviewMouseLeftButtonDownEvent });
+            }
+            void FolderMove(double distance)
+            {
+                pointer = new Point(distance, 0);
+                // This is the event state produced by ButtonBase while the button is pressed.
+                gestureChip.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, Environment.TickCount)
+                    { RoutedEvent = Mouse.MouseMoveEvent, Handled = true });
+            }
+            var threshold = SystemParameters.MinimumHorizontalDragDistance + 2;
+            try
+            {
+                FolderDown(); FolderMove(1);
+                CheckView(dragStarts == 0, "Folder movement below the system drag threshold remains a click");
+                gestureChip.CaptureMouse(); FolderMove(threshold);
+                CheckView(dragStarts == 1 && activeDragFolder is null && modalDepth == initialModalDepth,
+                    "Handled button movement starts a folder drag and resets modal ownership afterward");
+                FolderMove(threshold + 5);
+                CheckView(dragStarts == 1, "One held folder gesture cannot start two drag loops");
+                FolderDown(); pressed = false; FolderMove(threshold); pressed = true;
+                CheckView(dragStarts == 1, "Released mouse movement cannot start a folder drag");
+                FolderDown(); gestureChip.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left)
+                    { RoutedEvent = UIElement.PreviewMouseLeftButtonUpEvent }); FolderMove(threshold);
+                CheckView(dragStarts == 1, "Mouse-up cancels the pending folder gesture");
+                FolderDown(); gestureChip.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, Environment.TickCount)
+                    { RoutedEvent = Mouse.LostMouseCaptureEvent }); FolderMove(threshold);
+                CheckView(dragStarts == 1, "Lost capture cancels the pending folder gesture");
+                FolderDown(); busy = true; FolderMove(threshold); busy = false;
+                CheckView(dragStarts == 1, "Busy state prevents starting a pending folder drag");
+                previewFolderDrag = (_, data) => { CheckView(OwnFolderDrag(data, out var dragged) && PlaceFolder(dragged, 0), "Routed folder drag can reorder siblings"); };
+                FolderDown(); FolderMove(threshold);
+                CheckView(vault.Document.Folders.Where(f => f.ParentId is null).OrderBy(f => f.Order).First().Id == folderA.Id,
+                    "Folder gesture reorder persists the new sibling order");
+                gestureChip = folderChips!.Children.OfType<Button>().Single(b => b.Tag is Guid id && id == folderA.Id);
+                previewFolderDrag = (_, data) => { CheckView(OwnFolderDrag(data, out var dragged) && MoveFolderInto(dragged, folderB.Id), "Routed folder drag can nest into another folder"); };
+                FolderDown(); FolderMove(threshold);
+                CheckView(vault.Document.Folders.Single(f => f.Id == folderA.Id).ParentId == folderB.Id
+                    && vault.Document.Folders.Single(f => f.Id == folderChild.Id).ParentId == folderA.Id,
+                    "Folder gesture nesting preserves descendants");
+                MoveFolderInto(folderA.Id, null); UpdateLayout();
+            }
+            finally { previewFolderPointer = null; previewFolderPressed = null; previewFolderDrag = null; busy = false; Mouse.Capture(null); }
             activeDragFolder = folderA.Id;
             CheckView(OwnFolderDrag(folderData, out _) && !OwnFolderDrag(new DataObject("SableLatch/folder-id", folderB.Id.ToString()), out _), "Folder dragging accepts only the active source");
             var folderChip = folderChips!.Children.OfType<Button>().Single(b => b.Tag is Guid id && id == folderB.Id);
@@ -926,7 +1015,7 @@ public partial class MainWindow
             ShowFolderEditor(vault.Document.Folders.Single(f => f.Id == folderA.Id)); UpdateLayout();
             Descendants<ComboBox>(Body).Single().SelectedItem = "All items (root)"; PressEnter();
             CheckView(vault.Document.Folders.Single(f => f.Id == folderA.Id).ParentId is null, "Edit folder can change its parent");
-            var originalEntry = vault.Document.Items.First(i => i.ContentType == "sable.text" && i.DeletedAt is null && i.Advanced?.Action?.Enabled != true);
+            var originalEntry = vault.Document.Items.First(i => i.ContentType == "sable.secret" && i.DeletedAt is null && i.Advanced?.Action?.Enabled != true);
             var originalPayload = originalEntry.Payload.GetRawText(); var beforeDuplicates = vault.Document.Items.Count;
             DuplicateEntry(originalEntry); UpdateLayout(); var draftId = captureEditorDraft!().Id;
             CheckView(screen == "editor" && editorIsDuplicate && draftId != originalEntry.Id && vault.Document.Items.Count == beforeDuplicates, "Duplicate opens an independent unsaved editor immediately");
@@ -953,6 +1042,7 @@ public partial class MainWindow
             async Task Render(string name, FrameworkElement? element = null)
             {
                 await Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+                if (screen is "setup" or "recovery-key" or "onboarding-ready") await Task.Delay(300);
                 UpdateLayout();
                 var target = element ?? this;
                 var bitmap = new RenderTargetBitmap(Math.Max(1, (int)target.ActualWidth), Math.Max(1, (int)target.ActualHeight), 96, 96, PixelFormats.Pbgra32); bitmap.Render(target);

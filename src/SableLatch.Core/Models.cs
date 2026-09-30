@@ -13,10 +13,10 @@ public static class Codec
 public sealed class VaultItem
 {
     public Guid Id { get; set; } = Guid.NewGuid();
-    public string ContentType { get; set; } = "sable.text";
+    public string ContentType { get; set; } = "sable.secret";
     public int ContentVersion { get; set; } = 1;
     public string Label { get; set; } = "";
-    public bool IsSensitive { get; set; }
+    public bool IsSensitive { get; set; } = true;
     public AdvancedEntry? Advanced { get; set; }
     public Guid? FolderId { get; set; }
     public int Order { get; set; }
@@ -104,6 +104,17 @@ public sealed class VaultDocument
 
 public static class ItemOperations
 {
+    // Keep the old storage identifier readable, but expose one protected value type.
+    // Never derive a label from the value: previously unlabelled text may be private.
+    public static void UpgradeTextEntries(VaultDocument doc)
+    {
+        foreach (var item in doc.Items.Where(i => i.ContentType == "sable.text"))
+        {
+            item.ContentType = "sable.secret"; item.IsSensitive = true;
+            if (string.IsNullOrWhiteSpace(item.Label)) item.Label = "Saved secret";
+        }
+        doc.Settings.DisabledModules.RemoveAll(id => id == "sable.text");
+    }
     public static VaultItem DuplicateDraft(VaultDocument doc, Guid id)
     {
         var source = doc.Items.Single(i => i.Id == id && i.DeletedAt is null);

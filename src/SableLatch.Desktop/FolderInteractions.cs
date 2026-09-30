@@ -20,6 +20,12 @@ public partial class MainWindow
     private Guid? activeDragFolder;
     private FolderInsertionMarker? folderMarker;
     private AdornerLayer? folderMarkerLayer;
+#if DEBUG
+    // Preview harness supplies pointer state and replaces only the native modal drag loop.
+    private Func<MouseEventArgs, Point>? previewFolderPointer;
+    private Func<MouseEventArgs, bool>? previewFolderPressed;
+    private Action<Button, IDataObject>? previewFolderDrag;
+#endif
 
     private bool OwnFolderDrag(IDataObject data, out Guid id)
     {
@@ -32,20 +38,45 @@ public partial class MainWindow
     private void AttachFolderDrag(Button chip, Guid id)
     {
         Point start = default; var pending = false;
-        chip.PreviewMouseLeftButtonDown += (_, e) => { pending = vault.IsUnlocked && !busy; start = e.GetPosition(this); };
-        chip.PreviewMouseLeftButtonUp += (_, _) => pending = false;
-        chip.MouseMove += (_, e) =>
+        Point Position(MouseEventArgs e)
         {
-            if (!pending || e.LeftButton != MouseButtonState.Pressed) { pending = false; return; }
-            var point = e.GetPosition(this);
+#if DEBUG
+            if (previewFolderPointer is not null) return previewFolderPointer(e);
+#endif
+            return e.GetPosition(this);
+        }
+        bool Pressed(MouseEventArgs e)
+        {
+#if DEBUG
+            if (previewFolderPressed is not null) return previewFolderPressed(e);
+#endif
+            return e.LeftButton == MouseButtonState.Pressed;
+        }
+        chip.PreviewMouseLeftButtonDown += (_, e) => { pending = vault.IsUnlocked && !busy && screen == "list"; start = Position(e); };
+        chip.PreviewMouseLeftButtonUp += (_, _) => pending = false;
+        chip.LostMouseCapture += (_, _) => pending = false;
+        // ButtonBase handles MouseMove while pressed. A normal event subscription never
+        // receives that movement; listen even when the button has already handled it.
+        chip.AddHandler(Mouse.MouseMoveEvent, new MouseEventHandler((_, e) =>
+        {
+            if (!pending || !Pressed(e)) { pending = false; return; }
+            var point = Position(e);
             if (Math.Abs(point.X - start.X) < SystemParameters.MinimumHorizontalDragDistance && Math.Abs(point.Y - start.Y) < SystemParameters.MinimumVerticalDragDistance) return;
             pending = false; if (!vault.IsUnlocked || busy || screen != "list") return;
             activeDragFolder = id; modalDepth++; Mouse.Capture(null); e.Handled = true;
             QueryContinueDragEventHandler cancel = (_, args) => { if (!vault.IsUnlocked || screen != "list") args.Action = DragAction.Cancel; };
             chip.QueryContinueDrag += cancel;
-            try { DragDrop.DoDragDrop(chip, new DataObject("SableLatch/folder-id", id.ToString()), DragDropEffects.Move); }
+            try
+            {
+                var data = new DataObject("SableLatch/folder-id", id.ToString());
+#if DEBUG
+                if (previewFolderDrag is not null) previewFolderDrag(chip, data);
+                else
+#endif
+                DragDrop.DoDragDrop(chip, data, DragDropEffects.Move);
+            }
             finally { chip.QueryContinueDrag -= cancel; activeDragFolder = null; modalDepth--; ClearFolderMarker(); }
-        };
+        }), handledEventsToo: true);
         chip.PreviewKeyDown += (_, e) =>
         {
             if (!vault.IsUnlocked || busy || Keyboard.Modifiers != ModifierKeys.Alt || e.Key is not (Key.Left or Key.Right)) return;

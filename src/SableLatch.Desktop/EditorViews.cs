@@ -21,6 +21,7 @@ public partial class MainWindow
     private void ShowEditor(VaultItem? existing = null, string? selectedType = null, bool? advanced = null)
     {
         if (!vault.IsUnlocked) return;
+        if (selectedType == "sable.text") selectedType = "sable.secret"; // Old callers/archives.
         if (screen == "editor" && editorIsNew && existing is null && captureEditorDraft is not null)
         {
             var draft = captureEditorDraft(); editorDrafts[draft.ContentType] = draft; advancedDraft = draft.Advanced; editorSharedLabel = draft.Label;
@@ -44,6 +45,7 @@ public partial class MainWindow
             {
                 var choice = new RadioButton { Content = option.Descriptor.Name, GroupName = group, Style = (Style)FindResource("SegmentChoice"), IsChecked = option.Descriptor.Id == type };
                 System.Windows.Automation.AutomationProperties.SetName(choice, "Entry type " + option.Descriptor.Name);
+                choice.ToolTip = option.Descriptor.Id == "sable.secret" ? "Keep any text private. Click its row to copy; Shift+Enter adds lines." : "Keep a username and password together. Click once for the username, then again for the password.";
                 choice.Click += (_, _) => { if (existing is null && option.Descriptor.Id != type) ShowEditor(null, option.Descriptor.Id); };
                 picker.Children.Add(choice);
             }
@@ -72,7 +74,8 @@ public partial class MainWindow
     {
         var stack = new StackPanel();
         var label = Input(stack, provider.Descriptor.Sensitive ? "Label" : "Label · optional", editorIsNew ? editorSharedLabel : existing?.Label ?? "");
-        var formattedHtml = provider.Descriptor.Id == "sable.text" ? existing?.Field("html") ?? "" : "";
+        var formattedHtml = provider.Descriptor.Id is "sable.text" or "sable.secret" ? existing?.Field("html") ?? "" : "";
+        var formattedPlain = existing?.Field("text") ?? "";
         var readers = new Dictionary<string, Func<string>>();
         var controls = new Dictionary<string, Control>();
         foreach (var field in provider.EditorFields)
@@ -105,6 +108,26 @@ public partial class MainWindow
                 System.Windows.Automation.AutomationProperties.SetName(eye, "Reveal " + field.Label); valueBox.Children.Add(eye);
                 readers[field.Key] = () => revealed.Visibility == Visibility.Visible ? revealed.Text : masked.Password;
                 controls[field.Key] = masked;
+                if (provider.Descriptor.Id == "sable.secret" && field.Key == "text")
+                {
+                    var note = Text("Formatting kept", 10, true); note.ToolTip = "Copies the original formatting to apps that support it. Editing the value uses plain text.";
+                    stack.Children.Add(note);
+                    void UpdateNote() => note.Visibility = formattedHtml.Length > 0 && readers[field.Key]() == formattedPlain ? Visibility.Visible : Visibility.Collapsed;
+                    void ReadFormatting(IDataObject data, string plain)
+                    {
+                        formattedHtml = ""; formattedPlain = plain;
+                        try { if (data.GetData(DataFormats.Html, false) is string html) formattedHtml = FormattedText.ReadClipboardHtml(html); }
+                        catch (Exception ex) when (ex is InvalidDataException or ArgumentException or System.Text.DecoderFallbackException) { /* Keep the successfully pasted plain value. */ }
+                        UpdateNote();
+                    }
+                    masked.WholeValuePasted = data => ReadFormatting(data, masked.Password);
+                    DataObject.AddPastingHandler(revealed, (_, args) =>
+                    {
+                        if (revealed.Text.Length != revealed.SelectionLength || args.DataObject.GetData(DataFormats.UnicodeText, true) is not string plain || plain.Length > 100_000) return;
+                        args.CancelCommand(); revealed.Text = plain; ReadFormatting(args.DataObject, plain); revealed.CaretIndex = plain.Length;
+                    });
+                    masked.TextChanged += (_, _) => UpdateNote(); revealed.TextChanged += (_, _) => UpdateNote(); UpdateNote();
+                }
             }
             else
             {
@@ -142,7 +165,7 @@ public partial class MainWindow
             if (provider is DeclarativeProvider module) item.ModuleSchema = module.Package.Manifest.SchemaFingerprint();
             item.Advanced = advancedState.Capture();
             var values = readers.ToDictionary(x => x.Key, x => x.Value());
-            if (provider.Descriptor.Id == "sable.text" && formattedHtml.Length > 0) values["html"] = formattedHtml;
+            if (provider.Descriptor.Id is "sable.text" or "sable.secret" && formattedHtml.Length > 0 && values.GetValueOrDefault("text") == formattedPlain) values["html"] = formattedHtml;
             item.Payload = JsonSerializer.SerializeToElement(values); return item;
         }
         captureEditorDraft = Capture;

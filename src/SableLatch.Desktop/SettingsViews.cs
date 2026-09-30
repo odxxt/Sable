@@ -100,7 +100,7 @@ public partial class MainWindow
     private void ShowDeletionSettings()
     {
         var s = vault.Document!.Settings; var stack = Form("Trash & retention", "", "settings", parent: ShowAdvancedSettings);
-        var normal = Check(stack, "Move ordinary entries to encrypted Trash", s.TrashNormal);
+        var normal = Check(stack, "Move non-sensitive module entries to Trash", s.TrashNormal);
         var secrets = Check(stack, "Move secrets and logins to encrypted Trash", s.TrashSecrets);
         var expire = Check(stack, "Automatically remove expired trashed entries", s.ExpireTrash);
         var days = Input(stack, "Trash retention · days (1–365)", s.TrashDays.ToString());
@@ -179,7 +179,7 @@ public partial class MainWindow
     private void OpenAbout(object sender, RoutedEventArgs e)
     {
         var stack = Form("SableLatch.", "A little space. Only yours.", "about", parent: ShowSettings);
-        stack.Children.Add(Text("VERSION 0.8.5 · PREVIEW", 11, true));
+        stack.Children.Add(Text("VERSION 0.8.7 · PREVIEW", 11, true));
         stack.Children.Add(Text("Portable for Windows 10 and 11 (64-bit). Built with native Windows UI, without a browser engine or background network service."));
         stack.Children.Add(Text("Local encryption: AES-256-GCM\nPassword protection: Argon2id\nDevice protection: Windows DPAPI\nBackup wrapping: RSA-OAEP + AES-GCM", 12, true));
         stack.Children.Add(Text("This first build has automated checks, but has not received an independent security audit. An unlocked or compromised computer can expose displayed and copied data.", 11, true));

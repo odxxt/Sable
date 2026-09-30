@@ -82,7 +82,7 @@ public partial class MainWindow
         grid.RowDefinitions.Add(new() { Height = GridLength.Auto }); grid.RowDefinitions.Add(new() { Height = GridLength.Auto }); grid.RowDefinitions.Add(new() { Height = new GridLength(1, GridUnitType.Star) }); grid.RowDefinitions.Add(new() { Height = GridLength.Auto });
         grid.VerticalAlignment = VerticalAlignment.Stretch;
         SetBody(grid, "list");
-        var find = new TextBox { Text = search, Height = 36, ToolTip = "Search labels and ordinary text across all folders" };
+        var find = new TextBox { Text = search, Height = 36, ToolTip = "Search entry labels across all folders" };
         System.Windows.Automation.AutomationProperties.SetName(find, "Search vault");
         find.Tag = "Search vault";
         var searchHost = new Grid { Margin = new Thickness(0, 0, 0, 8), Visibility = searchVisible ? Visibility.Visible : Visibility.Collapsed }; searchHost.Children.Add(find);

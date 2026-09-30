@@ -1,3 +1,16 @@
+# 0.8.7 — A warmer start and simpler entries
+
+- Guide first-time users through password, recovery key, optional PIN and first-secret creation. Add a small interactive welcome preview, clear progress, fixed Back/Next controls, contextual tooltips, reduced-motion-aware transitions and a completion screen. A first secret can be skipped; Back preserves the draft and the vault is created only at Finish.
+- Expose only Secret and Login as built-in entry choices. Upgrade legacy Text entries during unlock or the next write without changing their values, HTML, IDs, timestamps, folders, attachments or actions. Give previously unlabelled entries a neutral label. Secret clipboard, masking, search and Trash policy apply; unknown module payloads are unchanged.
+- Preserve sanitized HTML formatting in Secrets, including masked whole-value paste and plain-text fallback. Editing a value invalidates mismatched formatting. Keep the legacy text identifier as an internal compatibility reader only.
+- Restore keyboard focus on lock-screen creation, activation and tray/shortcut opening. On an already-visible locked panel, the shortcut focuses the PIN/password instead of hiding the window.
+
+# 0.8.6 — Folder drag initiation
+
+- Fix folder dragging never starting when WPF consumes mouse movement on a pressed folder button. Receive handled movement events, retain the system drag threshold, release capture before dragging and cancel pending gestures on lost capture.
+- Restore sibling reordering and dropping a folder into another folder, preserving descendants, insertion feedback and fixed-size success animation.
+- Extend the preview checks to exercise routed, already-handled mouse events and drag initiation, rather than testing only placement helpers. Keep browser sign-in as a researched proposal, not an implemented feature.
+
 # 0.8.5 — Native RDP, smoother organization and inline delete
 
 - Enable remote clipboard sharing for new and existing RDP entries. Remove the opt-in toggle and extra drive, device, audio, reconnection, cache and gateway restrictions; defer to native mstsc defaults and Windows/server policy.
