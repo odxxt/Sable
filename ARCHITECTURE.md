@@ -1,5 +1,15 @@
 # Architecture
 
+## Sable 0.9 additions
+
+`sable.shortcut` is a built-in provider with no value fields or copy actions. Its `EntryAction` uses existing host-owned preparation, testing and device approval. SSH/RDP remain signed declarative modules with encrypted fields; row activation now invokes their connection handlers. Secret/Login retain copying.
+
+`ShortcutTargets` is a bounded, OS-independent parser/matcher. `NetworkEntryAction` constructs fixed diagnostics from validated hosts/ports; arbitrary scripts never receive clipboard substitution. Matching requires explicit `SuggestFromClipboard`, which participates in the action consent fingerprint. A suggestion substitutes the target on a clone, leaving stored data unchanged. Reviewed execution rechecks the saved action.
+
+`ClipboardSuggestions` uses Windows notifications and a coalesced UI callback while the unlocked list is visible. It skips self-owned and protected clipboard formats and reads at most 1,026 bytes of Unicode text. Only the parsed target lives in the current UI; hiding, navigation and lock clear it. No clipboard history, network inference or polling is added.
+
+`TwoColumnPanel` implements pixel scrolling with a small visible tile buffer. Templates share existing entry models, handlers, menus and storage. Grid reorder uses tile-edge feedback and both-axis animation. Public branding/executable and catalog origin use Sable; legacy namespaces, crypto purposes and signed IDs remain compatible. `PortableData` prefers an existing `SableLatch-data` before creating `Sable-data`.
+
 ## Boundaries
 
 `SableLatch.Core` has no WPF, tray, registry, or clipboard dependency. It owns the versioned item schema, folder validation, deletion rules, session policy, authenticated encryption, storage transactions, encrypted attachments, backup envelopes, and provider contracts.
@@ -108,7 +118,9 @@ Secrets may carry an optional HTML field alongside their text value. The desktop
 
 ## Guided onboarding and unified secrets (0.8.7)
 
-`OnboardingViews` owns the step shell, brief page transitions, first-secret draft and completion screen. `SetupViews` composes password, hidden recovery-key and optional PIN steps into it. The vault is created only at final confirmation; skipping the first secret is explicit. Drafts survive Back without a plaintext draft file. Animations respect `ClientAreaAnimation`, finish within 260 ms and stop when their page unloads; no background renderer is added.
+`OnboardingViews` owns the three-step shell, brief page transitions and completion invitation. `SetupViews` composes password, hidden recovery-key and optional PIN steps. The vault is created at Finish. `FirstEntryTour` then attaches non-interactive tooltips to the real + menu and normal Secret editor; no duplicate secret form or fake copy exists. Its pending flag is encrypted in Preferences, defaults off for existing vaults and clears on a successful new-entry save or explicit Skip. Page changes and lock dispose the active tooltip. Setup drafts survive Back without a plaintext file. Animations respect `ClientAreaAnimation`, finish within 260 ms and stop when their page unloads; no background renderer is added.
+
+Version 0.8.8 configures an opaque, WindowChrome-rounded main HWND before source creation on Windows 10, preserving translucent WPF rendering on Windows 11. Display affinity is reapplied on visibility, pin and taskbar changes; exclusion falls back to WDA_MONITOR if necessary. The native result and readback are checked. Custom popup templates also use the OS-appropriate transparency mode; WPF-owned menus and tooltips request protection on opening. The Debug-only --preview-opaque flag exercises the main-window compatibility path without changing the production OS check.
 
 `ItemOperations.UpgradeTextEntries` maps the legacy `sable.text` identifier to `sable.secret` after authenticated document loading and before a validated commit. Payloads and IDs are preserved; unlabelled text receives a neutral label that never includes its value. The registry retains the old reader internally but omits it from enumerated choices and module settings. Imports use the normal commit path; backups use normal restore/unlock. On-disk changes remain encrypted and are persisted with the next write. No cryptographic format changes are required.
 

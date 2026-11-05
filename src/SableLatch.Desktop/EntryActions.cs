@@ -13,7 +13,7 @@ public interface IEntryActionHandler
 public static class EntryActions
 {
     private static readonly Dictionary<string, IEntryActionHandler> Handlers = new IEntryActionHandler[]
-    { new ApplicationEntryAction(), new WindowsEntryAction(), new WindowsEntryAction("control-panel"), new RunEntryAction(), new ScriptEntryAction("powershell"), new ScriptEntryAction("cmd") }.ToDictionary(h => h.Kind);
+    { new NetworkEntryAction("ping"), new NetworkEntryAction("tcp"), new NetworkEntryAction("lookup"), new FileEntryAction(), new ApplicationEntryAction(), new WindowsEntryAction(), new WindowsEntryAction("control-panel"), new RunEntryAction(), new ScriptEntryAction("powershell"), new ScriptEntryAction("cmd") }.ToDictionary(h => h.Kind);
     public static void Register(IEntryActionHandler handler)
     {
         if (string.IsNullOrWhiteSpace(handler.Kind) || handler.Kind.Length > 80) throw new ArgumentException("Invalid action kind.");
@@ -175,13 +175,19 @@ public partial class MainWindow
         var source = container is null ? new Button { DataContext = row } : Descendants<Button>(container).FirstOrDefault(b => b.Tag as string == "entry-action") ?? new Button { DataContext = row };
         await CopyEntry(item, item.ContentType == "sable.login" ? "Username" : "Copy", source);
     }
-    private async void ReviewEntryAction(VaultItem item)
+    private async void ReviewEntryAction(VaultItem item, ShortcutTarget? suggestedTarget = null)
     {
         if (!vault.IsUnlocked || modalDepth > 0) return;
         var saved = vault.Document!.Items.FirstOrDefault(i => i.Id == item.Id && i.DeletedAt is null);
         if (saved?.Advanced?.Action is not { Enabled: true } action || vault.Document.Settings.DisabledModules.Contains(saved.ContentType)) return;
         item = saved;
-        var firstRun = !actionApprovals.Contains(item.Id, action);
+        var configured = Codec.Clone(action);
+        if (suggestedTarget is not null)
+        {
+            if (saved.ContentType != "sable.shortcut" || !action.SuggestFromClipboard || !ShortcutTargets.Matches(action.Kind, suggestedTarget)) return;
+            action = Codec.Clone(action); action.Target = suggestedTarget.Display;
+        }
+        var firstRun = !actionApprovals.Contains(item.Id, configured);
         if (!action.VerifyEachTime && !firstRun) { if (LaunchEntryAction(action)) await CompleteEntryRun(item, action); return; }
         var snapshot = Codec.Clone(action); var startEpoch = epoch;
         var stack = Form("Run", "", "entry-action");
@@ -197,8 +203,8 @@ public partial class MainWindow
             try
             {
                 var current = vault.Document!.Items.FirstOrDefault(i => i.Id == item.Id && i.DeletedAt is null)?.Advanced?.Action;
-                if (current is null || !Codec.Encode(current).SequenceEqual(Codec.Encode(snapshot))) throw new InvalidOperationException("This action changed. Review it again.");
-                if (LaunchEntryAction(snapshot)) { RememberAction(item.Id, snapshot); await CompleteEntryRun(item, snapshot); }
+                if (current is null || !Codec.Encode(current).SequenceEqual(Codec.Encode(configured))) throw new InvalidOperationException("This action changed. Review it again.");
+                if (LaunchEntryAction(snapshot)) { RememberAction(item.Id, configured); await CompleteEntryRun(item, snapshot); }
             }
             catch (Exception ex) when (ex is InvalidOperationException or ArgumentException or System.ComponentModel.Win32Exception or IOException) { ShowError(ex.Message); }
         }, true);

@@ -46,7 +46,7 @@ public sealed class ContentRegistry
     public static ContentRegistry BuiltIns()
     {
         var r = new ContentRegistry();
-        r.Register(new TextProvider(false)); r.Register(new TextProvider(true)); r.Register(new LoginProvider());
+        r.Register(new TextProvider(false)); r.Register(new TextProvider(true)); r.Register(new LoginProvider()); r.Register(new ShortcutProvider());
         return r;
     }
 }

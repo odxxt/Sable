@@ -25,7 +25,7 @@ public sealed class WindowsDeviceProtector : IDeviceProtector
         {
             Marshal.Copy(bytes, 0, input.Data, bytes.Length); Marshal.Copy(entropyBytes, 0, entropy.Data, entropyBytes.Length);
             var ok = protect ? CryptProtectData(ref input, "SableLatch", ref entropy, IntPtr.Zero, IntPtr.Zero, 1, out output) : CryptUnprotectData(ref input, IntPtr.Zero, ref entropy, IntPtr.Zero, IntPtr.Zero, 1, out output);
-            if (!ok) throw new CryptographicException($"Windows device protection is unavailable (code {Marshal.GetLastWin32Error()}). Run SableLatch in your normal Windows user session. Use recovery after moving computers.");
+            if (!ok) throw new CryptographicException($"Windows device protection is unavailable (code {Marshal.GetLastWin32Error()}). Run Sable in your normal Windows user session. Use recovery after moving computers.");
             var result = new byte[output.Length]; Marshal.Copy(output.Data, result, 0, result.Length); return result;
         }
         finally
@@ -83,6 +83,7 @@ public sealed class ClipboardService : IClipboardService
     private readonly Dictionary<string, IClipboardWriter> writers;
     private readonly System.Windows.Threading.DispatcherTimer timer = new();
     private uint ownedSequence;
+    public bool OwnsCurrentClipboard => ownedSequence != 0 && Native.GetClipboardSequenceNumber() == ownedSequence;
     private byte[]? digest;
     public ClipboardService(DesktopExtensions? extensions = null)
     {

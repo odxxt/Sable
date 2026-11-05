@@ -1,3 +1,19 @@
+# 0.9.0 — Sable, shortcuts and clipboard suggestions
+
+- Rename the visible application and executable to Sable. Use the renamed repository for catalog downloads while retaining verification of existing signed catalog/module bytes and legacy storage identifiers.
+- Add standalone Shortcuts with no dummy secret field. Keep Secret and Login copying intact; clicking an SSH or RDP entry now launches its connection through the existing approval and credential-handling path.
+- Add File/folder, Ping, Test port and DNS lookup actions. Matching diagnostic shortcuts can opt into local clipboard suggestions. Validate hosts and ports, discard URL paths/queries, exclude protected and self-owned clipboard data, and never run automatically or interpolate clipboard text into arbitrary commands.
+- Add a persistent row/grid switch and a virtualized two-column layout with tile-edge drag feedback.
+- Keep folders in one four-slot row, with sideways drag/wheel browsing, brief-hold or vertical-drag reordering/nesting, edge scrolling during drops and preserved browsing position. Reduce grid tiles to 68-pixel slots and refine view controls, focus states and clipboard target hierarchy.
+- Replace tall icon-footer cards with low-profile text-first tiles. Remove pencil buttons from rows and tiles; Edit lives in the shared right-click menu. Keep Run on the right, show copy confirmation in that fixed slot, and add small transform-only press feedback that respects reduced motion.
+- Track actual context-menu ownership so a delayed menu event cannot disable Enter on the next page.
+
+# 0.8.8 — A real first-entry guide
+
+- Remove the fictional welcome-card interaction and separate first-secret setup form. Finish vault creation after password, recovery and optional PIN; then invite the user to create a real Secret using the actual + menu, New entry command and editor. Highlight each target with a tooltip. Save completes the guide, Skip dismisses it, and the pending state survives a lock or restart inside encrypted preferences.
+- Unify entry context menus around Edit, Duplicate, Move to folder and Delete, with applicable Run/Launch actions above them. Remove redundant RDP copy/details and Advanced options shortcuts.
+- Use an opaque rounded main window on Windows 10 to avoid layered-WPF capture-affinity conflicts. Reapply and verify display affinity on show, pin and taskbar transitions; try blank-content protection if full exclusion fails. Security settings distinguish failures and fallback. Windows 10 before version 2004 cannot omit the whole window, and no API guarantees protection against every capture method.
+
 # 0.8.7 — A warmer start and simpler entries
 
 - Guide first-time users through password, recovery key, optional PIN and first-secret creation. Add a small interactive welcome preview, clear progress, fixed Back/Next controls, contextual tooltips, reduced-motion-aware transitions and a completion screen. A first secret can be skipped; Back preserves the draft and the vault is created only at Finish.

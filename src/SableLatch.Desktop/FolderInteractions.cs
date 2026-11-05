@@ -16,7 +16,9 @@ internal sealed class FolderInsertionMarker(UIElement host) : Adorner(host)
 
 public partial class MainWindow
 {
-    private WrapPanel? folderChips;
+    private StackPanel? folderChips;
+    private FolderRail? folderRail;
+    private Guid? folderRailParent;
     private Guid? activeDragFolder;
     private FolderInsertionMarker? folderMarker;
     private AdornerLayer? folderMarkerLayer;
@@ -37,7 +39,7 @@ public partial class MainWindow
 
     private void AttachFolderDrag(Button chip, Guid id)
     {
-        Point start = default; var pending = false;
+        Point start = default; var pending = false; long pressedAt = 0;
         Point Position(MouseEventArgs e)
         {
 #if DEBUG
@@ -52,7 +54,7 @@ public partial class MainWindow
 #endif
             return e.LeftButton == MouseButtonState.Pressed;
         }
-        chip.PreviewMouseLeftButtonDown += (_, e) => { pending = vault.IsUnlocked && !busy && screen == "list"; start = Position(e); };
+        chip.PreviewMouseLeftButtonDown += (_, e) => { pending = vault.IsUnlocked && !busy && screen == "list"; start = Position(e); pressedAt = Environment.TickCount64; };
         chip.PreviewMouseLeftButtonUp += (_, _) => pending = false;
         chip.LostMouseCapture += (_, _) => pending = false;
         // ButtonBase handles MouseMove while pressed. A normal event subscription never
@@ -63,6 +65,11 @@ public partial class MainWindow
             var point = Position(e);
             if (Math.Abs(point.X - start.X) < SystemParameters.MinimumHorizontalDragDistance && Math.Abs(point.Y - start.Y) < SystemParameters.MinimumVerticalDragDistance) return;
             pending = false; if (!vault.IsUnlocked || busy || screen != "list") return;
+            if (FolderRail.ShouldBrowse(folderRail?.ScrollableWidth > .5, Environment.TickCount64 - pressedAt, point - start))
+            {
+                var rail = folderRail!; rail.StartPan(e.GetPosition(rail).X - (point.X - start.X));
+                rail.PanTo(e.GetPosition(rail).X); e.Handled = true; return;
+            }
             activeDragFolder = id; modalDepth++; Mouse.Capture(null); e.Handled = true;
             QueryContinueDragEventHandler cancel = (_, args) => { if (!vault.IsUnlocked || screen != "list") args.Action = DragAction.Cancel; };
             chip.QueryContinueDrag += cancel;
@@ -147,7 +154,7 @@ public partial class MainWindow
         if (folderMarker is not null) folderMarkerLayer?.Remove(folderMarker);
         folderMarker = null; folderMarkerLayer = null;
     }
-    private void AttachFolderPanelDrop(WrapPanel panel)
+    private void AttachFolderPanelDrop(StackPanel panel)
     {
         panel.AllowDrop = true; panel.Background = Brushes.Transparent;
         panel.DragOver += (_, e) =>

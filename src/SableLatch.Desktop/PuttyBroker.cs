@@ -14,7 +14,7 @@ namespace SableLatch.Desktop;
 // Only trusted host code owns these handles. ZIP modules cannot call Win32 or supply launch arguments.
 internal sealed class CredentialPipe : IDisposable
 {
-    public string Name { get; } = "SableLatch-" + Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+    public string Name { get; } = "Sable-" + Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
     private readonly NamedPipeServerStream stream;
     public CredentialPipe()
     {
@@ -124,7 +124,7 @@ internal static class PuttyBroker
     public static async Task Connect(VerifiedPutty executable, PuttyProfile profile, byte[] password, CancellationToken cancellation, Action<Process>? started = null, bool hidden = false)
     {
         Process? child = null;
-        var sessionName = "SableLatch-" + Guid.NewGuid().ToString("N");
+        var sessionName = "Sable-" + Guid.NewGuid().ToString("N");
         var registryPath = @"Software\SimonTatham\PuTTY\Sessions\" + sessionName;
         try
         {

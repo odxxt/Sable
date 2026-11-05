@@ -11,7 +11,7 @@ try {
     dotnet run --project tests/SableLatch.ModuleTests -c $Configuration
     if ($LASTEXITCODE) { throw 'Windows module/pipe checks failed' }
     if ($Portable) {
-        dotnet publish src/SableLatch.Desktop -c $Configuration -r win-x64 --self-contained true -p:DebugType=None -p:DebugSymbols=false -o artifacts/SableLatch-portable
+        dotnet publish src/SableLatch.Desktop -c $Configuration -r win-x64 --self-contained true -p:DebugType=None -p:DebugSymbols=false -o artifacts/Sable-portable
     } else { dotnet build src/SableLatch.Desktop -c $Configuration }
     if ($LASTEXITCODE) { throw 'Desktop build failed' }
 } finally { Pop-Location }

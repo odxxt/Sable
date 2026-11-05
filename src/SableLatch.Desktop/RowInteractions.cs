@@ -6,9 +6,11 @@ namespace SableLatch.Desktop;
 internal sealed class InsertionMarker(UIElement host) : Adorner(host)
 {
     public double Y { get; set; }
+    public double? X { get; set; }
     protected override void OnRender(DrawingContext context)
     {
         var brush = (Brush)Application.Current.FindResource("Accent");
+        if (X is double x) { context.DrawLine(new Pen(brush, 2), new Point(x, Y + 5), new Point(x, Y + TwoColumnPanel.TileHeight - 5)); return; }
         context.DrawLine(new Pen(brush, 2), new Point(7, Y), new Point(Math.Max(7, ActualWidth - 7), Y));
         context.DrawEllipse(brush, null, new Point(7, Y), 2.5, 2.5);
     }
@@ -114,6 +116,13 @@ public partial class MainWindow
         insertionLayer ??= AdornerLayer.GetAdornerLayer(entryList);
         if (insertionMarker is null && insertionLayer is not null) { insertionMarker = new(entryList) { IsHitTestVisible = false }; insertionLayer.Add(insertionMarker); }
         if (insertionMarker is not null) { insertionMarker.Y = Math.Clamp(y, 2, Math.Max(2, entryList.ActualHeight - 2)); insertionMarker.InvalidateVisual(); }
+        if (vault.Document!.Settings.Layout == "grid" && realized.Count > 0 && insertionMarker is not null)
+        {
+            var tile = realized.OrderBy(li => { var p = li.TranslatePoint(new Point(li.ActualWidth / 2, li.ActualHeight / 2), entryList); return Math.Abs(p.Y - point.Y) * 1000 + Math.Abs(p.X - point.X); }).First();
+            var p = tile.TranslatePoint(new Point(), entryList); var after = point.X >= p.X + tile.ActualWidth / 2;
+            insertionIndex = entryList.ItemContainerGenerator.IndexFromContainer(tile) + (after ? 1 : 0);
+            insertionMarker.X = p.X + (after ? tile.ActualWidth - 2 : 2); insertionMarker.Y = p.Y; insertionMarker.InvalidateVisual();
+        }
         var scroll = Descendants<ScrollViewer>(entryList).FirstOrDefault();
         if (Environment.TickCount64 - lastDragScroll >= 70 && (point.Y < 18 || point.Y > entryList.ActualHeight - 18))
         {

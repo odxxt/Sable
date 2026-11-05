@@ -137,7 +137,7 @@ internal static class NativeRdpLauncher
                 {
                     await Task.Delay(200).ConfigureAwait(false); NativeRdpSettings.TryDelete(settings.Path);
                 }
-                if (File.Exists(settings.Path)) throw new InvalidOperationException("The temporary encrypted RDP file could not be removed. SableLatch will retry cleanup when it exits or next starts.");
+                if (File.Exists(settings.Path)) throw new InvalidOperationException("The temporary encrypted RDP file could not be removed. Sable will retry cleanup when it exits or next starts.");
             }
         }
     }

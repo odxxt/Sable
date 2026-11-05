@@ -20,7 +20,7 @@ public partial class MainWindow
             var chosen = password.Password;
             try { Crypto.RequirePassword(chosen); } catch (ArgumentException ex) { RejectInput(password, ex.Message); return; }
             if (chosen != confirm.Password) { RejectInput(confirm, "Passwords do not match."); return; }
-            var picker = new Microsoft.Win32.SaveFileDialog { Filter = "SableLatch encrypted export|*.sableexport", DefaultExt = ".sableexport", FileName = "SableLatch-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") };
+            var picker = new Microsoft.Win32.SaveFileDialog { Filter = "Sable encrypted export|*.sableexport", DefaultExt = ".sableexport", FileName = "Sable-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") };
             modalDepth++; bool? accepted; try { accepted = picker.ShowDialog(this); } finally { modalDepth--; }
             if (accepted != true) return;
             await RunVault(() => Task.Run(() => Transfers.Save(picker.FileName, Transfers.Create(vault, chosen))), () => { Audit(AuditEvent.ExportSaved); ShowTransfers(); });

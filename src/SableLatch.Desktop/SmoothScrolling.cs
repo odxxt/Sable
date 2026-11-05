@@ -9,6 +9,7 @@ internal sealed class SmoothScrolling : Animatable
     private static readonly DependencyProperty ProgressProperty = DependencyProperty.Register("Progress", typeof(double), typeof(SmoothScrolling), new PropertyMetadata(0d, ProgressChanged));
     private ScrollViewer? viewer;
     private bool active;
+    internal static bool IsAnimating(ScrollViewer scroll) => scroll.GetValue(StateProperty) is SmoothScrolling { active: true };
     private double start, target;
     protected override Freezable CreateInstanceCore() => new SmoothScrolling();
     public static void Register()

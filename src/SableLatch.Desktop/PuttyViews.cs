@@ -111,9 +111,9 @@ public partial class MainWindow
             if (moduleApprovals.Contains(digest)) { _ = Launch(false); return; }
             var stack = Form("Connect with PuTTY", "", "module-permission", parent: () => ShowModuleDetails(item));
             stack.Children.Add(Text(profile.Username + "@" + profile.Host + ":" + profile.Port, 16));
-            stack.Children.Add(Text("SableLatch will deliver this entry's password only to the verified PuTTY process it starts.", 12, true));
-            stack.Children.Add(Text("Confirm the SSH server identity in PuTTY before authenticating. Existing SSH sessions remain open when SableLatch locks.", 11, true));
-            if (!provider.Package.Official) stack.Children.Add(Text("Community module · not reviewed by SableLatch", 11, true));
+            stack.Children.Add(Text("Sable will deliver this entry's password only to the verified PuTTY process it starts.", 12, true));
+            stack.Children.Add(Text("Confirm the SSH server identity in PuTTY before authenticating. Existing SSH sessions remain open when Sable locks.", 11, true));
+            if (!provider.Package.Official) stack.Children.Add(Text("Community module · not reviewed by Sable", 11, true));
             var remember = Check(stack, "Don't ask again for this connection", false);
             var reviewPage = Body.Content;
             PageAction(AsyncButton("Connect", async () => { if (ReferenceEquals(reviewPage, Body.Content) && epoch == startEpoch) await Launch(remember.IsChecked == true); }));

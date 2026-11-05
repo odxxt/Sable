@@ -23,6 +23,7 @@ public sealed class EntryAction
     public bool VerifyEachTime { get; set; }
     public bool CopyOnRun { get; set; }
     public bool KeepTerminalOpen { get; set; }
+    public bool SuggestFromClipboard { get; set; }
     public void Validate()
     {
         // Unknown kinds survive vault transfers; only registered desktop handlers execute.

@@ -1,10 +1,10 @@
 # Remote Desktop launch — 0.8.5
 
-SableLatch opens the Windows system Remote Desktop Connection application (mstsc.exe). It no longer hosts an RDP session window. The signed declarative RDP ZIP remains compatible; this change is implemented by trusted host code.
+Sable opens the Windows system Remote Desktop Connection application (mstsc.exe). It no longer hosts an RDP session window. The signed declarative RDP ZIP remains compatible; this change is implemented by trusted host code. The host was previously named SableLatch; existing storage and cryptographic identifiers retain that name for compatibility.
 
 ## Entry behavior
 
-Clicking the row copies only the password with the existing sensitive clipboard policy. The play button uses the entry's Launch / Launch & copy preference. Right-click and Connection details offer both actions explicitly. Launch & copy copies the password after local startup, not after confirmed remote authentication. Pinning and close-after-copy preferences still apply. Remote-session clipboard sharing is enabled for normal copy/paste in both directions. Legacy clipboard-off fields are ignored; there is no separate SableLatch redirection toggle. Remote clipboard sharing and the Launch & copy button are separate behaviors.
+In host 0.9, RDP is a connection Shortcut. Clicking its row or tile launches using the entry's Launch / Launch & copy preference. Right-click offers both actions explicitly; Edit changes the connection. Launch & copy copies the password after local startup, not after confirmed remote authentication. Pinning and close-after-copy preferences still apply. Remote-session clipboard sharing is enabled for normal copy/paste in both directions. Legacy clipboard-off fields are ignored; there is no separate Sable redirection toggle. Remote clipboard sharing and Launch & copy are separate behaviors.
 
 ## Display behavior
 

@@ -30,9 +30,9 @@ public partial class MainWindow
             && Guid.TryParse(data.GetData("SableLatch/item-id", false) as string, out id) && expected == id
             && vault.Document!.Items.Any(i => i.Id == expected && i.DeletedAt is null);
     }
-    private Dictionary<Guid, double> RowPositions() => entryList is null ? [] : Descendants<ListBoxItem>(entryList)
-        .Where(c => c.DataContext is RowModel).ToDictionary(c => ((RowModel)c.DataContext).Item.Id, c => c.TranslatePoint(new Point(), entryList).Y);
-    private void AnimateRows(Dictionary<Guid, double> before)
+    private Dictionary<Guid, Point> RowPositions() => entryList is null ? [] : Descendants<ListBoxItem>(entryList)
+        .Where(c => c.DataContext is RowModel).ToDictionary(c => ((RowModel)c.DataContext).Item.Id, c => c.TranslatePoint(new Point(), entryList));
+    private void AnimateRows(Dictionary<Guid, Point> before)
     {
         if (entryList is null || !SystemParameters.ClientAreaAnimation) return;
         entryList.UpdateLayout();
@@ -40,9 +40,10 @@ public partial class MainWindow
         {
             if (row.DataContext is not RowModel model || !before.TryGetValue(model.Item.Id, out var oldY)) continue;
             row.RenderTransform = Transform.Identity;
-            var offset = oldY - row.TranslatePoint(new Point(), entryList).Y;
-            if (Math.Abs(offset) < .5) continue;
+            var delta = oldY - row.TranslatePoint(new Point(), entryList); var offset = delta.Y;
+            if (Math.Abs(offset) < .5 && Math.Abs(delta.X) < .5) continue;
             var transform = new TranslateTransform(); row.RenderTransform = transform;
+            transform.BeginAnimation(TranslateTransform.XProperty, new DoubleAnimation(delta.X, 0, TimeSpan.FromMilliseconds(180)) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }, FillBehavior = FillBehavior.Stop });
             transform.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(offset, 0, TimeSpan.FromMilliseconds(180))
             { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }, FillBehavior = FillBehavior.Stop });
         }

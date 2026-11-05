@@ -25,7 +25,7 @@ public partial class MainWindow
         if (auditUnavailable) stack.Children.Add(Text("Local event history is unavailable on this Windows account. Its encrypted file is preserved.", 12, true));
         PageAction(Button("Save HTML report", () =>
         {
-            var picker = new Microsoft.Win32.SaveFileDialog { Filter = "HTML report|*.html", FileName = "SableLatch-audit.html", OverwritePrompt = true };
+            var picker = new Microsoft.Win32.SaveFileDialog { Filter = "HTML report|*.html", FileName = "Sable-audit.html", OverwritePrompt = true };
             modalDepth++;
             try
             {

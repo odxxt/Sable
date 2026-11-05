@@ -40,6 +40,8 @@ public sealed class VaultFolder
 
 public sealed class Preferences
 {
+    public bool FirstEntryTourPending { get; set; }
+    public bool ClipboardSuggestions { get; set; } = true;
     public List<string> CompletedSetupSteps { get; set; } = [];
     public int SessionMinutes { get; set; } = 60;
     public bool LockEveryOpen { get; set; }

@@ -7,7 +7,7 @@ namespace SableLatch.Desktop;
 
 internal static class ModuleTrust
 {
-    public const string CatalogUrl = "https://raw.githubusercontent.com/odxxt/SableLatch/main/modules/catalog.json";
+    public const string CatalogUrl = "https://raw.githubusercontent.com/odxxt/Sable/main/modules/catalog.json";
     public static byte[] Resource(string name)
     {
         using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("SableLatch.Modules." + name) ?? throw new InvalidDataException("Module resource unavailable.");
@@ -20,8 +20,9 @@ internal static class ModuleTrust
     }
     public static async Task<byte[]> Download(string address, int limit, CancellationToken token)
     {
-        if (!Uri.TryCreate(address, UriKind.Absolute, out var uri) || uri.Scheme != "https" || uri.Host != "raw.githubusercontent.com" || !uri.AbsolutePath.StartsWith("/odxxt/SableLatch/", StringComparison.Ordinal) || uri.UserInfo.Length > 0 || uri.Query.Length > 0 || uri.Fragment.Length > 0)
-            throw new InvalidDataException("The catalog can download only from the official SableLatch GitHub repository.");
+        address = address.Replace("https://raw.githubusercontent.com/odxxt/SableLatch/", "https://raw.githubusercontent.com/odxxt/Sable/", StringComparison.Ordinal);
+        if (!Uri.TryCreate(address, UriKind.Absolute, out var uri) || uri.Scheme != "https" || uri.Host != "raw.githubusercontent.com" || !uri.AbsolutePath.StartsWith("/odxxt/Sable/", StringComparison.Ordinal) || uri.UserInfo.Length > 0 || uri.Query.Length > 0 || uri.Fragment.Length > 0)
+            throw new InvalidDataException("The catalog can download only from the official Sable GitHub repository.");
         using var client = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false }) { Timeout = TimeSpan.FromSeconds(15) };
         using var response = await client.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, token);
         response.EnsureSuccessStatusCode();

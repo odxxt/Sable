@@ -33,14 +33,14 @@ public partial class MainWindow
         var domain = Input(advancedFields, "Domain · optional", Value("domain", ""));
         var port = Input(advancedFields, "Port", Value("port", "3389"));
         var fullScreen = Check(advancedFields, "Start in full screen", Value("fullScreen", "true") != "false");
-        stack.Children.Add(Text("Launch button", 11, true));
+        stack.Children.Add(Text("When clicked", 11, true));
         var modes = new System.Windows.Controls.Primitives.UniformGrid { Columns = 2 };
         var group = "rdp-mode-" + Guid.NewGuid().ToString("N");
         var launchOnly = new RadioButton { Content = "Launch", GroupName = group, Style = (Style)FindResource("SegmentChoice"), IsChecked = Value("copyOnLaunch", "false") != "true" };
         var launchCopy = new RadioButton { Content = "Launch & copy", GroupName = group, Style = (Style)FindResource("SegmentChoice"), IsChecked = Value("copyOnLaunch", "false") == "true" };
         modes.Children.Add(launchOnly); modes.Children.Add(launchCopy);
         stack.Children.Add(new Border { Background = (Brush)FindResource("ControlSurface"), CornerRadius = new CornerRadius(10), Padding = new Thickness(3), Margin = new Thickness(0, 0, 0, 8), Child = modes });
-        stack.Children.Add(Text("Click the entry to copy its password. Launch & copy also copies the password when opening Remote Desktop.", 11, true));
+        stack.Children.Add(Text("Click the shortcut to open Remote Desktop. Launch & copy also copies its password.", 11, true));
         string ReadPassword() => visible.Visibility == Visibility.Visible ? visible.Text : password.Password;
         VaultItem Capture()
         {
@@ -123,7 +123,7 @@ public partial class MainWindow
             stack.Children.Add(Text("Windows will let you review an unverified server certificate and choose whether to connect. Windows policy may still restrict connections. Sessions stay open when the vault locks.", 11, true));
             if (copy) stack.Children.Add(Text("Also copies the password. Your sensitive clipboard cleanup settings apply.", 12, true));
             stack.Children.Add(Text("Copy/paste is enabled. Other resource settings follow Windows Remote Desktop defaults and policy.", 12, true));
-            if (!provider.Package.Official) stack.Children.Add(Text("Community module · not reviewed by SableLatch", 11, true));
+            if (!provider.Package.Official) stack.Children.Add(Text("Community module · not reviewed by Sable", 11, true));
             var remember = Check(stack, "Don't ask again for this connection", true); var page = Body.Content;
             PageAction(AsyncButton(copy ? "Launch & copy" : "Launch", async () => { if (ReferenceEquals(page, Body.Content) && epoch == startEpoch) await Launch(remember.IsChecked == true); })); pageSubmit = null;
         }

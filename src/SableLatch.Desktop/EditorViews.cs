@@ -34,36 +34,17 @@ public partial class MainWindow
         var type = existing?.ContentType ?? selectedType ?? types[0].Descriptor.Id;
         var provider = content.Find(type);
         if (provider is null || existing is not null && !ModuleAvailable(existing)) { ShowError("This entry's editor is not installed or its schema is incompatible. Its data is preserved."); return; }
+        if (type == "sable.shortcut") advancedEditor = true;
         var advancedSwitch = new CheckBox { Content = "Advanced", IsChecked = advancedEditor, Style = (Style)FindResource("CompactSwitch"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0, 0, 0) };
         System.Windows.Automation.AutomationProperties.SetName(advancedSwitch, "Advanced options");
         advancedSwitch.Click += (_, _) => { if (advancedSwitch.IsChecked != advancedEditor) toggleAdvancedEditor?.Invoke(); };
-        var stack = Form(existing is null ? "New entry" : editorIsDuplicate ? "Duplicate entry" : "Edit entry", "", "editor", accessory: advancedSwitch);
-        {
-            var picker = new System.Windows.Controls.Primitives.UniformGrid { Columns = existing is null ? types.Count(p => p is not DeclarativeProvider) + 1 : 1 };
-            var group = "entry-type-" + Guid.NewGuid().ToString("N");
-            foreach (var option in types.Where(p => existing is null ? p is not DeclarativeProvider : p.Descriptor.Id == type))
-            {
-                var choice = new RadioButton { Content = option.Descriptor.Name, GroupName = group, Style = (Style)FindResource("SegmentChoice"), IsChecked = option.Descriptor.Id == type };
-                System.Windows.Automation.AutomationProperties.SetName(choice, "Entry type " + option.Descriptor.Name);
-                choice.ToolTip = option.Descriptor.Id == "sable.secret" ? "Keep any text private. Click its row to copy; Shift+Enter adds lines." : "Keep a username and password together. Click once for the username, then again for the password.";
-                choice.Click += (_, _) => { if (existing is null && option.Descriptor.Id != type) ShowEditor(null, option.Descriptor.Id); };
-                picker.Children.Add(choice);
-            }
-            if (existing is null)
-            {
-                var more = new RadioButton { Content = "More ▾", GroupName = group, Style = (Style)FindResource("SegmentChoice"), IsChecked = provider is DeclarativeProvider };
-                System.Windows.Automation.AutomationProperties.SetName(more, "More types");
-                more.Click += (_, _) => ShowMoreTypes();
-                picker.Children.Add(more);
-            }
-            stack.Children.Add(new Border { Background = (Brush)FindResource("ControlSurface"), CornerRadius = new CornerRadius(10), Padding = new Thickness(3), Margin = new Thickness(0, 0, 0, 14), Child = picker });
-            if (existing is null && provider is DeclarativeProvider) stack.Children.Add(Text(provider.Descriptor.Name, 12, true));
-        }
+        var stack = Form(existing is null ? "New entry" : editorIsDuplicate ? "Duplicate entry" : "Edit entry", "", "editor", accessory: type == "sable.shortcut" ? null : advancedSwitch);
+        stack.Children.Add(EntryChoices(provider, existing));
         if (!extensions.Editors.TryGetValue(type, out var editor)) { stack.Children.Add(Text("This content type needs its editor extension.")); return; }
         stack.Children.Add(editor.Build(existing ?? editorDrafts.GetValueOrDefault(type), item =>
         {
             EntryMetadata.MarkSaved(item, vault.Document!.Items.FirstOrDefault(i => i.Id == item.Id), DateTimeOffset.UtcNow);
-            if (Change(d => { var index = d.Items.FindIndex(i => i.Id == item.Id); if (index < 0) d.Items.Add(item); else d.Items[index] = item; }))
+            if (Change(d => { var index = d.Items.FindIndex(i => i.Id == item.Id); if (index < 0) { d.Items.Add(item); d.Settings.FirstEntryTourPending = false; } else d.Items[index] = item; }))
             {
                 if (item.Advanced?.Action is { Enabled: true } action && editorTestedAction == ActionApprovals.Fingerprint(action)) RememberAction(item.Id, action);
                 ShowList(); SetStatus("Entry saved");
@@ -73,7 +54,7 @@ public partial class MainWindow
     private FrameworkElement BuildFields(IContentProvider provider, VaultItem? existing, Action<VaultItem> save)
     {
         var stack = new StackPanel();
-        var label = Input(stack, provider.Descriptor.Sensitive ? "Label" : "Label · optional", editorIsNew ? editorSharedLabel : existing?.Label ?? "");
+        var label = Input(stack, provider.Descriptor.Sensitive || provider.Descriptor.Id == "sable.shortcut" ? "Label" : "Label · optional", editorIsNew ? editorSharedLabel : existing?.Label ?? "");
         var formattedHtml = provider.Descriptor.Id is "sable.text" or "sable.secret" ? existing?.Field("html") ?? "" : "";
         var formattedPlain = existing?.Field("text") ?? "";
         var readers = new Dictionary<string, Func<string>>();
@@ -172,7 +153,7 @@ public partial class MainWindow
         void SaveFields()
         {
             var name = label.Text.Trim();
-            if (provider.Descriptor.Sensitive && name.Length == 0) { RejectInput(label, "Add a label."); return; }
+            if ((provider.Descriptor.Sensitive || provider.Descriptor.Id == "sable.shortcut") && name.Length == 0) { RejectInput(label, "Add a label."); return; }
             var values = readers.ToDictionary(x => x.Key, x => x.Value());
             var missing = provider.EditorFields.FirstOrDefault(f => f.Required && values[f.Key].Length == 0);
             if (missing is not null) { controls[missing.Key].BringIntoView(); RejectInput(controls[missing.Key], "Enter " + missing.Label.ToLowerInvariant() + "."); return; }
@@ -211,6 +192,7 @@ public partial class MainWindow
             run.IsEnabled = advancedState.Capture()?.Action is { Enabled: true };
         };
         refreshFooter(); PageAction(footer); pageSubmit = primary;
+        if (provider.Descriptor.Id == "sable.secret" && controls.GetValueOrDefault("text") is MaskedSecretBox secretInput && editorIsNew) GuideSecretFields(label, secretInput, primary);
         Dispatcher.BeginInvoke(() => label.Focus());
         return stack;
     }

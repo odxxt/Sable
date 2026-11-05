@@ -14,7 +14,7 @@ internal static class ApplicationCatalog
         var thread = new Thread(() =>
         {
             try { completion.SetResult(Read()); } catch { completion.SetResult([]); }
-        }) { IsBackground = true, Name = "SableLatch app picker" };
+        }) { IsBackground = true, Name = "Sable app picker" };
         thread.SetApartmentState(ApartmentState.STA); thread.Start(); return completion.Task;
     }
     private static IReadOnlyList<InstalledApplication> Read()

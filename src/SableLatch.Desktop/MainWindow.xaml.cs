@@ -24,7 +24,7 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer heartbeat = new() { Interval = TimeSpan.FromSeconds(1) };
     private Forms.NotifyIcon? tray;
     private IntPtr handle;
-    private bool quitting, busy, holdForPassword, contextOpen;
+    private bool quitting, busy, holdForPassword;
     private bool clearingEditors;
     private bool systemNotificationsReady;
     private int epoch, modalDepth;
@@ -44,6 +44,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        CaptureProtection.ConfigureWindow(this);
 #if DEBUG
         clipboard = App.PreviewMode ? new PreviewClipboard() : new ClipboardService(extensions);
 #else
@@ -66,7 +67,7 @@ public partial class MainWindow : Window
         ReloadModules();
         SourceInitialized += (_, _) => InitializePlatform();
         Loaded += (_, _) => { PositionWindow(); if (!App.PreviewMode) ShowUnlock(); };
-        IsVisibleChanged += (_, _) => { if (!IsVisible) ResetLoginCopy(); else { ApplyTaskbarVisibility(); FocusLockInput(); } };
+        IsVisibleChanged += (_, _) => { if (!IsVisible) { ResetLoginCopy(); CloseTourHint(); suggestionHost?.Children.Clear(); } else { ApplyTaskbarVisibility(); FocusLockInput(); QueueSuggestions(); } };
         Activated += (_, _) => FocusLockInput();
         Deactivated += (_, _) => { if (screen == "list" && !session.IsPinned && !holdForPassword && !busy && !contextOpen && modalDepth == 0) Hide(); };
         PreviewKeyDown += (_, e) =>
@@ -96,17 +97,18 @@ public partial class MainWindow : Window
         HwndSource.FromHwnd(handle)?.AddHook(WindowMessage);
         if (!App.PreviewMode)
         {
+            AddClipboardFormatListener(handle);
             systemNotificationsReady = Native.WTSRegisterSessionNotification(handle, 0);
             var shortcut = "Ctrl+Alt+Space";
             try { var file = Path.Combine(App.DataDirectory, "host.json"); if (File.Exists(file)) shortcut = Codec.Decode<string>(File.ReadAllBytes(file)); } catch { }
             try { SetShortcut(shortcut); } catch { Status.Text = "Shortcut unavailable · use the tray"; }
             var icon = Application.GetResourceStream(new Uri("pack://application:,,,/Assets/SableLatch.ico"));
-            tray = new Forms.NotifyIcon { Text = "SableLatch · locked", Icon = new System.Drawing.Icon(icon!.Stream), Visible = true };
+            tray = new Forms.NotifyIcon { Text = "Sable · locked", Icon = new System.Drawing.Icon(icon!.Stream), Visible = true };
             tray.MouseClick += (_, e) => { if (e.Button == Forms.MouseButtons.Left) Dispatcher.Invoke(ToggleVisibility); };
             var menu = new Forms.ContextMenuStrip();
             menu.BackColor = System.Drawing.Color.FromArgb(32, 32, 35); menu.ForeColor = System.Drawing.Color.White; menu.ShowImageMargin = false;
             menu.Opened += (_, _) => CaptureProtection.Protect(menu.Handle);
-            menu.Items.Add("Open SableLatch", null, (_, _) => Dispatcher.Invoke(OpenPanel));
+            menu.Items.Add("Open Sable", null, (_, _) => Dispatcher.Invoke(OpenPanel));
             menu.Items.Add("Lock", null, (_, _) => Dispatcher.Invoke(() => ForceLock("Locked")));
             menu.Items.Add(new Forms.ToolStripSeparator());
             menu.Items.Add("Exit", null, (_, _) => Dispatcher.Invoke(ExitApp));
@@ -115,6 +117,7 @@ public partial class MainWindow : Window
     }
     private IntPtr WindowMessage(IntPtr hwnd, int msg, IntPtr wp, IntPtr lp, ref bool handled)
     {
+        if (msg == 0x031D) QueueSuggestions();
         if (msg == 0x0312 && wp.ToInt32() == 71) { if (!recordingShortcut) ToggleVisibility(); handled = true; }
         if (msg == 0x02B1 && wp.ToInt32() is 6 or 7 or 8)
         {
@@ -206,7 +209,7 @@ public partial class MainWindow : Window
         EraseEditors(); Body.Content = null;
         clipboard.ClearOwned();
         if (!busy) vault.Lock();
-        if (tray is not null) tray.Text = "SableLatch · locked";
+        if (tray is not null) tray.Text = "Sable · locked";
         ShowUnlock(); SetStatus(reason); FocusLockInput();
         if (!busy) ReleaseUnlockMemory();
     }
@@ -232,7 +235,7 @@ public partial class MainWindow : Window
     private async Task<bool> RunVault(Func<Task> operation, Action? after = null, bool quietFailure = false)
     {
         if (busy) return false;
-        if (!App.PreviewMode && !systemNotificationsReady) { ShowError("Windows lock notifications are unavailable. Restart SableLatch in your normal Windows session before unlocking."); return false; }
+        if (!App.PreviewMode && !systemNotificationsReady) { ShowError("Windows lock notifications are unavailable. Restart Sable in your normal Windows session before unlocking."); return false; }
         var startEpoch = epoch; busy = true; Body.IsEnabled = false; SetStatus("Working…");
         try
         {
@@ -281,6 +284,7 @@ public partial class MainWindow : Window
     }
     private void EraseEditors()
     {
+        CloseTourHint(); suggestionHost?.Children.Clear(); suggestionHost = null;
         CancelEditHover(); ClearDropMarker(); ClearFolderMarker(); folderChips = null; dragHandle = null;
         captureEditorDraft = null; toggleAdvancedEditor = null;
         clearingEditors = true;
@@ -295,6 +299,7 @@ public partial class MainWindow : Window
         ResetSettingsDraft();
         if (mode != "editor") { editorDrafts.Clear(); editorSharedLabel = ""; advancedDraft = null; editorTestedAction = null; }
         EraseEditors(); recordingShortcut = false; ErrorToast.Visibility = Visibility.Collapsed; Body.Content = element; screen = mode; formError = null;
+        CloseContextMenu();
         backAction = null;
         pageFooter = null;
         pageSubmit = null;
@@ -332,6 +337,7 @@ public partial class MainWindow : Window
         // WPF owns taskbar registration; keep its state in sync with native Alt+Tab styles.
         if (ShowInTaskbar != visible) ShowInTaskbar = visible;
         Native.SetAltTabVisibility(handle, visible);
+        if (handle != IntPtr.Zero) CaptureProtection.Protect(handle);
     }
     private void ExitApp()
     {
@@ -342,7 +348,7 @@ public partial class MainWindow : Window
     {
         if (!quitting) { e.Cancel = true; Hide(); return; }
         Audit(AuditEvent.Exited); heartbeat.Stop(); quickUnlock?.Dispose(); clipboard.Dispose(); vault.Dispose(); tray?.Dispose();
-        Native.UnregisterHotKey(handle, 71); Native.WTSUnRegisterSessionNotification(handle);
+        RemoveClipboardFormatListener(handle); Native.UnregisterHotKey(handle, 71); Native.WTSUnRegisterSessionNotification(handle);
         sessionCancellation.Cancel(); sessionCancellation.Dispose();
     }
     private async Task MakeBackup(bool manual)

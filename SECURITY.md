@@ -4,6 +4,8 @@ This document describes the implemented preview, not a certification or security
 
 ## Vault format v1
 
+Sable 0.9 keeps existing SableLatch cryptographic purpose strings, format markers, module IDs and Windows binding identifiers for compatibility. Shortcuts, arguments and preferences are encrypted inside the same vault as secrets. A shortcut is a UI/behavior distinction, not plaintext storage.
+
 - A cryptographically random 32-byte data key encrypts the JSON metadata using AES-256-GCM, a fresh 12-byte random nonce per write, and a 16-byte tag.
 - Associated data includes the format, vault identifier, and purpose. Each attachment has its own nonce/tag and associated data that includes its attachment ID.
 - Argon2id derives a 32-byte password wrapping key with a random 16-byte salt, 65,536 KiB memory, three passes, and one lane. These parameters are fixed by format v1 rather than accepted unbounded from an untrusted file.
@@ -44,7 +46,17 @@ Key byte arrays and temporary plaintext serialization buffers are zeroed where o
 
 Secret copies include Windows clipboard history/cloud-exclusion formats. Cleanup checks the clipboard sequence number and, for text, a digest before clearing. A later clipboard item is left untouched. Other clipboard applications and programs running as the user can read copied values. Clipboard clearing is also attempted on lock/exit when the user has enabled it.
 
-Native SetWindowDisplayAffinity is requested and read back for the main panel. Each WPF context menu and tooltip is protected on opening; dropdown and submenu templates attach CaptureProtection.Enabled to protect their own HWNDs. Windows 10 build 19041 and later use WDA_EXCLUDEFROMCAPTURE (0x11); earlier versions use WDA_MONITOR (1). Protection has no resident worker or polling timer. Settings report any detected application failure. Native affinity checks passed for the main panel, context menu, dropdown and tooltip on this host. This does not prove every Teams/Zoom mode is protected: neither product was directly tested. OS dialogs, independently launched apps, alternative capture methods, privileged software, cameras and a compromised process are outside the boundary. Microsoft explicitly does not guarantee strict protection for every capture method: https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowdisplayaffinity.
+### Clipboard suggestions (0.9)
+
+Suggestions use Windows clipboard-change notifications only while the unlocked list is visible. The host reads at most 1,026 bytes of Unicode text, skips its own clipboard sequence and protected/history-exclusion markers, validates a hostname/address and optional port, and drops URL paths, queries and credentials. Unmarked clipboard text is not guaranteed to be nonsensitive. The global switch disables matching; only explicitly opted-in diagnostic shortcuts can appear.
+
+Nothing executes on clipboard change. Clicking a suggestion sends only the validated destination to one fixed Ping, DNS lookup or Test-NetConnection command. Shell punctuation, switches, whitespace and invalid ports are rejected; arbitrary script shortcuts do not accept clipboard substitution. The saved target is unchanged. Suggestions are discarded on navigation, hide or lock and are not logged or persisted. Running a diagnostic does contact its chosen host or DNS resolver; that happens only after the user's click and applicable action review.
+
+### Screen capture
+
+Native SetWindowDisplayAffinity is requested and read back for the main panel, including on show, pin and taskbar transitions. Each WPF context menu and tooltip requests protection on opening; dropdown and submenu templates attach CaptureProtection.Enabled to protect their own HWNDs. Windows 10 uses an opaque WindowChrome-rounded main window to avoid per-pixel layered-WPF compatibility problems; Windows 11 retains transparency. Windows 10 build 19041 (version 2004) and later use WDA_EXCLUDEFROMCAPTURE (0x11); earlier versions use WDA_MONITOR (1), which can leave a blank rectangle. If exclusion fails, the app attempts WDA_MONITOR and reports fallback; if both fail, Security settings report that protection is unavailable. Protection has no resident worker or polling timer.
+
+Native affinity checks passed on this Windows 11 host with both the usual translucent panel and the opaque compatibility configuration, including pinned/taskbar transitions. That is not an actual Windows 10 Snipping Tool test: the reported failure still needs a retest on the affected machine. Neither Teams nor Zoom was directly tested. OS dialogs, independently launched apps, alternative capture methods, privileged software, cameras and a compromised process are outside the boundary. The app does not prevent use when protection fails. Microsoft explicitly does not guarantee strict protection for every capture method: https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowdisplayaffinity.
 
 ## Files and recovery
 
@@ -106,7 +118,7 @@ The eye swaps the masked/revealed editor and clears the hidden control. Lock/nav
 
 MaskedSecretBox keeps the WPF text document limited to bullets and original line breaks. Text input and paste update the private value and repaint the mask; copy, cut, undo, IME composition and drag/drop are disabled in the masked field. Its automation peer reports a password control without Value/Text patterns. The separate reveal editor disables undo and is cleared when hidden. Navigation/locking clears both controls. This reduces incidental UI exposure; it does not secure decrypted process memory from local malware or guarantee physical erasure of .NET strings.
 
-KeepTerminalOpen is encrypted action metadata and is included in consent identity when enabled. With it disabled, existing fingerprints remain valid for backward compatibility. Changing it invalidates a tested configuration. /k and -NoExit affect process lifetime only, without changing the account privileges or sandboxing status. External terminals and their displayed output are not protected by SableLatch capture exclusion.
+KeepTerminalOpen is encrypted action metadata and is included in consent identity when enabled. With it disabled, existing fingerprints remain valid for backward compatibility. Changing it invalidates a tested configuration. /k and -NoExit affect process lifetime only, without changing the account privileges or sandboxing status. External terminals and their displayed output are not protected by Sable capture exclusion.
 
 Automatic backups remain off for new/legacy preferences and after recovery to a new computer. The setup checklist no longer preselects them. Existing explicitly saved backup preferences are preserved.
 ## Declarative ZIP modules and PuTTY (0.7.0)
@@ -124,7 +136,7 @@ A temporary non-secret PuTTY session isolates each connection from existing logg
 The catalog is queried only on demand. No polling, module service or third-party module process is added. Registry writes for the isolated PuTTY session and real device protection could not be tested in this restricted execution environment; see VERIFICATION.md.
 
 ## Formatted clipboard content
-Text HTML is stored inside the encrypted payload. AngleSharp parses it as data only; SableLatch does not create a browsing context, script engine or HTML renderer. Output is reconstructed from an element/style allowlist. Scripts, event handlers, remote images and active embedding are discarded. The clipboard writer sanitizes imported HTML again. Plain-text and HTML representations travel together; the receiving application's paste behavior is outside SableLatch's control.
+Text HTML is stored inside the encrypted payload. AngleSharp parses it as data only; Sable does not create a browsing context, script engine or HTML renderer. Output is reconstructed from an element/style allowlist. Scripts, event handlers, remote images and active embedding are discarded. The clipboard writer sanitizes imported HTML again. Plain-text and HTML representations travel together; the receiving application's paste behavior is outside Sable's control.
 
 ## Local RDP capability (0.8.5)
 
@@ -132,6 +144,6 @@ The saved password remains encrypted in the vault. On explicit launch, host code
 
 This replaces the earlier in-memory ActiveX helper design and changes its exposure boundary. Same-user software can capture the temporary blob and decrypt it. Deleting the original file neither revokes a captured copy nor guarantees secure erasure. Startup/cancellation/failure/exit cleanup is best effort, with a next-start sweep for crash leftovers. Launch detection is not proof that mstsc read the file or authenticated. Current Windows policy may refuse embedded credentials; no NLA/CredSSP downgrade or alternate credential-store fallback is attempted. Version 0.8.2 uses authentication level 2 so Windows can offer an explicit certificate-warning override; accepting an unverified certificate reduces protection against server impersonation. The app never automatically accepts it, and Windows policy can still block the connection.
 
-The unlocked document still holds decrypted JSON; mutable conversion arrays are cleared, but Windows/client memory, paging and dumps are outside SableLatch's control. First-use approval includes the new delivery method and copy mode. Modules never receive the password. The external mstsc session and its saving/capture behavior are controlled by Windows, not SableLatch; existing sessions survive vault locking. See [full lifecycle and limitations](docs/RDP-DESIGN.md).
+The unlocked document still holds decrypted JSON; mutable conversion arrays are cleared, but Windows/client memory, paging and dumps are outside Sable's control. First-use approval includes the new delivery method and copy mode. Modules never receive the password. The external mstsc session and its saving/capture behavior are controlled by Windows, not Sable; existing sessions survive vault locking. See [full lifecycle and limitations](docs/RDP-DESIGN.md).
 
-Host 0.8.5 enables normal RDP clipboard sharing and removes its previous resource/performance overrides. Windows/client defaults and server policy apply. First-use review is refreshed to describe that resource behavior. This is separate from SableLatch's local sensitive-copy clearing policy.
+Host 0.8.5 enables normal RDP clipboard sharing and removes its previous resource/performance overrides. Windows/client defaults and server policy apply. First-use review is refreshed to describe that resource behavior. This is separate from Sable's local sensitive-copy clearing policy.

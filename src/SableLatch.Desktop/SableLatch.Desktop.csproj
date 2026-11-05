@@ -4,7 +4,7 @@
     <TargetFramework>net10.0-windows</TargetFramework>
     <UseWPF>true</UseWPF><UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>disable</ImplicitUsings>
-    <AssemblyName>SableLatch</AssemblyName><Version>0.8.7</Version>
+    <AssemblyName>Sable</AssemblyName><Version>0.9.0</Version><Product>Sable</Product><Title>Sable</Title>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\SableLatch.ico</ApplicationIcon>

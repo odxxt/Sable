@@ -1,35 +1,51 @@
-# SableLatch
+# Sable
 
 **Keep it close. Keep it private.**
 
-A compact encrypted clipboard vault for Windows. Save the text, secrets and logins you reach for every day, then copy them from a quiet tray popup and get back to what you were doing.
+A compact tray companion for Windows. Keep secrets, logins, useful commands, files and server connections together. Copy a value or run a shortcut, with local clipboard suggestions and a choice of rows or a two-column grid.
 
-[**Downloads for Windows x64**](https://github.com/odxxt/SableLatch/releases) · [User guide](docs/USER-GUIDE.md) · [Roadmap](#whats-next)
+[**Downloads for Windows x64**](https://github.com/odxxt/Sable/releases) · [User guide](docs/USER-GUIDE.md) · [Roadmap](#whats-next)
 
 <p align="center">
-  <img src="docs/images/vault.png" width="310" alt="SableLatch compact tray vault with folders and click-to-copy entries">
+  <img src="docs/images/vault.png" width="310" alt="Sable compact tray vault with folders and click-to-copy entries">
   &nbsp;
-  <img src="docs/images/actions.png" width="310" alt="Advanced entry settings with Run and copy and a fixed save footer">
+  <img src="docs/images/grid.png" width="310" alt="Sable two-column grid with compact shortcuts and secret entries">
 </p>
 
 *Screenshots use fictional demonstration data.*
 
-## A little vault for everyday things
+## Keep useful things within reach
 
-- **Two simple choices.** A Secret keeps any text private, including multiline notes and formatted content. A Login copies its username first and password on the next click, keeping the panel available between them.
+- **Secrets and Shortcuts.** Save a private value or Login to copy, or a standalone Shortcut to run a command, open a file or connect to a server. Logins still copy the username first and password on the next click.
 - **Small, calm and close at hand.** A rounded dark panel, subtle feedback, a configurable keyboard shortcut and a pin to keep it open. Unpinned, it stays out of the taskbar and Alt+Tab by default.
 - **Organize your own way.** Nested folders with drag-to-move/reorder, search, direct row dragging and folder drops, entry duplication, compact entry colors and multiline text or secrets. Reveal a secret only when you choose.
 - **Useful advanced actions.** Open an application, find Windows Settings or Control Panel pages, use a Windows+R-style command, or run CMD/PowerShell. Choose Run or Run & copy, test before saving, with terminals staying open by default.
 - **Keep useful formatting.** Paste formatted content into an empty Secret to retain common HTML formatting and tables when copying to supporting apps. The editor stays masked, plain text remains available as a fallback, and secret clipboard protection applies to both formats.
 - **Lock when it matters.** A full password at startup, optional 4–12 digit quick PIN during that process session, configurable timed locking and Windows session locking. Five incorrect PINs require the full password. Pinning pauses the timer, but never overrides Windows locking.
-- **Thoughtful clipboard handling.** Secret copies clear after 30 seconds by default if still owned by SableLatch. The delay is configurable; Windows clipboard-history exclusion and supported screen-capture exclusion are requested.
+- **Thoughtful clipboard handling.** Secret copies clear after 30 seconds by default if still owned by Sable. The delay is configurable; Windows clipboard-history exclusion and supported screen-capture exclusion are requested.
 - **Your data stays local.** An encrypted vault, encrypted import/export and optional encrypted backups. Backups start **off**. No account, cloud service, telemetry, browser engine or resident background service. Each open RDP session uses a separate local process.
 - **Add your own entry types.** Install declarative ZIP modules, use protected PuTTY SSH and Remote Desktop entries, or start with the quick-note sample. See the [module guide](modules/README.md). No background module tasks or executable plugin code.
 - **Recover and review.** A master recovery key, configurable encrypted Trash for secrets, entry timestamps and a small protected activity history that can be exported to an HTML report.
 
-## New in v0.8.7 preview
+## New in v0.9.0 preview
 
-- **A warmer first run:** a welcome preview, four compact guided steps, optional first-secret creation and a completion screen. Back keeps drafts; tooltips explain controls, and brief transitions respect Windows animation preferences.
+- **Sable:** the shorter app name matches [odxxt/Sable](https://github.com/odxxt/Sable).
+- **Secrets and Shortcuts:** Secrets copy values or login credentials. Standalone Shortcuts run applications, files/folders, Windows settings, Run commands, PowerShell or CMD. RDP and SSH entries now launch on click, with credentials still encrypted inside their entries.
+- **Clipboard suggestions:** opt a Ping, Test port or DNS lookup shortcut into matching. Sable suggests your configured shortcut for an IP, host:port, or hostname/website. Click to run it with that target; the saved destination stays unchanged. Matching stays local, only while the unlocked panel is visible, and keeps no history. Nothing runs automatically.
+- **Rows or grid:** switch with the small view button beside +. Grid shows two entries across, supports editing, copying/running and dragging, and virtualizes long lists.
+- **One row of folders:** four compact slots, smooth sideways browsing for more, and the existing drag-to-reorder or nest behavior. Clipboard suggestions now separate the action label from the readable destination.
+
+See [shortcut setup and migration](docs/SABLE-0.9.md). Clipboard suggestions currently support the three diagnostic action types, not arbitrary script-template substitution.
+
+### Included from v0.8.8
+
+- **Create your first real secret:** finish vault setup, then follow gentle highlights through the actual + menu and Secret editor. A small Skip lets you continue without the guide. No pretend Wi-Fi entry or separate first-secret form.
+- **Consistent entry menus:** Edit, Duplicate, Move to folder and Delete stay in the same order, with any Run/Launch actions above them. SSH and RDP use the same pattern.
+- **Windows 10 capture compatibility:** use an opaque rounded panel to avoid transparent-window conflicts, and reapply protection when opening or pinning. Older Windows 10 can blank content rather than omit the window; actual capture behavior still depends on Windows and the capture tool. See [security limits](SECURITY.md#screen-capture).
+
+### Included from v0.8.7
+
+- **Compact setup:** Back keeps drafts; tooltips explain controls, and brief transitions respect Windows animation preferences.
 - **Secret and Login:** Text is no longer a separate choice. Existing Text entries become Secrets while retaining values, formatting, identity and timestamps. Their values are masked and excluded from search; secret clipboard and Trash preferences now apply.
 - **Ready to type:** opening the locked panel or pressing Lock focuses the PIN/password immediately. The shortcut also focuses an already-visible lock screen.
 
@@ -52,29 +68,29 @@ See the [changelog](CHANGELOG.md), [user guide](docs/USER-GUIDE.md) and [verific
 
 Target: **Windows 10/11, x64**. The ZIP includes the .NET Desktop Runtime; you do not need to install .NET separately to run it. ARM64 and 32-bit packages are not currently provided. See [runtime OS support](https://github.com/dotnet/core/blob/main/release-notes/10.0/supported-os.md) and [verification limits](VERIFICATION.md) for platform details.
 
-1. Download **SableLatch-v<version>-win-x64.zip** from the [release page](https://github.com/odxxt/SableLatch/releases). GitHub's automatic **Source code** archives are for developers, not the runnable app.
+1. Download **Sable-v<version>-win-x64.zip** from the [release page](https://github.com/odxxt/Sable/releases). GitHub's automatic **Source code** archives are for developers, not the runnable app.
 2. Extract the **entire ZIP** to a writable folder. Keep all included files together.
-3. Open **SableLatch.exe**. Create a vault or restore an existing encrypted backup.
+3. Open **Sable.exe**. Create a vault or restore an existing encrypted backup.
 4. Save your recovery key somewhere safe outside the app. It is shown during setup and is not available to reveal again later.
-5. Open SableLatch from the tray or press **Ctrl+Alt+Space**. Use **+ → New entry** and click its row to copy.
+5. Open Sable from the tray or press **Ctrl+Alt+Space**. Use **+ → New entry**. Click a Secret to copy or a Shortcut to run.
 
 You can change the shortcut and startup behavior in Settings. **Enter** saves or continues; **Shift+Enter** adds a line. The close button hides the panel. Settings → **Quit → Confirm quit** exits the app.
 
 Checksums are included with each release as `SHA256SUMS-v<version>.txt`. To check a download in PowerShell:
 
 ```powershell
-Get-FileHash .\SableLatch-v0.8.7-win-x64.zip -Algorithm SHA256
+Get-FileHash .\Sable-v0.9.0-win-x64.zip -Algorithm SHA256
 ```
 
 ### Updating
 
-Exit the old app, extract the new release separately, and copy your **entire `SableLatch-data` folder** beside the new executable. Include its attachments and keep the old folder as a rollback copy. Open the new version on the same Windows account/computer. Do not run two versions against the same vault or alternate older builds on newer data.
+Exit the old app, extract the new release separately, and copy your **entire data folder** beside the new executable. Keep an existing `SableLatch-data` name; Sable detects it automatically. Fresh installs use `Sable-data`. Include attachments and keep the old folder as a rollback copy. Open the new version on the same Windows account/computer. Do not run two versions against the same vault or alternate older builds on newer data.
 
 ## Encryption, explained
 
-SableLatch uses established cryptographic primitives. These links describe the underlying algorithms; they are not a certification or audit of this application.
+Sable uses established cryptographic primitives. These links describe the underlying algorithms; they are not a certification or audit of this application.
 
-| Component | How SableLatch uses it | Reference |
+| Component | How Sable uses it | Reference |
 | --- | --- | --- |
 | **AES-256-GCM** | Authenticated encryption for vault data, attachments and encrypted envelopes, with fresh 96-bit nonces, 128-bit authentication tags and purpose-bound associated data. | [NIST SP 800-38D](https://csrc.nist.gov/pubs/sp/800/38/d/final) |
 | **Argon2id** | Password-based key derivation: 64 MiB memory, 3 passes, 1 lane, a random 128-bit salt and a 256-bit output. | [RFC 9106](https://www.rfc-editor.org/rfc/rfc9106) |
@@ -102,7 +118,7 @@ This is a **preview**, not an independently audited password manager. Capture ex
 The direction is a small app with room to grow. Checked items are available now; unchecked items are planned without a promised release date:
 
 - [x] **Declarative ZIP modules:** installation, enable/disable controls, beginner samples, API 1 field/action contracts and the first PuTTY module.
-- [x] **Local Remote Desktop:** click to copy the password; use Launch or Launch & copy to open Windows Remote Desktop. A temporary Windows-encrypted connection file is used; see the [security limits](docs/RDP-DESIGN.md).
+- [x] **Local Remote Desktop:** click to launch Windows Remote Desktop, with an optional Launch & copy preference. A temporary Windows-encrypted connection file is used; see the [security limits](docs/RDP-DESIGN.md).
 - [x] **Module trust and permissions:** signed official packages, community warnings and scoped host-operation consent.
 - [ ] **More module capabilities:** encrypted SSH-key authentication, additional RDP options, and a separately reviewed sandbox for executable extensions.
 - [ ] **More entry types:** image/screenshot and attachment providers that use the existing encrypted storage and clipboard contracts.
@@ -118,12 +134,12 @@ The current app already separates content, storage, clipboard, editors, layouts 
 Install a **.NET 10 SDK on Windows**, then run:
 
 ```powershell
-git clone https://github.com/odxxt/SableLatch.git
-cd SableLatch
+git clone https://github.com/odxxt/Sable.git
+cd Sable
 .\build.ps1 -Portable
 ```
 
-The script runs the core checks and publishes the standalone app to `artifacts/SableLatch-portable`.
+The script runs the core checks and publishes the standalone app to `artifacts/Sable-portable`.
 
 For development:
 
@@ -136,7 +152,7 @@ The preview is covered by core/storage/package checks, WPF interaction checks an
 
 ## Explore and contribute
 
-Found a bug or have an idea? [Open an issue](https://github.com/odxxt/SableLatch/issues). Include the app version, Windows version and steps to reproduce. Use fictional entries in screenshots and examples; never attach your vault, passwords or recovery key.
+Found a bug or have an idea? [Open an issue](https://github.com/odxxt/Sable/issues). Include the app version, Windows version and steps to reproduce. Use fictional entries in screenshots and examples; never attach your vault, passwords or recovery key.
 
 - [User guide](docs/USER-GUIDE.md) — everyday controls, settings and recovery.
 - [RDP design](docs/RDP-DESIGN.md) — native Windows launch, credential-file lifecycle and limitations.
@@ -148,4 +164,4 @@ Found a bug or have an idea? [Open an issue](https://github.com/odxxt/SableLatch
 
 ## License
 
-SableLatch is licensed under the **[MIT License](LICENSE)**. Third-party components retain their own licenses; see [THIRD-PARTY.md](THIRD-PARTY.md).
+Sable is licensed under the **[MIT License](LICENSE)**. Third-party components retain their own licenses; see [THIRD-PARTY.md](THIRD-PARTY.md).

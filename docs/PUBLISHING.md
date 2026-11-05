@@ -1,6 +1,6 @@
-# Publishing SableLatch and its module catalog
+# Publishing Sable and its module catalog
 
-The app and module catalog use the same public repository: `odxxt/SableLatch`.
+The app and module catalog use the same public repository: `odxxt/Sable`.
 
 ## Push source changes
 
@@ -15,15 +15,17 @@ Use your normal Windows terminal if an automation session cannot access Git Cred
 
 ## Publish an app download
 
-A source push does not upload the standalone app to Releases. Build and verify the portable ZIP, source ZIP and SHA256SUMS file, commit the corresponding source, and create a matching version tag. Push main and the tag without force, then create a GitHub prerelease with those three files as assets. The prepared local Publish-SableLatch script automates those steps after local preparation and verifies remote asset hashes before publishing. Existing published assets are not overwritten.
+A source push does not upload the standalone app to Releases. Build and verify the portable ZIP, source ZIP and SHA256SUMS file, commit the corresponding source, and create a matching version tag. Push main and the tag without force, then create a GitHub prerelease with those three files as assets. Verify uploaded asset hashes before publishing. Existing published assets are not overwritten.
 
 ## Make modules appear in the app
 
 The app fetches this file only when the user clicks **Settings → Plugins & modules → Catalog → Check GitHub catalog**:
 
-https://raw.githubusercontent.com/odxxt/SableLatch/main/modules/catalog.json
+https://raw.githubusercontent.com/odxxt/Sable/main/modules/catalog.json
 
-Each catalog entry points to a ZIP under the same repository and specifies its SHA-256. The catalog payload is signed using the SableLatch publisher key; the ZIP's manifest is independently signed. The client checks both and the archive hash. Uploading an unsigned JSON list or editing signed bytes invalidates the catalog.
+Each catalog entry points to a ZIP under the same repository and specifies its SHA-256. The catalog payload is signed using the Sable publisher key; the ZIP's manifest is independently signed. The client checks both and the archive hash. Uploading an unsigned JSON list or editing signed bytes invalidates the catalog.
+
+The existing catalog still has signed URLs containing `odxxt/SableLatch`. Host 0.9 verifies those exact bytes and maps only that old official raw-GitHub prefix to `odxxt/Sable` before the request. Do not edit the signed payload just to rename URLs without re-signing it. Existing module IDs and embedded resource names also remain compatible.
 
 The PuTTY catalog and ZIP were fetched from public GitHub on 24 September 2026; the catalog signature and ZIP hash matched. No separate hosting or server is needed. Pushing a compatible, correctly signed catalog/package update to main makes it available on the next explicit catalog check. Both included PuTTY and RDP modules also work offline.
 
@@ -37,8 +39,8 @@ For a new official module:
 
 Keep the encrypted publisher private key and its unlock password outside Git and release ZIPs, backed up separately. The repository contains only the public verification key. See [the module author guide](../modules/README.md).
 
-## v0.8.5 release inventory
+## v0.9.0 release inventory
 
-Publish the final UI-polished build, not an earlier local ZIP with the same version. Release assets are `SableLatch-v0.8.5-win-x64.zip`, `SableLatch-v0.8.5-source.zip` and `SHA256SUMS-v0.8.5.txt`. The version tag must point to the clean source commit used for these assets. The source ZIP excludes Git metadata, build output, vault data and private publisher keys. The standalone ZIP includes the desktop runtime, current documentation and verification reports.
+Publish the final UI-polished build, not an earlier local ZIP with the same version. Release assets are `Sable-v0.9.0-win-x64.zip`, `Sable-v0.9.0-source.zip` and `SHA256SUMS-v0.9.0.txt`. The version tag must point to the clean source commit used for these assets. The source ZIP excludes Git metadata, build output, vault data and private publisher keys. The standalone ZIP includes the desktop runtime, current documentation and verification reports.
 
 The signed API 1 module ZIPs and catalog remain compatible with this host update. Changing host UI, native RDP clipboard settings or folder behavior does not require re-signing an unchanged manifest. Do not change signed package bytes solely to update prose in the source documentation.

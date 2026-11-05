@@ -32,7 +32,7 @@ public partial class MainWindow
         Audit(fullPassword ? AuditEvent.PasswordUnlocked : AuditEvent.PinUnlocked);
         failedUnlocks = 0; nextUnlockAttempt = default; session.Unlock(); nextMaintenance = default;
         heartbeat.Start();
-        if (tray is not null) tray.Text = "SableLatch";
+        if (tray is not null) tray.Text = "Sable";
         var s = vault.Document!.Settings;
         ApplyTheme(s.Theme);
         if (fullPassword)
@@ -45,7 +45,8 @@ public partial class MainWindow
                 try { File.WriteAllBytes(Path.Combine(App.DataDirectory, "host.json"), Codec.Encode(s.Shortcut)); } catch { SetStatus("Shortcut could not be saved for startup"); }
             }
         }
-        if (fullPassword && vault.Document!.QuickUnlock is null && !s.PinPromptDismissed) ShowPinSetup(false); else ShowList();
+        if (fullPassword && vault.Document!.QuickUnlock is null && !s.PinPromptDismissed) ShowPinSetup(false);
+        else if (s.FirstEntryTourPending) ShowSetupReady(); else ShowList();
     }
     private void ShowRecover()
     {

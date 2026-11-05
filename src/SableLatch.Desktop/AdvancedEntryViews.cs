@@ -25,9 +25,10 @@ public partial class MainWindow
     {
         var section = new StackPanel { Visibility = advancedEditor ? Visibility.Visible : Visibility.Collapsed };
 
-        stack.Children.Add(Text("Entry color", 11, true));
+        var colors = new StackPanel(); var colorHost = contentType == "sable.shortcut" ? colors : stack;
+        colorHost.Children.Add(Text("Entry color", 11, true));
         var selectedColor = existing?.Color ?? "default";
-        var swatches = new WrapPanel { Margin = new Thickness(0, 0, 0, 12) }; stack.Children.Add(swatches);
+        var swatches = new WrapPanel { Margin = new Thickness(0, 0, 0, 12) }; colorHost.Children.Add(swatches);
         var buttons = new Dictionary<string, Button>();
         foreach (var pair in EntryColors.All)
         {
@@ -36,8 +37,8 @@ public partial class MainWindow
             choice.Background = pair.Key == "default" ? (Brush)FindResource("ControlSurface") : EntryColors.Brush(pair.Key); choice.Content = selectedColor == pair.Key ? "✓" : ""; choice.ToolTip = pair.Key;
             System.Windows.Automation.AutomationProperties.SetName(choice, "Entry color " + pair.Key); buttons.Add(pair.Key, choice); swatches.Children.Add(choice);
         }
-        stack.Children.Add(section); var fields = section;
-        var names = new Dictionary<string, string> { ["Choose an action…"] = "", ["Application"] = "application", ["Windows & Control Panel"] = "windows", ["Run"] = "run", ["PowerShell"] = "powershell", ["CMD"] = "cmd" };
+        stack.Children.Add(section); if (contentType == "sable.shortcut") stack.Children.Add(colors); var fields = section;
+        var names = new Dictionary<string, string> { ["Choose an action…"] = "", ["Application"] = "application", ["Windows & Control Panel"] = "windows", ["Run"] = "run", ["PowerShell"] = "powershell", ["CMD"] = "cmd", ["File or folder"] = "file", ["Ping"] = "ping", ["Test port"] = "tcp", ["DNS lookup"] = "lookup" };
         if (existing?.Action is { } unknown && unknown.Kind != "control-panel" && !names.ContainsValue(unknown.Kind)) names["Unavailable · " + unknown.Kind] = unknown.Kind;
         var kind = Select(fields, "Action", names.Keys, names.FirstOrDefault(p => p.Value == (existing?.Action?.Kind == "control-panel" ? "windows" : existing?.Action?.Kind)).Key ?? "Choose an action…");
         var details = new StackPanel(); fields.Children.Add(details);
@@ -55,6 +56,7 @@ public partial class MainWindow
         var hint = Text("", 11, true); details.Children.Add(hint);
         var terminal = Check(details, "Keep terminal open when finished", existing?.Action?.KeepTerminalOpen ?? true);
         terminal.Checked += (_, _) => changed(); terminal.Unchecked += (_, _) => changed();
+        var suggest = Check(details, "Suggest for matching clipboard", existing?.Action?.SuggestFromClipboard ?? false);
         var copyOnRun = existing?.Action?.CopyOnRun == true;
         var canCopy = contentType is "sable.text" or "sable.secret" or "sable.login";
         if (canCopy)
@@ -79,6 +81,11 @@ public partial class MainWindow
         void ChooseDestination()
         {
             var id = names[(string)kind.SelectedItem];
+            if (id == "file")
+            {
+                var dialog = new Microsoft.Win32.OpenFileDialog { Filter = "All files|*.*", CheckFileExists = true };
+                modalDepth++; try { if (dialog.ShowDialog(this) == true) target.Text = dialog.FileName; } finally { modalDepth--; } return;
+            }
             if (id is "windows" or "control-panel")
             {
                 ShowChoicePicker("Windows & Control Panel", Task.FromResult(WindowsSettingsCatalog.Read()), choice => target.Text = choice.Target, settings: true); return;
@@ -98,15 +105,16 @@ public partial class MainWindow
         browse.Click += (_, _) => ChooseDestination();
         void Refresh(bool clear)
         {
-            var id = names[(string)kind.SelectedItem]; details.Visibility = id.Length == 0 ? Visibility.Collapsed : Visibility.Visible; var script = id is "cmd" or "powershell";
-            if (clear) { target.Clear(); arguments.Clear(); directory.Clear(); terminal.IsChecked = script; directoryHost.Visibility = Visibility.Collapsed; }
-            terminal.Visibility = script ? Visibility.Visible : Visibility.Collapsed;
-            targetLabel.Text = id switch { "application" => "Application path", "windows" => "Settings destination", "control-panel" => "Control Panel name", "run" => "Run command", _ => "Script" };
+            var id = names[(string)kind.SelectedItem]; details.Visibility = id.Length == 0 ? Visibility.Collapsed : Visibility.Visible; var script = id is "cmd" or "powershell"; var diagnostic = ShortcutTargets.IsDiagnostic(id);
+            if (clear) { target.Clear(); arguments.Clear(); directory.Clear(); terminal.IsChecked = script || diagnostic; directoryHost.Visibility = Visibility.Collapsed; }
+            suggest.Visibility = diagnostic && contentType == "sable.shortcut" ? Visibility.Visible : Visibility.Collapsed;
+            terminal.Visibility = script || diagnostic ? Visibility.Visible : Visibility.Collapsed;
+            targetLabel.Text = id switch { "file" => "File or folder path", "ping" or "lookup" => "Host", "tcp" => "Host and port", "application" => "Application path", "windows" => "Settings destination", "control-panel" => "Control Panel name", "run" => "Run command", _ => "Script" };
             target.AcceptsReturn = id == "powershell"; target.MinHeight = script ? 85 : 36;
-            browse.Visibility = id is "application" or "windows" or "control-panel" ? Visibility.Visible : Visibility.Collapsed;
-            browse.Content = id switch { "windows" => "Choose a setting…", "control-panel" => "Choose Control Panel item…", _ => "Choose application…" };
+            browse.Visibility = id is "file" or "application" or "windows" or "control-panel" ? Visibility.Visible : Visibility.Collapsed;
+            browse.Content = id switch { "file" => "Choose file…", "windows" => "Choose a setting…", "control-panel" => "Choose Control Panel item…", _ => "Choose application…" };
             argumentsHost.Visibility = id == "application" ? Visibility.Visible : Visibility.Collapsed;
-            hint.Text = id switch { "windows" => "Search Windows Settings and Control Panel together. Availability depends on your PC.", "control-panel" => "Choose an item above, or enter its canonical name.", "run" => "Like Windows+R: notepad, control printers, or %APPDATA%. Quote paths that contain spaces.", "cmd" => "One command line, or call a .cmd file. Test action runs it on your PC.", "powershell" => "Shift+Enter adds a line. Test action runs the script on your PC.", _ => "Test action opens the application before you save." };
+            hint.Text = id switch { "file" => "Open a file or folder with its default Windows application.", "ping" or "lookup" => "Enter an IP address or hostname. Suggestions use matching clipboard hosts when you click them.", "tcp" => "Enter host:port, such as 192.168.1.10:443. IPv6 uses [address]:port.", "windows" => "Search Windows Settings and Control Panel together. Availability depends on your PC.", "control-panel" => "Choose an item above, or enter its canonical name.", "run" => "Like Windows+R: notepad, control printers, or %APPDATA%. Quote paths that contain spaces.", "cmd" => "One command line, or call a .cmd file. Test action runs it on your PC.", "powershell" => "Shift+Enter adds a line. Test action runs the script on your PC.", _ => "Test action opens the application before you save." };
             changed();
         }
         kind.SelectionChanged += (_, _) =>
@@ -126,7 +134,8 @@ public partial class MainWindow
             {
                 Enabled = advancedEditor, Kind = names[(string)kind.SelectedItem], Label = "Run", Target = target.Text,
                 Arguments = names[(string)kind.SelectedItem] == "application" ? arguments.Text : "", WorkingDirectory = directory.Text.Trim(), VerifyEachTime = verify.IsChecked == true, CopyOnRun = canCopy && copyOnRun,
-                KeepTerminalOpen = names[(string)kind.SelectedItem] is "cmd" or "powershell" && terminal.IsChecked == true
+                SuggestFromClipboard = contentType == "sable.shortcut" && ShortcutTargets.IsDiagnostic(names[(string)kind.SelectedItem]) && suggest.IsChecked == true,
+                KeepTerminalOpen = (names[(string)kind.SelectedItem] is "cmd" or "powershell" || ShortcutTargets.IsDiagnostic(names[(string)kind.SelectedItem])) && terminal.IsChecked == true
             } : null
         };
         bool Invalid(Control field, string message) { if (field == directory) directoryHost.Visibility = Visibility.Visible; field.BringIntoView(); RejectInput(field, message); return false; }

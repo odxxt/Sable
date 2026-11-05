@@ -8,7 +8,7 @@ public partial class MainWindow
     private sealed class SetupDraft
     {
         public string Password = "", Recovery = Crypto.NewRecoveryKey();
-        public string Pin = "", FirstLabel = "", FirstValue = "";
+        public string Pin = "";
         public bool Startup = true;
         public string? ImportFile, ImportPassword;
     }
@@ -25,15 +25,10 @@ public partial class MainWindow
         latch.Child = new System.Windows.Shapes.Path { Data = Geometry.Parse("M 23,12 L 23,21"), Stroke = Brushes.White, StrokeThickness = 2.5, StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round };
         emblem.Children.Add(latch); stack.Children.Add(emblem);
         var title = Heading("A little privacy.\nA lot less searching."); title.FontSize = 23; title.TextAlignment = TextAlignment.Center; stack.Children.Add(title);
-        var caption = Text("Welcome to SableLatch. Let's make it yours.", 11, true); caption.TextAlignment = TextAlignment.Center; caption.Margin = new Thickness(0, 1, 0, 8); stack.Children.Add(caption);
-        var sample = Button("", () => { }); sample.Margin = new Thickness(0, 0, 0, 12); sample.Padding = new Thickness(12, 8, 12, 8); sample.Background = (Brush)FindResource("ControlSurface");
-        sample.ToolTip = "Try it. Your real entries copy with one click; their values stay hidden in the list.";
-        var demo = new TextBlock { Text = "Home Wi-Fi                  ••••", FontSize = 12, HorizontalAlignment = HorizontalAlignment.Center };
-        sample.Content = demo; sample.HorizontalContentAlignment = HorizontalAlignment.Center; stack.Children.Add(sample);
-        sample.Click += async (_, _) => { if (!sample.IsEnabled) return; sample.IsEnabled = false; demo.Text = "✓   That's how simple it feels"; await Task.Delay(1100); if (sample.IsLoaded) { demo.Text = "Home Wi-Fi                  ••••"; sample.IsEnabled = true; } };
+        var caption = Text("Keep your everyday secrets close.", 11, true); caption.TextAlignment = TextAlignment.Center; caption.Margin = new Thickness(0, 1, 0, 8); stack.Children.Add(caption);
         var create = Button("Create your vault  →", () => ShowSetupPassword(new()), true); create.HorizontalContentAlignment = HorizontalAlignment.Center; create.Height = 40; stack.Children.Add(create);
         pageSubmit = create;
-        create.ToolTip = "Four short steps. Your vault stays encrypted on this computer.";
+        create.ToolTip = "Three short steps. Your vault stays encrypted on this computer.";
         var restore = Button("Restore from backup", ShowRestore); restore.FontSize = 11; restore.Opacity = .6; restore.HorizontalContentAlignment = HorizontalAlignment.Center; restore.Margin = new Thickness(0, 0, 0, 5);
         Grid.SetRow(restore, 1); page.Children.Add(restore);
         restore.ToolTip = "Bring back a vault using an encrypted backup and its recovery key.";
@@ -50,7 +45,7 @@ public partial class MainWindow
         var stack = SetupPage(0, "Your vault. Your key.", "One strong password protects everything you keep.", () => { draft.Password = password!.Password; draft.Startup = startup!.IsChecked == true; if (draft.ImportFile is null) ShowWelcome(); else ShowImportFile(true, draft.ImportFile); });
         password = Password(stack, "At least 12 characters"); password.Password = draft.Password; password.ToolTip = "Use a memorable passphrase of at least 12 characters. You'll need it when the app starts.";
         confirm = Password(stack, "Confirm password"); confirm.Password = draft.Password;
-        startup = Check(stack, "Start quietly with Windows", draft.Startup); startup.ToolTip = "SableLatch waits in the tray. You can turn this off in Settings.";
+        startup = Check(stack, "Start quietly with Windows", draft.Startup); startup.ToolTip = "Sable waits in the tray. You can turn this off in Settings.";
         PageAction(Button("Next  →", () =>
         {
             try { Crypto.RequirePassword(password.Password); } catch (ArgumentException ex) { RejectInput(password, ex.Message); return; }
@@ -77,10 +72,10 @@ public partial class MainWindow
                 if (chosen != confirm.Password) { RejectInput(confirm, "PINs do not match."); return; }
             }
             draft.Pin = usePin ? chosen : "";
-            ShowSetupFirstSecret(draft); await Task.CompletedTask;
+            await FinishSetup(draft);
         }
         stack.Children.Add(AsyncButton("Use full password instead", () => Finish(false), false));
-        PageAction(AsyncButton("Next  →", () => Finish(true)));
+        PageAction(AsyncButton("Finish setup  →", () => Finish(true)));
         Dispatcher.BeginInvoke(() => pin.Focus());
     }
     private void ShowRecoveryKey(string recovery, Func<Task> complete, bool replacement, Action? previous = null)
@@ -133,7 +128,7 @@ public partial class MainWindow
     }
     private string? ChooseArchive(bool backup)
     {
-        var picker = new Microsoft.Win32.OpenFileDialog { Filter = backup ? "SableLatch backup|*.sablebackup" : "SableLatch encrypted export|*.sableexport" };
+        var picker = new Microsoft.Win32.OpenFileDialog { Filter = backup ? "Sable backup|*.sablebackup" : "Sable encrypted export|*.sableexport" };
         modalDepth++; try { return picker.ShowDialog(this) == true ? picker.FileName : null; } finally { modalDepth--; }
     }
     private void ShowRestore() => ShowRestoreFile(null);
@@ -172,7 +167,7 @@ public partial class MainWindow
             var chosen = password.Password; var start = startup.IsChecked == true;
             if (chosen != confirm.Password) { RejectInput(confirm, "Passwords do not match."); return; }
             var existing = vault.Exists;
-            var target = existing ? Path.Combine(Path.GetDirectoryName(App.DataDirectory)!, "SableLatch-restored-" + Guid.NewGuid().ToString("N")[..8]) : App.DataDirectory;
+            var target = existing ? Path.Combine(Path.GetDirectoryName(App.DataDirectory)!, "Sable-restored-" + Guid.NewGuid().ToString("N")[..8]) : App.DataDirectory;
             await RunVault(() => Task.Run(() =>
             {
                 if (!existing)

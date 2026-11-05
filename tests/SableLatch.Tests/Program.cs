@@ -80,7 +80,7 @@ var formattedCopy = providers.Find("sable.text")!.Copy(Codec.Clone(formatted), "
 var formattedPayload = Codec.Decode<FormattedTextValue>(formattedCopy.Data);
 Check(formattedCopy.MediaType == "application/x-sable-formatted-text" && formattedPayload.Text == "Hello" && formattedPayload.Html == "<b>Hello</b>", "Text preserves both formatted and plain representations through serialization");
 Check(providers.Find("sable.secret")!.Copy(formatted, "Copy") is { MediaType: "application/x-sable-formatted-text", Sensitive: true }, "Secret provider preserves formatting with sensitive clipboard protection");
-Check(providers.All.Select(p => p.Descriptor.Id).SequenceEqual(new[] { "sable.secret", "sable.login" }), "Only Secret and Login are exposed as built-in choices");
+Check(providers.All.Select(p => p.Descriptor.Id).SequenceEqual(new[] { "sable.secret", "sable.login", "sable.shortcut" }), "Secret, Login and Shortcut are exposed as built-in choices");
 Check(new VaultItem() is { ContentType: "sable.secret", IsSensitive: true }, "New entries default to protected secrets");
 var legacyItem = new VaultItem { ContentType = "sable.text", Label = "", IsSensitive = false, Payload = formatted.Payload, CreatedAt = now.AddDays(-4), Order = 7 };
 var legacyId = legacyItem.Id; var legacyPayload = legacyItem.Payload.GetRawText();
@@ -270,6 +270,8 @@ Check(!copyApproval.Contains(consentId, copyChanged), "Enabling secret copying r
 var terminalChanged = Codec.Clone(consentAction); terminalChanged.KeepTerminalOpen = true;
 Check(!copyApproval.Contains(consentId, terminalChanged), "Keeping a terminal open requires new local execution consent");
 Check(!new Preferences().BackupEnabled && !Codec.Decode<Preferences>(Encoding.UTF8.GetBytes("{}")).BackupEnabled, "New and legacy vaults keep backups off by default");
+Check(!Codec.Decode<Preferences>(Encoding.UTF8.GetBytes("{}")).FirstEntryTourPending, "Existing vault preferences do not start the first-entry guide");
+Check(Codec.Decode<Preferences>(Codec.Encode(new Preferences { FirstEntryTourPending = true })).FirstEntryTourPending, "Pending first-entry guide survives preference serialization");
 Check(!Codec.Decode<EntryAction>(Encoding.UTF8.GetBytes("{\"target\":\"legacy\"}")).KeepTerminalOpen, "Older actions retain automatic terminal closing");
 const string multilineSecret = "line-one\nline-two\r\n\nlast-line";
 advancedStore.Mutate(d => { d.Items.Single().Payload = JsonSerializer.SerializeToElement(new { username = "user", password = multilineSecret }); d.Items.Single().Advanced!.Action!.KeepTerminalOpen = true; });
@@ -278,6 +280,19 @@ Check(advancedStore.Document!.Items.Single().Field("password") == multilineSecre
 using var multilineTransfer = Transfers.Open(Transfers.Create(advancedStore, exportPassword), exportPassword);
 Transfers.Import(importedStore, multilineTransfer);
 Check(importedStore.Document!.Items.Any(i => i.Field("password") == multilineSecret && i.Advanced?.Action?.KeepTerminalOpen == true), "Multiline secrets and terminal options survive encrypted export and import");
+ShortcutChecks.Run(Check, Reject);
+var portableRoot = TestDir("portable-path"); Directory.CreateDirectory(portableRoot);
+Check(PortableData.DefaultDirectory(portableRoot) == Path.Combine(portableRoot, "Sable-data"), "New Sable installations use the new data-folder name");
+Directory.CreateDirectory(Path.Combine(portableRoot, "SableLatch-data"));
+Check(PortableData.DefaultDirectory(portableRoot) == Path.Combine(portableRoot, "SableLatch-data"), "Sable detects the legacy data folder without moving its vault");
+using (var shortcuts = new VaultStore(TestDir("shortcuts"), device))
+{
+    shortcuts.Create(password);
+    shortcuts.Mutate(d => { d.Settings.Layout = "grid"; d.Items.Add(new VaultItem { ContentType = "sable.shortcut", Label = "Network tool", IsSensitive = false, Advanced = new() { Action = new() { Kind = "tcp", Target = "192.0.2.20:443", SuggestFromClipboard = true } } }); });
+    Check(!Encoding.UTF8.GetString(File.ReadAllBytes(shortcuts.FilePath)).Contains("192.0.2.20"), "Shortcut destinations stay encrypted on disk");
+    shortcuts.Lock(); shortcuts.Unlock(password);
+    Check(shortcuts.Document!.Settings.Layout == "grid" && shortcuts.Document.Items.Single().Advanced!.Action!.SuggestFromClipboard, "Shortcut and grid state survive encrypted reopening");
+}
 ModuleChecks.Run(Check, Reject, root);
 OrganizationChecks.Run(Check, Reject);
 var moduleConsentDirectory = TestDir("module-approvals"); Directory.CreateDirectory(moduleConsentDirectory);

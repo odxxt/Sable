@@ -31,7 +31,7 @@ public partial class MainWindow
         });
         quit.IsVisibleChanged += (_, _) => { if (!quit.IsVisible) ResetQuit(); };
         quit.FontSize = 11; quit.Width = 100; quit.Opacity = .65; quit.Margin = new Thickness(0, 8, 0, 0); DockPanel.SetDock(quit, Dock.Right); footer.Children.Add(quit);
-        var about = Button("ⓘ  About SableLatch", () => OpenAbout(this, new RoutedEventArgs())); about.FontSize = 11; about.Opacity = .65; about.Margin = new Thickness(0, 8, 0, 0); footer.Children.Add(about); PageAction(footer); pageSubmit = null;
+        var about = Button("ⓘ  About Sable", () => OpenAbout(this, new RoutedEventArgs())); about.FontSize = 11; about.Opacity = .65; about.Margin = new Thickness(0, 8, 0, 0); footer.Children.Add(about); PageAction(footer); pageSubmit = null;
     }
     private void ShowAdvancedSettings()
     {
@@ -60,7 +60,7 @@ public partial class MainWindow
         stack.Children.Add(Button(vault.Document!.QuickUnlock is null ? "Set up quick PIN" : "Change quick PIN", () => NavigateSettings(() => ShowPinSetup(true))));
         stack.Children.Add(Button("Change app password", () => NavigateSettings(ShowChangePassword)));
         stack.Children.Add(Button("Generate replacement recovery key", () => NavigateSettings(ShowRotateRecovery)));
-        stack.Children.Add(Text(CaptureProtection.HasFailure ? "Screen capture protection is unavailable for one or more windows in this Windows session." : "Screen capture protection is active for supported Windows capture tools.", 11, true));
+        stack.Children.Add(Text(CaptureProtection.HasFailure ? "Screen capture protection is unavailable for one or more windows in this Windows session." : CaptureProtection.HasFallback || CaptureProtection.RequestedAffinity == 1 ? "Capture protection hides the content, but a blank window may remain in captures." : "Screen capture protection is active for supported Windows capture tools.", 11, true));
         stack.Children.Add(Text("Other recording methods and external cameras cannot be blocked.", 11, true));
     }
     private void ShowChangePassword()
@@ -87,6 +87,8 @@ public partial class MainWindow
     private void ShowClipboardSettings()
     {
         var s = vault.Document!.Settings; var stack = Form("Copying.", "Secret copies are excluded from Windows clipboard history and cloud sync. Other clipboard tools may still read them.", "settings");
+        var suggestions = Check(stack, "Suggest shortcuts from clipboard", s.ClipboardSuggestions);
+        suggestions.ToolTip = "Locally match small clipboard text while the unlocked panel is visible. Nothing runs automatically or is saved to history.";
         var clear = Check(stack, "Automatically clear secret copies", s.ClearSecretClipboard);
         var seconds = Input(stack, "Clear after · seconds (1–3,600)", s.ClipboardSeconds.ToString());
         var close = Check(stack, "Close after copying when unpinned", s.CloseAfterCopy);
@@ -94,7 +96,7 @@ public partial class MainWindow
         SettingsSave(stack, Button("Save copying settings", () =>
         {
             if (!int.TryParse(seconds.Text, out var n)) { ShowError("Enter a whole number of seconds."); return; }
-            if (Change(d => { d.Settings.ClearSecretClipboard = clear.IsChecked == true; d.Settings.ClipboardSeconds = n; d.Settings.CloseAfterCopy = close.IsChecked == true; })) ShowSettings();
+            if (Change(d => { d.Settings.ClipboardSuggestions = suggestions.IsChecked == true; d.Settings.ClearSecretClipboard = clear.IsChecked == true; d.Settings.ClipboardSeconds = n; d.Settings.CloseAfterCopy = close.IsChecked == true; })) ShowSettings();
         }, true));
     }
     private void ShowDeletionSettings()
@@ -178,12 +180,12 @@ public partial class MainWindow
     private void ShowModules() => ShowPluginManager();
     private void OpenAbout(object sender, RoutedEventArgs e)
     {
-        var stack = Form("SableLatch.", "A little space. Only yours.", "about", parent: ShowSettings);
-        stack.Children.Add(Text("VERSION 0.8.7 · PREVIEW", 11, true));
+        var stack = Form("Sable.", "A little space. Only yours.", "about", parent: ShowSettings);
+        stack.Children.Add(Text("VERSION 0.9.0 · PREVIEW", 11, true));
         stack.Children.Add(Text("Portable for Windows 10 and 11 (64-bit). Built with native Windows UI, without a browser engine or background network service."));
         stack.Children.Add(Text("Local encryption: AES-256-GCM\nPassword protection: Argon2id\nDevice protection: Windows DPAPI\nBackup wrapping: RSA-OAEP + AES-GCM", 12, true));
         stack.Children.Add(Text("This first build has automated checks, but has not received an independent security audit. An unlocked or compromised computer can expose displayed and copied data.", 11, true));
         stack.Children.Add(Button("Open app folder", () => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", AppContext.BaseDirectory) { UseShellExecute = true })));
-        stack.Children.Add(Button("Exit SableLatch", ExitApp));
+        stack.Children.Add(Button("Exit Sable", ExitApp));
     }
 }

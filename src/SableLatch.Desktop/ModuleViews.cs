@@ -43,7 +43,7 @@ public partial class MainWindow
         foreach (var package in installedModules)
         {
             stack.Children.Add(Button(package.Manifest.Name + "  ✓", () => ShowModuleSettings(package)));
-            stack.Children.Add(Text(package.Official ? "SableLatch · verified signature" : "Community · not reviewed by SableLatch", 10, true));
+            stack.Children.Add(Text(package.Official ? "Sable · verified signature" : "Community · not reviewed by Sable", 10, true));
         }
         if (installedModules.Count == 0) stack.Children.Add(Text("Add entry types and actions. Modules run only when you use them.", 12, true));
         stack.Children.Add(Text("Built-in types", 11, true));
@@ -55,7 +55,7 @@ public partial class MainWindow
     }
     private void PickModule()
     {
-        var dialog = new Microsoft.Win32.OpenFileDialog { Filter = "SableLatch module (*.zip)|*.zip", Title = "Install module", CheckFileExists = true };
+        var dialog = new Microsoft.Win32.OpenFileDialog { Filter = "Sable module (*.zip)|*.zip", Title = "Install module", CheckFileExists = true };
         if (dialog.ShowDialog(this) != true) return;
         try
         {
@@ -80,8 +80,8 @@ public partial class MainWindow
         stack.Children.Add(Text(package.Manifest.Name, 17));
         stack.Children.Add(Text(package.Manifest.Author + " · " + package.Manifest.Version, 11, true));
         stack.Children.Add(Text(package.Manifest.Handler == "rdp" ? "Copy saved RDP passwords and launch Windows Remote Desktop using temporary Windows-encrypted connection files." : package.Manifest.Description, 12));
-        stack.Children.Add(Text(package.Official ? "Verified SableLatch module" : "Not reviewed by SableLatch. Install only packages whose purpose you understand.", 12, !package.Official));
-        stack.Children.Add(Text(package.Manifest.Handler == "rdp" ? "Can request a Remote Desktop connection to the host you configure. The host owns credential delivery; the ZIP cannot read passwords." : package.Manifest.Handler == "putty" ? "Can request a PuTTY connection to the host you configure. Passwords stay in SableLatch's protected launcher." : "Can define fields and request copying of its own non-secret fields. It cannot read other entries.", 12, true));
+        stack.Children.Add(Text(package.Official ? "Verified Sable module" : "Not reviewed by Sable. Install only packages whose purpose you understand.", 12, !package.Official));
+        stack.Children.Add(Text(package.Manifest.Handler == "rdp" ? "Can request a Remote Desktop connection to the host you configure. The host owns credential delivery; the ZIP cannot read passwords." : package.Manifest.Handler == "putty" ? "Can request a PuTTY connection to the host you configure. Passwords stay in Sable's protected launcher." : "Can define fields and request copying of its own non-secret fields. It cannot read other entries.", 12, true));
         stack.Children.Add(Text("No executable code, background activity or direct internet access.", 11, true));
         var reviewedPage = Body.Content; var startEpoch = epoch;
         PageAction(Button(current is null ? "Install" : "Update", () =>
@@ -155,7 +155,7 @@ public partial class MainWindow
     {
         if (!vault.IsUnlocked) return;
         var stack = Form(package.Manifest.Name, "", "settings", parent: ShowModules);
-        stack.Children.Add(Text(package.Manifest.Version + (package.Official ? " · Verified SableLatch module" : " · Community module"), 11, true));
+        stack.Children.Add(Text(package.Manifest.Version + (package.Official ? " · Verified Sable module" : " · Community module"), 11, true));
         var enabled = Check(stack, "Enabled", !vault.Document!.Settings.DisabledModules.Contains(package.Manifest.ContentType));
         TextBox? executable = null;
         if (package.Manifest.Handler == "putty")
@@ -241,7 +241,7 @@ public partial class MainWindow
         async void Copy() { if (vault.IsUnlocked && !busy) await CopyEntry(item, action, new Button()); }
         if (moduleApprovals.Contains(digest)) { Copy(); return; }
         var stack = Form("Allow copy", "", "module-permission", parent: () => ShowModuleDetails(item));
-        stack.Children.Add(Text("Allow SableLatch to copy this entry's selected field to the clipboard?", 13));
+        stack.Children.Add(Text("Allow Sable to copy this entry's selected field to the clipboard?", 13));
         if (item.IsSensitive) stack.Children.Add(Text("This entry is marked sensitive. Clipboard cleanup rules will apply.", 11, true));
         var remember = Check(stack, "Don't ask again for this entry and action", false);
         var page = Body.Content; var startEpoch = epoch;

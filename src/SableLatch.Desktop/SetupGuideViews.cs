@@ -26,7 +26,7 @@ public partial class MainWindow
         var stack = Form("A few essentials", "", "settings");
         stack.Children.Add(Text($"{CompletedGuideSteps} of 3 complete. Pick up wherever you left off.", 12, true));
         var titles = new[] { "Protect a backup", "Set Trash retention", "Make it a shortcut" };
-        var descriptions = new[] { "Keep a recovery copy of your vault.", "Choose when deleted items expire.", "Open SableLatch without reaching for the tray." };
+        var descriptions = new[] { "Keep a recovery copy of your vault.", "Choose when deleted items expire.", "Open Sable without reaching for the tray." };
         for (var i = 0; i < GuideSteps.Length; i++)
         {
             var id = GuideSteps[i]; var row = new StackPanel();

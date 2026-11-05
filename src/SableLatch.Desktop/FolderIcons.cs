@@ -21,8 +21,8 @@ internal static class FolderIcons
     };
     public static FrameworkElement Label(VaultFolder folder)
     {
-        var row = new StackPanel { Orientation = Orientation.Horizontal };
-        row.Children.Add(Create(folder.Icon));
-        row.Children.Add(new TextBlock { Text = folder.Name, Margin = new Thickness(7, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center, MaxWidth = 105, TextTrimming = TextTrimming.CharacterEllipsis }); return row;
+        var row = new Grid(); row.ColumnDefinitions.Add(new() { Width = GridLength.Auto }); row.ColumnDefinitions.Add(new());
+        var icon = Create(folder.Icon); icon.Width = icon.Height = 14; row.Children.Add(icon);
+        var name = new TextBlock { Text = folder.Name, FontSize = 11, Margin = new Thickness(5, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis }; Grid.SetColumn(name, 1); row.Children.Add(name); return row;
     }
 }

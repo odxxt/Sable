@@ -4,6 +4,7 @@
 artifacts/
 TestResults/
 SableLatch-data/
+Sable-data/
 *.sable
 *.sablevault
 *.sablebackup
