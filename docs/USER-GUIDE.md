@@ -1,191 +1,160 @@
-# Sable 0.9.0 — portable preview
+# Sable user guide — 0.9.1 preview
 
-A compact tray companion for Windows, with encrypted secrets and executable shortcuts. A native WPF window and tray icon; no browser engine, service, telemetry, or network listener.
+Sable keeps secrets, logins, useful commands and server connections in a compact Windows tray app. Everything saved in the vault is encrypted, including shortcuts, descriptions and folder names. It needs no online account.
 
-See [Sable 0.9: shortcuts, suggestions, grid and migration](SABLE-0.9.md) for the new workflow.
+## First run
 
-## Run the portable app
+Extract the **entire portable ZIP** to a writable folder and open `Sable.exe`. The runtime is included; keep all accompanying files together. The welcome page offers **Create your vault** and **Restore from backup**. Encrypted import is available in Settings after opening a vault.
 
-Extract the **entire** portable ZIP into a writable folder, then open `Sable.exe`. Keep the accompanying files together. The self-contained package includes its Windows runtime; no separate .NET installation is needed.
+Setup guides you through a password of at least 12 characters, a recovery key and an optional 4–12 digit PIN. Back keeps your drafts, and Enter activates Next. The key starts hidden. Reveal it when ready; click it to copy with an in-place green confirmation, or press **Save key** to save a **readable, unencrypted file**. Keep it private and separate from the vault. Confirm that you saved it before continuing. The key is shown only when generated; Settings can replace it after password verification, not reveal it again.
 
-The welcome screen has a brief lock animation, Create your vault and a smaller Restore from backup option. Encrypted import is in Settings after creating or opening a vault. Three short steps guide you through a password of at least 12 characters, your initially hidden recovery key and an optional PIN. Back preserves drafts; Next and Finish stay at the bottom. Hover for explanations. Finishing creates your vault, then welcomes you with your shortcut and Create my first secret. The guide highlights the real + button, New entry menu and Secret fields. Save creates your first entry and completes the guide. Clicking that row actually copies its saved value, using normal secret clipboard protection. Skip is a small text button; the guide can also resume after locking or restarting. Startup with Windows is offered during setup and can be disabled later. Page motion follows the Windows animation preference.
+After setup, **Create my first secret** guides you through the actual + menu, starter chooser and editor. Saving creates a real entry; clicking it copies the saved value. Skip dismisses the guide. The pending guide can resume after locking or restarting. The welcome illustration loops only while visible; motion honors the Windows animation preference.
 
-Entry right-click menus share Edit, Duplicate, Move to folder and Delete in that order. Applicable Run/Run & copy or RDP Launch/Launch & copy commands appear above them. To change SSH or RDP connection settings, choose Edit.
+## Create an entry
 
-After the first full-password unlock, set a 4–12 digit quick PIN. The full password is required whenever the process starts. Timer, manual, Windows-lock, and sleep locks use the PIN while that process remains running. Five incorrect PIN attempts discard that quick session and require the full password. The centered locked screen uses typing only; clicking its background focuses the input. Input is disabled and cleared through verification and error feedback; concurrent requests cannot extend the five-attempt budget. Set, change, or disable the PIN in Settings → Security & locking. Changing it requires the full password.
+Open **+ → New entry**, then choose a described starter:
 
-### Updating an existing portable copy
+| Starter | Use it for | Default click |
+| --- | --- | --- |
+| **Secret or login** | A saved value, or a username and password | Copy; a login copies username, then password |
+| **Shortcut** | An application, file, folder, Windows setting or command | Run |
+| **Connection** | Installed SSH or Remote Desktop modules | Launch |
 
-Exit the old version from its tray menu. Extract the new ZIP to a separate writable folder. Copy your complete `SableLatch-data` folder into the new `Sable` folder, beside the new executable; keep the original folder as your rollback copy. Launch the new executable on the same Windows account/computer. If you use a custom data location, launch with `--data-dir` pointing to that existing folder instead. Never run both versions against the same vault. The encrypted vault format remains v1; no reset or recovery is needed for this same-computer upgrade. Older builds do not understand PIN settings and can discard them when saving, so do not alternate versions on the same data.
+Connection appears only when an enabled connection module is installed. Other field modules get their own starters. Module installation stays in Settings. [The entry-model guide](ENTRY-MODEL.md) includes a diagram and all click-behavior details.
 
-Fresh installations store the vault in `Sable-data`; an existing `SableLatch-data` folder beside the app is detected and kept. A custom location can be opened with `Sable.exe --data-dir "C:\path\to\vault"`. Keep the whole data folder, including `attachments`, when transferring it. On a different Windows installation, choose recovery and supply the master recovery key.
+Without a username, the input says **Secret value**. Use **Add username** above it to reveal Username and change the value caption to Password. **Remove username** returns to a secret. Updated fields briefly fade in. Values survive toggling while editing; a removed username is not saved. **Change** preserves each starter's unfinished fields and shares the latest name until you leave the editor or lock.
 
-## Included
+Use **Shift+Enter** or paste to enter multiple lines. The eye at the right reveals the value temporarily; a slash indicates that it is revealed. **Color & description** contains small color swatches and an optional description for the entry tooltip. Tooltips never show saved secrets. Save stays at the bottom while fields scroll.
 
-- Secret and Login entries; labels; masked multiline values with optional formatting; nested folders; search across labels. Secret is the default and holds any text. More contains installed module types.
-- Compact, rounded 342 × 411 popup with borderless rows, a single right-side run action where available, optional header search, and visual invalid-field feedback.
-- A fixed compact window with the list filling the available space, smooth whole-row hover, dark context menus without an icon gutter, and active header fills that clear when switched off. Back follows the settings hierarchy and stays in a fixed position. The entry editor has a fixed Save button, a bottom list fade signals more rows, and the scrollbar is a slim rounded indicator.
-- Centered locked screen with a box-free typed PIN. Four to twelve digits are supported. Only the last three remaining attempts are shown; five rejected attempts require the full password.
-- Lightweight audit metadata: creation/modification timestamps on entries, 256 protected security-event records, and a static HTML report from Settings → Advanced → Activity & audit. No reporting server, background timer, or copied-value logging.
-- Click to copy with animated confirmation. Entry types use buttons; switching types preserves unfinished drafts. Drag the entry row to show an insertion line and reorder. Drop it onto a folder chip to move it there, or onto the parent breadcrumb to move up. Alt+Up/Down reorders a focused entry.
-- Click a login row once to copy its username and again to copy its password. The corresponding caption blinks. Username copy temporarily keeps the panel on top without activating another application. Password copy closes it unless pinned or close-after-copy is disabled.
-- A configurable 60-minute unlock session by default. Pin suspends the timeout; unpin applies any expired timeout immediately. Windows lock, unlock, sleep/resume, sign-out, explicit Lock, and Exit lock the vault regardless of pin.
-- Secret clipboard copies clear after 30 seconds by default if still owned by the app. Windows clipboard history/cloud exclusion flags are set. Other clipboard software can still read copied values.
-- Right-click → Delete reveals a centered, muted-red **Delete** button inside the same row, with a cancel icon at the right. Click Delete to confirm; click cancel or press Escape to return to the entry. The row keeps its size throughout. Ordinary entries then delete permanently by default; secrets and logins enter encrypted Trash. Only trashed items expire after seven days, with configurable retention or no automatic expiry.
-- Settings for sessions, clipboard, deletion, backups, startup, shortcut, themes, and built-in content modules.
-- Password changes and recovery-key replacement after password verification. First-run backup restore uses the normal vault folder. Restoring while a vault already exists creates a separate copy and preserves it.
-- Encrypted backups using both a backup password and the appropriate recovery key. Automatic backups are off by default, including in the setup checklist. Enable them explicitly in Settings; after enabling they run when unlocked, changed, and due. The initial cadence is 24 hours with seven archives retained.
-- Three data-only monochrome theme presets; English UI. Typed item, attachment, editor, presenter, clipboard, layout, and toolbar interfaces are in place for extension development.
+### Secrets with an optional shortcut
 
-## Controls
+Expand **Advanced → Include a shortcut** to add an independent **Run / Run and copy** button. The main secret row still copies. For a login, Run and copy launches once and copies the username; the next row click copies the password without launching again. Failed launches and cancelled reviews do not copy. Test action tests execution only.
 
-Existing Text entries automatically become Secrets when unlocked or imported. Their values, formatting, IDs, folders, timestamps and actions are retained. An empty label becomes “Saved secret”; the value is never used as a visible label. These entries are now masked, excluded from value searches and covered by your secret clipboard-clearing and Trash preferences. The encrypted conversion is persisted on the next save.
+### Configure a shortcut
 
-Default shortcut: **Ctrl+Alt+Space**. When locked, the shortcut opens and focuses the PIN/password field; using it on an already-visible lock screen focuses the field instead of hiding the app. Pressing the top Lock button also focuses the input immediately. Change it with the press-to-record control or restore its default in Appearance & startup. Drag the header to move the panel. Double-click the Sable name to return it to its default bottom-right position; the title remains ordinary text. Unpinned windows stay out of Alt+Tab; pinning makes them appear. Close hides it in the tray; Lock clears the active document and requires the PIN (or full password if no quick session exists). Escape cancels an armed deletion, returns from an editor, or hides the main panel. Enter activates the current Save, Next or Unlock action, including PIN setup, password confirmation, recovery and settings. Shift+Enter inserts a newline in multiline fields. Focused buttons, open dropdowns and shortcut recording keep their own keyboard behavior. Held-key repeats and submissions during busy operations are ignored. About is inside Settings.
+Available actions are Application, File or folder, Windows & Control Panel, Run, PowerShell and CMD. Selecting Application or Windows settings opens its focused picker. Cancel returns to the editor. Changing action type clears its old target, arguments and starting folder. Mouse-wheel scrolling does not change dropdown selections.
 
-## Encrypted import and export
+- **Application:** select a detected desktop app or Browse for an `.exe`. Optional arguments stay separate from the executable path. Discovery is on demand, not a whole-drive scan.
+- **File or folder:** open a selected destination using its associated Windows application.
+- **Windows & Control Panel:** search the combined built-in catalog. Availability depends on your Windows build, installed software and policy; it is not an exhaustive live inventory.
+- **Run:** use Windows+R-style resolution, such as `notepad`, `control printers` or `%APPDATA%`. Quote executable paths that contain spaces when adding arguments.
+- **PowerShell / CMD:** write a script or invoke a script file. **Keep terminal open when finished** is on by default. Disable it to close on completion; an explicit script exit can still close the terminal. Optional **Run as administrator** requests Windows UAC for supported actions.
 
-Settings → Advanced → Import & export saves a `.sableexport` protected by its own export password. It includes entries (including Trash), folders, creation/edit dates, unknown content types and encrypted attachments. App passwords, PIN enrollment, backup credentials, host settings and audit history are excluded. Imports add independent copies without replacing existing entries or changing the destination password/PIN. Importing the same file twice creates duplicates.
+**Starting folder · optional** controls relative paths: a script reading `report.txt` can start in `C:\Reports`. Leave it blank for the Windows user folder. Most actions do not need it.
 
-On a new computer, create a vault with a fresh password/recovery key/PIN, then choose Settings → Advanced → Import & export and enter the export password. For `.sablebackup` archives, choose Restore from backup and supply both its backup password and original recovery key; then set a new local app password. Restored automatic backups start disabled so a previous computer's destination is not reused accidentally.
+Press **Test action** before saving a new or changed enabled action. The separate Save button stays dimmed until its current configuration has launched successfully. Testing runs the action; it does not prove that a script is safe or completes successfully. Changed execution settings, including copy mode, require another test. Names/colors alone do not.
 
-Exports use AES-256-GCM with a fresh nonce and random 128-bit salt, plus Argon2id (64 MiB, three passes). Unique salts defeat reusable rainbow tables; the memory-hard derivation slows password guessing. An offline file cannot enforce a retry limit, and a weak password can still be guessed. Choose a long, unique export passphrase. Archives are currently limited to 256 MB and individual attachments to 64 MB; large transfers need temporary memory while running, but no background process or cache remains.
-## Settle in
+Saved actions require first-use review on this Windows environment unless explicitly tested and approved locally. Imported actions need fresh approval; **Verify each time** optionally asks on every run. Commands are not sandboxed. Locking cancels pending launches, but does not stop established external programs.
 
-The top of Settings offers **Finish setting up / Continue setup** until you review three essentials: automatic backups, encrypted Trash retention, and your global shortcut. Progress is saved inside the encrypted vault. The guide has no appearance or advanced tuning steps. Backups can be explicitly left off; a completed checklist records your preferences, not proof that a backup exists. A restored vault starts this checklist again for its new environment.
+PowerShell can explicitly receive `$name` and encrypted `$value1` … `$value20` through **Pass this entry's fields to PowerShell**, off by default. Custom fields appear only where relevant. See [variable mappings, examples and exposure limits](ENTRY-MODEL.md#script-fields). CMD has no secret-field binding.
 
-Settings saves stay at the bottom while fields scroll. Back with unsaved changes first shakes Save and shows “Save changes? Back again to discard.” Back again leaves without saving. Further editing resets the confirmation; returning fields to their original values does not prompt. Locking always takes priority and discards editor drafts.
+### Preserve formatting
 
-Folders use real vector folder icons by default. In New/Edit folder, Customize expands a small icon picker on the same page. The choice is encrypted with the folder and travels with encrypted exports. “All items” is a plain label at the root, while folder breadcrumbs still navigate back.
+Paste HTML-formatted content into an empty secret, or select its entire value before pasting. Sable retains sanitized bold/italic text, lists, links, common styles and tables alongside plain text. Supporting email and document apps choose the formatted representation when you copy; plain-text apps get plain text.
 
-Hold a folder and move the pointer to start dragging. Drop near another folder's left/right edge to reorder siblings; the insertion line shows the position. Drop in its center to nest the dragged folder and all its contents. Drop on the parent breadcrumb to move up. A folder cannot be moved into itself or its descendants. Right-click → Move folder and Alt+Left/Right on a focused folder provide alternatives. The success check fades over the existing chip without resizing it.
+The masked editor shows **Formatting kept**. This is preservation, not a rich-text composer. Typing or partially replacing a value clears its old formatting; paste the whole source again to restore it. Login fields are plain text. Scripts, forms, remote images and embedded objects are removed; no external resources are fetched. Complex layouts and RTF-only sources are not preserved exactly.
 
-The default and bundled theme backgrounds are approximately 95% opaque (previously 80%), while text stays fully opaque. No live background blur is enabled. Text has a subtle black contrast shadow. Scrollable pages show upper/lower fades only when content exists beyond that edge. The thin scrollbar thumb is proportional to its viewport and can be dragged normally. The welcome animation is brief, honors the Windows animation preference, and stops when its page closes. Recovery-key copy shows a muted green confirmation.
-## Audit reports
+## Open, pin and lock
 
-New entries record their creation and last edit time in the encrypted vault. Old entries have no known creation timestamp; the report says “Not recorded” rather than guessing. Editing them records a modification time. Reports list labels, entry type, timestamps, and trash state, but never payloads, usernames, passwords, PINs, or recovery keys. An unlabelled entry is shown as “Unlabelled entry” rather than exposing its first line.
+Open from the tray or use **Ctrl+Alt+Space**. A locked panel immediately focuses PIN/password input, including when already visible. Change the shortcut with the recorder in **Settings → App preferences**. Drag the header to move Sable; double-click its name to restore the default bottom-right position.
 
-The separate `audit.sablelog` contains at most 256 fixed-code security events and is limited to 128 KB. It uses the same Windows-user/device protector, is read only during writes or explicit export, and has no resident history cache or timer. It is local to that Windows environment and is not part of recovery backups; a copied unreadable history file is preserved. This is operational history, not a tamper-proof forensic ledger.
+The pin cycles these modes in a fixed-size toolbar slot:
 
-Choose **Settings → Advanced → Activity & audit → Save HTML report**. Save over the previous report to refresh it, then open it in your browser. The exported HTML is a readable file containing labels and dates, so store it where you intend. It has no scripts, external assets, or network requests. Nothing is exported automatically.
+| Mode | Stays open after focus changes/copy | Always on top | Taskbar / Alt+Tab by default | Session timeout |
+| --- | --- | --- | --- | --- |
+| **Tray** | No; copy preferences apply | Only temporarily between login copies | Hidden | Active |
+| **Always on top** | Yes | Yes | Shown | Enforcement paused |
+| **Normal window** | Yes | No | Shown | Active |
 
-## Recovery rules
+The pin is diagonal, upright and horizontal respectively. Normal window stays behind other applications, including during login copying. **Settings → App preferences → Taskbar & Alt+Tab** offers When kept open, Always and Never; explicit Always/Never overrides the table. Modes are session-local and start in Tray when the process starts.
 
-Normal access requires the app password and the registered Windows environment. The 256-bit master recovery key can recover the vault by itself and set a new app password. A lost recovery key can be replaced while you can still authenticate on the registered computer. If both normal access and the recovery key are lost, no reset can decrypt the old vault; keep its encrypted files and start a new vault in a separate folder.
+The default session limit is 60 minutes. Changing modes never resets its clock. Leaving Always on top immediately applies an overdue timeout. Windows lock/unlock, sleep/resume, sign-out and explicit Lock apply regardless of mode. **Lock when reopened** can require authentication whenever the panel is reopened, except in Always on top mode.
 
-A replacement recovery key applies to the current vault. Older backups and older vault copies still require their original key. Backups additionally require their backup password; the recovery key alone cannot open the outer backup archive.
+The full password is required at every process start. An optional 4–12 digit PIN unlocks timer/manual/session locks while that process remains running. Five incorrect PINs discard the quick session and require the full password; only the last three remaining attempts are shown. Verification/error feedback clears and disables input to prevent overlapping attempts. Change or disable the PIN in Security & locking after full-password verification.
 
-## Preview status and limits
+Close hides the panel. **Settings → Quit → Confirm quit** exits. Enter saves/continues; Shift+Enter adds a line. Escape cancels a menu confirmation, returns from an editor or hides the main panel. Focused buttons, open pickers and shortcut recording retain their native key behavior.
 
-This is a first working preview, **not an independently audited password manager**. The core test suite checks encryption failures, recovery, backups, attachment integrity, mutation safety, and session policies. Windows DPAPI is unavailable under the restricted build account, so real device binding must still be tested from a normal Windows session. The test-only device adapter and sample-data renderer are excluded from Release builds.
+## Organize and delete
 
-The target is x64 Windows 10/11. Only the available Windows host has been used for compilation and rendering; a Windows 10/11 compatibility matrix remains necessary before a public release. Microsoft's currently supported .NET Windows editions are listed in its [runtime support policy](https://github.com/dotnet/core/blob/main/release-notes/10.0/supported-os.md). Compatibility and vendor support are different claims.
+The **+** menu offers New entry and New folder. Choose rows or the two-column grid with the view button; root and each folder remember their own view. Search uses labels, not secret values. Folder chips fit their names up to a maximum width, show full names in tooltips and remain in one row. Wheel scrolling and drag-edge scrolling reach overflow.
 
-The tray app uses one process; each open RDP window uses an additional process until closed. Memory use is not zero. Argon2 intentionally uses 64 MiB while deriving a password key. Large collections use a virtualized list, but metadata is currently decrypted as one document and rewritten atomically on changes. Attachment maximum: 64 MiB each. Vault metadata and complete backup archive maximum: 256 MiB. A paged/chunked storage implementation can replace this behind the storage contracts later.
+Drag entries to reorder; an insertion line marks the destination. Drop onto a folder to move them or onto the parent breadcrumb to move up. A centered check fades over the folder's text, then the text returns without resizing the chip. Alt+Up/Down reorders a focused entry.
 
-Declarative ZIP installation, scoped operation prompts, signed official modules and beginner samples are shipped in 0.7.0; see the [module guide](../modules/README.md). Arbitrary executable plugins, screenshot capture UI, SSH keys, a rich-text composing editor, installer mode, automatic app updates, application code signing and additional translations are **not shipped**. The screenshot provider in `examples` demonstrates the storage/clipboard contract; it is not a capture plugin enabled in this app. English fallback/localization hooks exist, but full translation coverage still needs finishing before adding another language.
+Drag a folder to a sibling's edge to reorder, or its center to nest the whole subtree. The preview follows the pointer. Dropping onto the parent breadcrumb moves it up. Right-click → Move folder and Alt+Left/Right are alternatives. Self/descendant moves are rejected. Edit folder changes its name, parent and optional built-in icon.
 
-Window coordinates and the global shortcut are stored unencrypted in `window.json` and `host.json`; they contain no vault values. Startup registration contains only the executable and vault-folder paths. The rest of the preferences, labels, folder names, and entry payloads are encrypted. Clipboard history exclusion and capture exclusion are best-effort platform features, not defenses against malware or an administrator.
+Entry right-click menus keep **Edit, Duplicate, Move to folder, Delete** in order, with available Run/Launch actions above them. Duplicate opens an unsaved independent draft; Back creates nothing. Copies receive new IDs/timestamps on Save and fresh action approvals.
 
-## Build and test
+**Delete** changes that same menu item to **Confirm delete**. Confirm again, or dismiss/Escape to cancel. Secret/login entries go to encrypted Trash by default; ordinary entries delete permanently. Retention and delete preferences are configurable. **Only already-trashed items expire after seven days** by default; active entries do not.
 
-Install a .NET 10 SDK on Windows, then run:
+**Delete folder** opens its editor at the deletion section. The first press shows affected counts and an irreversible warning; a second deliberate press confirms after a brief accidental-double-click guard. This permanently removes the entire subtree, including active and trashed entries. Independent backups/exports are unchanged; deletion is not guaranteed physical erasure from the storage device.
+
+## Modules and connections
+
+Open **Settings → Plugins & modules**. Installed modules show a check and their version; click one for its settings. **Add a connection** offers SSH · PuTTY and Remote Desktop if not installed. These included packages install offline. Use **Install from ZIP…** for another package, or **Online catalog → Check GitHub catalog** for the signed catalog. There are no automatic catalog checks. **Default entry types** controls the built-in choices.
+
+ZIP modules are restricted definitions, not executable plugins. They cannot read secret values or run arbitrary background code. Uninstalling/disabling leaves entries encrypted and unavailable until a compatible module is restored. See [the module guide](../modules/README.md) for samples, signatures and supported capabilities.
+
+### SSH with PuTTY
+
+Install SSH · PuTTY, then create **+ → New entry → Connection → SSH · PuTTY**. Enter name, host, username and password. **More options** contains port, expected server fingerprint, IPv4/IPv6 preference, compression, keepalive and font/size. Module settings detect PuTTY or let you Browse. If absent, Download PuTTY opens the official download site; PuTTY is not bundled.
+
+Click launches PuTTY by default. The first-use review can remember the connection on this Windows environment; changes to target/options, package or verified executable ask again. Host code sends the password only through a protected, random, single-use named pipe after checking that the reader is the exact launched PuTTY process. The launch path does not put it in arguments, environment, a file, logs or clipboard. Explicit Copy/Run and copy choices can copy it through Sable's sensitive clipboard path. The unlocked document and PuTTY still hold credentials in memory.
+
+PuTTY checks the server's host key. An expected fingerprint can be configured. Locking cancels pending delivery; established SSH sessions remain open. SSH private keys, saved PuTTY sessions, proxies/tunnels and remote commands are not implemented.
+
+### Remote Desktop
+
+Install Remote Desktop, then create **+ → New entry → Connection → Remote Desktop**. Enter host, Windows username and password. **More options** includes domain, port and Start in full screen, enabled by default. Initial sizing, native resize/full-screen controls and normal bidirectional clipboard sharing belong to Windows mstsc and server policy.
+
+Click launches by default. **When I click the entry** can select Copy, Run or Run and copy; Launch / Launch & copy are also explicit menu actions. Copy uses the stored password. Launch & copy copies after local startup, not confirmed remote authentication. Both kept-open window modes leave Sable open.
+
+For each launch, Sable creates a temporary `.rdp` file with a DPAPI-encrypted password, opens system `mstsc.exe` and removes the file after startup, with retry/next-start cleanup. No permanent RDP file is kept in the vault, no Credential Manager entry is written, and no proxy is used. **Software running as your Windows user can capture and decrypt that file.** Cleanup cannot revoke a captured copy or guarantee secure deletion.
+
+Windows may show publisher, certificate or credential prompts. Sable leaves certificate-warning choices to Windows and does not bypass NLA/CredSSP or organizational policy. Native Smart sizing scales the desktop; it is not dynamic remote-resolution negotiation on every resize. Established sessions can survive Sable locking/exiting and are not covered by its capture protection. See [RDP lifecycle and limitations](RDP-DESIGN.md).
+
+## Settings, clipboard and activity
+
+Everyday settings cover Security & locking, Clipboard & copying, App preferences and Plugins & modules. Advanced contains Backups & restore, Import & export, Trash & retention and Activity & audit. About and Quit sit at the main settings footer. Save stays fixed at the bottom. Back with unsaved changes first asks you to save; press Back again to discard. Further editing resets that reminder. Locking always discards drafts.
+
+After three active saved entries, **Continue setup** offers backup preferences, Trash retention and the global shortcut. Completed items are dimmed. Backups can remain off; finishing the checklist is not proof that a backup exists.
+
+Secret copies clear after 30 seconds by default if Sable still owns that clipboard content. Delay and clearing can be changed. History/cloud-exclusion formats and supported capture exclusion are requested. Other software can read the clipboard; capture protection cannot block every recorder, privileged process or camera. Windows 10 support differs by build; [Security](../SECURITY.md#screen-capture) records the fallback and unverified capture paths.
+
+Existing opted-in Ping/Test port/DNS actions can suggest a configured shortcut from a matching clipboard address. Matching runs only while the unlocked list is visible, skips Sable-owned/protected copies, keeps no history and never runs automatically. No new diagnostic presets or arbitrary clipboard-to-script binding are offered. Disable matching in Copying if unwanted.
+
+Entry creation/edit dates are encrypted. **Advanced → Activity & audit → Save HTML report** exports a static readable report with labels, types, timestamps and Trash state, never payload values. Saving over a previous file refreshes it. Store that report privately. The separate device-protected journal retains at most 256 fixed-code events/128 KB, without a reporting server or background cache. It is operational history, not a tamper-proof forensic log; old unknown creation dates are not guessed.
+
+## Backups, exports and recovery
+
+| Operation | Required credentials | Effect |
+| --- | --- | --- |
+| Normal unlock | App password in the registered Windows environment | Opens the vault; session PIN is optional afterward |
+| Recover a moved vault / forgotten password | Recovery key and complete data folder | Rebinds access and sets a new app password |
+| Restore `.sablebackup` | Backup password **and** that backup's recovery key | Creates/restores a vault at an empty destination |
+| Import `.sableexport` | Export password | Adds independent entries to the open vault |
+
+**Backups start off.** Enable them in Advanced → Backups & restore, choose a destination and backup password. Once enabled, changed unlocked data is backed up when due; initial cadence is 24 hours with seven archives retained. Restoring to a new environment leaves automatic backups disabled until configured. Restoring while a vault exists creates a separate copy, not a replacement.
+
+Advanced → Import & export uses a separate export password. It includes folders, entries including Trash, timestamps, unknown types and attachments. Imports assign new IDs and preserve destination credentials/settings. Importing twice creates duplicates. Passwords/PIN enrollment, backup configuration, local action approvals and audit history are not transferred. Unknown module entries remain unavailable until installed separately.
+
+Random salts and Argon2id make password guessing more expensive; offline archives cannot enforce attempt limits. Use long unique passphrases. Losing an export password cannot be fixed with the vault recovery key. A replacement recovery key applies to the current vault, not older backups/copies. If both normal access and the appropriate recovery key are lost, a reset cannot decrypt the old vault; preserve the files and start a separate vault.
+
+## Updating or moving
+
+Quit the old app, extract the new version separately and copy the **complete** data folder beside `Sable.exe`, including attachments. Fresh installs use `Sable-data`; existing `SableLatch-data` is detected and takes precedence if both names exist. Keep the original as a rollback copy. On the same Windows environment, open normally. On another environment, use the recovery key or restore a backup with both credentials.
+
+A custom data location uses `Sable.exe --data-dir "C:\path\to\vault"`. Do not run two versions against one vault or alternate old versions after saving newer fields. Existing Text entries become Secrets after authenticated loading, preserving values, formatting, IDs and dates; changes persist on the next save. Legacy namespaces and crypto identifiers intentionally remain compatible.
+
+## Preview limits and development
+
+This is an unaudited preview for Windows 10/11 x64. A full Windows/DPI/capture compatibility matrix remains outstanding. Native WPF has no browser engine or resident service, but memory use is not zero: Argon2 uses 64 MiB during derivation, unlocked metadata is one document, and large transfers need temporary memory. Attachment limit is 64 MiB each; metadata and archive limits are 256 MiB. Long entry lists are virtualized.
+
+Executable third-party plugins, screenshot capture UI, SSH-key authentication, a rich-text composing editor, browser autofill, installer mode, auto-updates, application code signing and additional languages are not shipped. Theme presets are data-only. Window position and shortcut metadata are unencrypted `window.json` / `host.json`; they contain no vault values.
+
+Build with a .NET 10 SDK on Windows:
 
 ```powershell
 .\build.ps1 -Portable
 ```
 
-Or build and run the projects directly:
-
-```powershell
-dotnet run --project tests/SableLatch.Tests
-dotnet run --project src/SableLatch.Desktop
-dotnet publish src/SableLatch.Desktop -c Release -r win-x64 --self-contained true -o artifacts/Sable-portable
-```
-
-Debug builds alone support `--preview --data-dir <empty-disposable-folder>` for rendering fixture screens and running view checks. Never use a real vault for that switch. Release builds contain no preview device adapter.
-
-See [ARCHITECTURE.md](../ARCHITECTURE.md), [SECURITY.md](../SECURITY.md), and [EXTENSIONS.md](../EXTENSIONS.md). Sable is available at https://github.com/odxxt/Sable under the MIT license.
-
-## Advanced entries (0.6.6)
-
-Choose **+ → New entry**, then turn on the **Advanced** switch beside the page title. Keep the same Text, Secret or Login type. Entry colors are available with Advanced off. Turning Advanced on reveals a closed action-type dropdown, with its fields hidden until a type is selected. Choosing a type configures the separate play button beside Edit:
-
-- **Application:** choose an existing .exe, with optional arguments.
-- **Windows & Control Panel:** search both collections together, with distinct icons and source labels. The compact catalog contains 208 destinations and keywords, with only six common choices shown before searching. You can also enter an `ms-settings:` address or canonical name.
-- **Run:** enter a Windows+R-style command, such as `notepad`, `control printers`, or `%APPDATA%`. Quote executable paths containing spaces when adding arguments. Commands use Windows shell resolution, without an implicit CMD wrapper.
-- **PowerShell:** enter a script (Shift+Enter adds lines), or invoke an existing .ps1 file. Up to 12,000 characters; no profile or execution-policy override.
-- **CMD:** enter one command line, chain commands, or call a .cmd file. Up to 7,000 characters; AutoRun is disabled.
-
-Existing ordinary entries can gain these options from **Edit → Advanced**. **Test action** sits to the left of **Save entry** while Advanced is enabled, using one third of the footer width while Save uses two thirds. Both keep the same height and text alignment. Save stays dimmed until the enabled action is tested; clicking dimmed Save only shakes Test action. Neither button changes its name. A failed launch leaves Save dimmed. Changing the action destination, script, arguments or working folder requires testing that changed configuration. A successful test means Windows accepted the launch; inspect its actual result yourself before saving. Clicking a Secret/Login row never runs anything and keeps the existing login username/password sequence. Actions are never run on opening, importing, restoring or unlocking. The action target, script, color and arguments are part of the encrypted entry and travel with backups/exports. A transferred application path may need updating for the new PC.
-
-Actions execute as your Windows account, outside a sandbox. Review imported actions before running them. Scripts and command-line arguments are readable by the launched process and may be visible to local process-inspection tools; do not embed credentials in commands. Sable never substitutes vault values or keys into actions. App locking does not terminate a program or script you already started. Existing audit storage records only that an action started, never its script or arguments.
-
-## Simpler settings and tray behavior
-
-Settings keeps Security & locking, Clipboard & copying, App preferences and Plugins & modules together. About stays at the bottom with a circled information icon; Quit sits to its right. Click Quit, then Confirm quit to close the app; leaving Settings or hiding the panel cancels the confirmation. **Advanced** holds Backups & restore, Import & export, Trash & retention and Activity & audit. Entry layouts appear only under Plugins & modules when another layout is registered; App preferences has no layout selector. Saves stay below scrolling fields.
-
-In **App preferences → Taskbar & Alt+Tab**, choose Only when pinned (default), Always or Never. The preference is encrypted and is applied after unlocking; it stays cached through locks during that app session. Before the first unlock, the default tray-only unpinned behavior applies.
-
-The window stays at 342 × 411 logical pixels across folders, settings and forms, matching the previous compact folder view. Windows DPI scaling may round this to physical pixels. The list footer stays at the bottom. Scroll cues have a broad soft falloff vertically and fade out along both sides; top/bottom cues disappear at their respective ends.
-
-Actions require a first-run review on each computer unless you created and tested them locally. The successful review is remembered for that exact entry and command on this Windows account/computer. Changed commands, arguments or starting folders ask again. Imported entries receive new IDs and must be reviewed; restored or copied approvals cannot carry trust to another PC. **Verify each time** remains independent: enable it to review every run. Imports preserve that choice. Existing entries with it already enabled keep it enabled. Copying an entry never runs its action.
-
-**Choose application…** lists desktop applications discovered on demand from registered Windows App Paths and Start-menu shortcuts. The highlighted picker focuses its fixed search field at the top, with small application icons beside results below. Filter the list by name; **Browse…** selects an .exe that is not listed. This is not a complete inventory of every Microsoft Store or portable application. The picker does not scan the entire disk or keep a resident app catalog. Changing action type clears the previous target, arguments and working folder. Missing action inputs are focused, scrolled into view and animated individually.
-**Starting folder · optional** controls where relative paths resolve. For example, a script that reads `report.txt` can start in `C:\Reports` to find that file there. Most actions can leave it blank, which starts in your Windows user folder. Existing configured folders are preserved. Expand this option only when needed.
-
-Missing or invalid fields shake red. After three failed attempts on that field, a short explanation appears beneath it; editing hides the explanation. PIN unlocking retains its separate five-attempt limit and countdown. Scroll glows are centered beyond the top/bottom edge so only their inner halves show; covered pages do not shine through a picker.
-Selecting Application or Windows & Control Panel opens the relevant focused picker immediately. Cancel returns to the editor. The mouse wheel scrolls forms or dropdown lists without changing the selected value. The Advanced switch stays beside New/Edit entry, separate from Text / Secret / Login.
-
-Settings search uses a small built-in catalog, not an indexing service. Search matches names, categories, destination addresses and keywords such as microphone privacy, wifi or credential. Windows build, hardware, policy and installed software determine which destinations actually exist; some older Control Panel destinations redirect to Settings. Third-party panels and pages requiring a specific device/app ID are not exhaustively catalogued. References: https://learn.microsoft.com/en-us/windows/apps/develop/launch/launch-settings and https://learn.microsoft.com/en-us/windows/win32/shell/controlpanel-canonical-names.
-
-First-run approvals live in a separate device-protected actions.sableconsent file, capped at 2,048 exact entry/action digests (under 300 KB). No command text is stored there, and vault backups/exports omit it. A missing, corrupt, foreign or evicted approval asks again. Local test execution of an existing unapproved entry also requests review; a locally authored new entry's explicit successful test counts as its approval. Programs and scripts still run under your Windows permissions, without a sandbox.
-Secret and Login value editors have an eye inside the right edge of the value box. When revealed, the same eye gains a diagonal slash. Reveal is temporary; hiding clears the plaintext editor and switching/locking clears both controls. Advanced is now the sole action enable switch, with its active track using the theme accent. Entry colors work independently. Turning Advanced off disables a saved action while keeping its configuration for later.
-
-For Secret and Login actions, use the segmented **Run / Run & copy** selector. Run launches only; Run & copy copies the entry value after a successful launch (username first for Login entries; the panel stays open until the next row click copies the password), never the row label. The same action is available by right-clicking the entry. The action icon receives a small copy badge without changing size or position. Secret copies use the normal clipboard-history exclusion, clearing timer and close-after-copy preferences. Cancelled reviews and failed launches do not copy. Test action tests execution only and does not copy the edited value. Changing copy mode requires testing and renewed local approval. Commands receive no automatic secret interpolation.
-## Multiline secrets, terminals and capture protection (0.6.6)
-
-Secret and Login password fields accept multiline paste and Shift+Enter while masked. The eye reveals the same complete value; hiding clears the visible plaintext field. Masked text contains only bullets and line breaks, exposes no automation value/text pattern, and has no copy/cut/undo buffer. Enter still saves the current form. Entry colors use smaller swatches, tooltips use the dark theme, and neighboring footer buttons share their height, padding and text alignment.
-
-New PowerShell and CMD actions enable **Keep terminal open when finished** by default, so you can read output after a command such as ping finishes. Turn it off to close the terminal when the command completes. Existing saved actions retain their choice. It uses PowerShell -NoExit or CMD /k, and requires testing the changed action before saving. A script that explicitly exits can still close its terminal. Selecting a new CMD or PowerShell action defaults it to on; other action types hide and clear it. Existing launch approvals are preserved with this option off; enabling it requires new consent. No extra process runs until you test or invoke an action.
-
-Windows capture exclusion is requested for the panel and its dropdowns, menus and tooltips, including when pinned. Windows 10 uses an opaque rounded panel for compatibility; Windows 11 retains its translucent panel. Opening, pinning and taskbar changes reapply and verify protection. Windows 10 version 2004 and later support omitting the window; earlier versions can only blank its contents. If full exclusion fails, Sable tries blank-content protection. Security settings report fallback or detected failures. The Windows 10 Snipping Tool fix still needs validation on an actual affected PC; a compatibility-mode test on Windows 11 does not prove that result. Teams/Zoom behavior depends on the capture path and was not directly tested. Native dialogs, launched programs, alternate capture APIs, elevated software and cameras are outside this protection. It is not possible to promise invisibility to every recorder. See SECURITY.md.
-## Install the PuTTY module (0.7.0)
-
-Open **Settings → Plugins & modules → Catalog → PuTTY SSH → Install**. This included package works offline. Open the installed module's settings to review the detected PuTTY application or locate it using Browse. If PuTTY is absent, use Download PuTTY to visit the official download page.
-
-Use **+ → New entry → More → PuTTY SSH**. Save a name, host, username and password. Advanced contains port, expected server fingerprint, network preference, compression, keepalive and terminal font/size. Clicking the SSH shortcut launches PuTTY after the first connection review. Don't ask again remembers that connection on this Windows environment. Changed hosts, binaries or module manifests ask again.
-
-Use Install ZIP for community modules. Removal preserves encrypted entries; reinstall the compatible module to use them again. See the module guide for samples and the supported first-version limits.
-
-## Compact navigation and scrolling (0.7.1)
-
-The **+** beside the folder heading opens a small **New entry / New folder** menu. There is no separate bottom Add entry button, so entries use the freed space while the window stays the same size. The entry type selector uses matching segments and a clear active fill. **More** opens module types, with the chosen module named below the selector. Changing type preserves the name and each type's unfinished field values until you leave the editor or lock.
-
-Installed modules show **✓** in Plugins and the catalog; opening the same package shows **Already installed** and a link to its settings. The online catalog checks the installed package against the signed catalog's archive hash. A different package still goes through verification and update review.
-
-Mouse-wheel scrolling eases over 160 milliseconds, including dropdowns, without changing their selection. Nested multiline fields scroll first; at their edge, scrolling continues on the page. It honors Windows' wheel line count and disabled animation preference, cancels on leaving the page, and does no animation work while idle. Scrollbar dragging and keyboard scrolling remain direct.
-## Formatting inside Secrets (0.8.7)
-
-Copy formatted text from an app that supplies HTML on the clipboard. Paste into an empty **Secret** value box, or select the entire value before pasting. Sable stores a sanitized HTML representation alongside the plain text, inside the encrypted vault. Copying the entry offers both formats; Word, email editors and other supporting destinations can retain bold, italic, underline, lists, links, common inline styles and tables. Plain-text destinations receive plain text.
-
-The compact editor stays masked and shows **Formatting kept**. Use the eye to reveal the value. This is preservation, not a rich-text composition editor. Typing or partially replacing the value clears its previous formatting to prevent outdated content being copied. Re-paste the formatted source to restore it. Sources offering only RTF or plain text do not preserve rich formatting in this version.
-
-Scripts, event attributes, forms, embedded objects and external images are removed. External resources are never fetched. CSS classes, arbitrary styles and images are not preserved, so complex email layouts are not pixel-perfect. HTML is capped at 100,000 characters, 5,000 DOM nodes and 64 levels. Login fields remain plain text; formatted Secrets use the same sensitive clipboard handling as other secrets. The destination app ultimately decides which clipboard representation and styling to accept.
-## Remote Desktop (0.8.5)
-
-1. Install Remote Desktop from Settings → Plugins & modules → Catalog (included offline).
-2. Create an entry using + → New entry → More → Remote Desktop. Save the host, Windows username and password. Existing RDP entries continue to work.
-3. Click its row or tile to launch Remote Desktop. In the editor choose Launch or Launch & copy; both are also in the right-click menu.
-4. Review the destination and temporary-file warning the first time. Windows Remote Desktop Connection opens in its own window. Launch & copy also copies the password using your secret clipboard settings.
-
-Advanced options include domain, port and Start in full screen. Full screen is on by default and uses the local display size. Turn it off to start in a normal window. Fixed width/height fields and forced stretching have been removed, including for existing entries. Window resizing and full-screen switching use the native mstsc controls. Native mstsc can scale the desktop using Smart sizing, but does not dynamically change the remote resolution with each window resize. Remote copy/paste is enabled, including for existing entries. Sable no longer imposes device, audio, reconnection, cache or gateway restrictions; Windows Remote Desktop defaults and server policy apply. Clipboard sharing is separate from the Launch & copy action. Launch defaults to no copy. Windows now lets you review an unverified server certificate and choose whether to connect. Verify the certificate with your administrator before accepting it; the unsigned-file publisher warning is separate. There is no Sable server or Credential Manager write.
-
-For each launch, Sable writes a temporary .rdp file with a Windows-encrypted password and removes it after client startup. Same-user software can capture and decrypt that file. Cleanup retries and next-start cleanup reduce leftovers but cannot guarantee secure deletion. No permanent .rdp file is stored in the vault. Current Windows policy may still prompt for credentials; real automatic login requires testing on your environment. Sable keeps NLA/CredSSP enabled and does not override organizational policy. An open Remote Desktop session can remain active when Sable locks or exits, and its screen is not covered by Sable's capture protection.
-
-## Move folders and duplicate entries (0.8.4)
-
-- Drag a folder to the left or right edge of a sibling to reorder it. A slim insertion line shows the destination; the chips slide into their new places on drop. This works inside nested folders too. Drop in a folder's center to move the dragged folder and all of its contents inside it. Drop on the parent breadcrumb to move up a level. Escape cancels the drag without saving changes.
-- Right-click a folder → **Move folder…** for a destination picker, or **Edit folder** to change its name, icon and parent together. A folder cannot be moved into itself or any of its descendants. Focus a folder and press **Alt+Left / Alt+Right** to reorder it with the keyboard.
-- Dropping an entry onto a folder fades its label, briefly shows a centered muted-green checkmark, then fades the label back in without changing the chip's width.
-- Right-click an entry → **Duplicate**. An unsaved copy opens immediately, with its own ID and a “(copy)” name. Change the fields and Save; Back cancels without creating an entry. Text formatting, secrets, login fields, action settings and installed module fields are retained. Creation/update timestamps are assigned on Save. Action approvals are not copied; enabled custom actions must be tested before saving the new entry, and module launch still requires its own review.
+The build script runs core and Windows module checks, then publishes to `artifacts/Sable-portable`. Debug-only fixtures require a fresh disposable data directory and must never use a real vault. See [Verification](../VERIFICATION.md), [Architecture](../ARCHITECTURE.md), [Security](../SECURITY.md) and the [documentation index](README.md).

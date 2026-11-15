@@ -24,6 +24,8 @@ public sealed class EntryAction
     public bool CopyOnRun { get; set; }
     public bool KeepTerminalOpen { get; set; }
     public bool SuggestFromClipboard { get; set; }
+    public bool RunAsAdministrator { get; set; }
+    public bool UseEntryVariables { get; set; }
     public void Validate()
     {
         // Unknown kinds survive vault transfers; only registered desktop handlers execute.

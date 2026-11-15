@@ -30,6 +30,12 @@ public static class EntryActions
             start.WorkingDirectory = action.WorkingDirectory;
         }
         else start.WorkingDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        if (action.UseEntryVariables && action.Kind != "powershell") throw new InvalidOperationException("Entry variables are supported only in PowerShell.");
+        if (action.RunAsAdministrator)
+        {
+            if (action.Kind is not ("powershell" or "cmd" or "application" or "run")) throw new InvalidOperationException("This action does not support administrator mode.");
+            start.UseShellExecute = true; start.Verb = "runas";
+        }
         return start;
     }
     internal static string SystemFile(string relative) => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), relative);
@@ -142,13 +148,17 @@ public partial class MainWindow
         footer.Children.Add(Button("Cancel", Close));
         footer.Children.Add(Button("Test action", () => { if (!ReferenceEquals(Body.Content, host) || startEpoch != epoch || !vault.IsUnlocked || busy) return; Close(); run(); }, true));
     }
-    private static string ActionDescription(EntryAction action) => action.Target + (action.Arguments.Length > 0 ? "\nArguments: " + action.Arguments : "") + (action.WorkingDirectory.Length > 0 ? "\nFolder: " + action.WorkingDirectory : "") + (action.CopyOnRun ? "\nOn run: copy the entry value (username first for a login)" : "") + (action.KeepTerminalOpen ? "\nKeep terminal open when finished" : "");
+    private static string ActionDescription(EntryAction action) => action.Target + (action.Arguments.Length > 0 ? "\nArguments: " + action.Arguments : "") + (action.WorkingDirectory.Length > 0 ? "\nFolder: " + action.WorkingDirectory : "") + (action.CopyOnRun ? "\nOn run: copy the entry value (username first for a login)" : "") + (action.KeepTerminalOpen ? "\nKeep terminal open when finished" : "") + (action.RunAsAdministrator ? "\nAdministrator · Windows UAC prompt" : "") + (action.UseEntryVariables ? "\nReceives this entry's name and script fields" : "");
 #if DEBUG
     private Action<ProcessStartInfo>? previewActionLaunch = null;
 #endif
-    private bool LaunchEntryAction(EntryAction action, Action<string>? reject = null)
+    private bool actionLaunching;
+    private async Task<bool> LaunchEntryAction(EntryAction action, Action<string>? reject = null, VaultItem? item = null, bool keepLoginPanel = false)
     {
-        if (!vault.IsUnlocked || busy) return false;
+        if (!vault.IsUnlocked || busy || actionLaunching) return false;
+        actionLaunching = true; var startEpoch = epoch; var launched = false;
+        var keepForLogin = keepLoginPanel && item?.ContentType == "sable.login" && (action.CopyOnRun || item.ClickBehavior == "run-copy");
+        if (keepForLogin) { holdForPassword = true; UpdatePanelTopmost(); }
         try
         {
             var start = EntryActions.Prepare(action);
@@ -156,20 +166,24 @@ public partial class MainWindow
             if (App.PreviewMode)
             {
                 if (previewActionLaunch is null) throw new InvalidOperationException("Action execution is disabled in this preview fixture.");
-                previewActionLaunch(start); return true;
+                previewActionLaunch(start); launched = true; return true;
             }
 #endif
-            using var process = Process.Start(start);
-            Audit(AuditEvent.EntryActionStarted); SetStatus("Action started"); return true;
+            if (action.Kind == "powershell") await PowerShellBroker.Run(action, item ?? new VaultItem(), sessionCancellation.Token);
+            else { using var process = Process.Start(start); }
+            if (!vault.IsUnlocked || epoch != startEpoch) return false;
+            launched = true; Audit(AuditEvent.EntryActionStarted); SetStatus("Action started"); return true;
         }
+        catch (OperationCanceledException) { if (vault.IsUnlocked) ShowError("Action cancelled or timed out."); return false; }
         catch (Exception ex) when (ex is InvalidOperationException or ArgumentException or System.ComponentModel.Win32Exception or IOException)
-        { if (reject is null) ShowError(ex.Message); else reject(ex.Message); return false; }
+        { var message = action.Kind == "powershell" ? "PowerShell could not receive the action. It may have been cancelled or blocked by Windows policy." : ex.Message; if (reject is null) ShowError(message); else reject(message); return false; }
+        finally { actionLaunching = false; if (keepForLogin && !launched && epoch == startEpoch) ResetLoginCopy(); }
     }
     private async Task CompleteEntryRun(VaultItem item, EntryAction action)
     {
         if (!vault.IsUnlocked) return;
         if (screen == "entry-action") ShowList();
-        if (!action.CopyOnRun || item.ContentType is not ("sable.text" or "sable.secret" or "sable.login")) return;
+        if (!(action.CopyOnRun || item.ClickBehavior == "run-copy")) return;
         var row = entryList?.Items.Cast<RowModel>().FirstOrDefault(r => r.Item.Id == item.Id);
         var container = row is null ? null : entryList!.ItemContainerGenerator.ContainerFromItem(row) as ListBoxItem;
         var source = container is null ? new Button { DataContext = row } : Descendants<Button>(container).FirstOrDefault(b => b.Tag as string == "entry-action") ?? new Button { DataContext = row };
@@ -188,7 +202,7 @@ public partial class MainWindow
             action = Codec.Clone(action); action.Target = suggestedTarget.Display;
         }
         var firstRun = !actionApprovals.Contains(item.Id, configured);
-        if (!action.VerifyEachTime && !firstRun) { if (LaunchEntryAction(action)) await CompleteEntryRun(item, action); return; }
+        if (!action.VerifyEachTime && !firstRun) { if (await LaunchEntryAction(action, item: item, keepLoginPanel: true)) await CompleteEntryRun(item, action); return; }
         var snapshot = Codec.Clone(action); var startEpoch = epoch;
         var stack = Form("Run", "", "entry-action");
         var reviewPage = Body.Content;
@@ -196,7 +210,7 @@ public partial class MainWindow
         stack.Children.Add(Text(firstRun ? "First run on this PC" : "Verify action", 15));
         var review = new TextBox { Text = ActionDescription(snapshot), IsReadOnly = true, TextWrapping = TextWrapping.Wrap, AcceptsReturn = true, MaxHeight = 155, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
         stack.Children.Add(review); eraseEditors.Add(review.Clear);
-        stack.Children.Add(Text("Runs with your Windows account's permissions. Only run actions you understand and trust. Vault values are never inserted automatically.", 11, true));
+        stack.Children.Add(Text("Only run scripts you trust. Explicitly enabled fields are passed to PowerShell and can be read or disclosed by your script. Administrator mode uses Windows UAC.", 11, true));
         var run = Button("Run action", async () =>
         {
             if (!ReferenceEquals(Body.Content, reviewPage) || !vault.IsUnlocked || startEpoch != epoch || busy) return;
@@ -204,7 +218,7 @@ public partial class MainWindow
             {
                 var current = vault.Document!.Items.FirstOrDefault(i => i.Id == item.Id && i.DeletedAt is null)?.Advanced?.Action;
                 if (current is null || !Codec.Encode(current).SequenceEqual(Codec.Encode(configured))) throw new InvalidOperationException("This action changed. Review it again.");
-                if (LaunchEntryAction(snapshot)) { RememberAction(item.Id, configured); await CompleteEntryRun(item, snapshot); }
+                if (await LaunchEntryAction(snapshot, item: item, keepLoginPanel: true)) { RememberAction(item.Id, configured); await CompleteEntryRun(item, snapshot); }
             }
             catch (Exception ex) when (ex is InvalidOperationException or ArgumentException or System.ComponentModel.Win32Exception or IOException) { ShowError(ex.Message); }
         }, true);

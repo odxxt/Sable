@@ -21,5 +21,30 @@ internal static class ShortcutChecks
         var provider = new ShortcutProvider();
         check(provider.CopyActions.Count == 0 && ((IContentProvider)provider).EditorFields.Count == 0, "Standalone shortcuts require no dummy secret or copy value");
         reject(() => provider.Copy(new(), "Copy"), "Shortcuts do not accidentally expose a clipboard value");
+        var secret = new VaultItem { Label = "Fixture name", Description = "Optional description", ClickBehavior = "run-copy", Payload = System.Text.Json.JsonSerializer.SerializeToElement(new { text = "'; $(throw 'not-code')\nfixture" }), ScriptValues = new() { ["value2"] = "second" } };
+        var bindings = ScriptBindings.For(secret);
+        check(bindings["name"] == secret.Label && bindings["value1"] == secret.Field("text") && bindings["value2"] == "second", "Script fields remain exact data including shell syntax and newlines");
+        secret.ScriptValues["value1"] = "collision";
+        reject(() => ScriptBindings.For(secret), "Custom fields cannot override the primary secret"); secret.ScriptValues.Remove("value1");
+        foreach (var invalid in new[] { "name", "HOME", "value0", "value01", "value21", "value1;whoami" }) check(!ScriptBindings.IsValueName(invalid), "Reject reserved or invalid variable " + invalid);
+        var roundTrip = Codec.Clone(secret);
+        check(roundTrip.Description == secret.Description && roundTrip.ClickBehavior == "run-copy" && roundTrip.ScriptValues["value2"] == "second", "Entry description, behavior and custom values round trip");
+        var document = new VaultDocument { Items = [secret], Folders = [new() { Name = "Grid", Layout = "grid" }, new() { Name = "Rows", Layout = "rows" }] };
+        document.Validate(); check(Codec.Clone(document).Folders.Select(f => f.Layout).SequenceEqual(new[] { "grid", "rows" }), "Folder views are independently persisted");
+        action = new EntryAction { Kind = "powershell", Target = "$value1", KeepTerminalOpen = true };
+        fingerprint = ActionApprovals.Fingerprint(action); action.UseEntryVariables = true;
+        check(fingerprint != ActionApprovals.Fingerprint(action), "Passing entry fields invalidates prior execution consent");
+        fingerprint = ActionApprovals.Fingerprint(action); action.RunAsAdministrator = true;
+        check(fingerprint != ActionApprovals.Fingerprint(action), "Elevation invalidates prior execution consent");
+        var root = new VaultFolder { Name = "Delete me" }; var nested = new VaultFolder { Name = "Nested", ParentId = root.Id }; var keep = new VaultFolder { Name = "Keep" };
+        var inside = new VaultItem { FolderId = root.Id }; var trashed = new VaultItem { FolderId = nested.Id, DeletedAt = DateTimeOffset.UtcNow }; var outside = new VaultItem { FolderId = keep.Id };
+        var tree = new VaultDocument { Folders = [root, nested, keep], Items = [inside, trashed, outside] };
+        check(FolderOperations.Subtree(tree, root.Id).SetEquals([root.Id, nested.Id]), "Folder deletion collects only its own nested subtree");
+        var snapshot = Codec.Encode(tree); reject(() => FolderOperations.DeleteTree(tree, Guid.NewGuid()), "Missing-folder deletion is rejected");
+        check(snapshot.SequenceEqual(Codec.Encode(tree)), "Rejected folder deletion leaves all contents unchanged");
+        FolderOperations.DeleteTree(tree, root.Id); tree.Validate();
+        check(tree.Folders.Count == 1 && tree.Folders.Single().Id == keep.Id && tree.Items.Count == 1 && tree.Items.Single().Id == outside.Id, "Recursive deletion removes nested folders and their active/trashed entries while preserving siblings");
+        tree.Folders.Add(new VaultFolder { Name = "Empty" }); FolderOperations.DeleteTree(tree, tree.Folders.Last().Id); tree.Validate();
+        check(tree.Folders.Count == 1 && tree.Items.Count == 1, "Empty folder deletion leaves other entries untouched");
     }
 }

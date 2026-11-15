@@ -10,7 +10,7 @@ public partial class MainWindow
     }
     private void AddSetupProgress(StackPanel stack)
     {
-        var count = CompletedGuideSteps; if (count == GuideSteps.Length) return;
+        var count = CompletedGuideSteps; if (count == GuideSteps.Length || vault.Document!.Items.Count(i => i.DeletedAt is null) < 3) return;
         var content = new StackPanel();
         content.Children.Add(new TextBlock { Text = count == 0 ? "Finish setting up" : "Continue setup", FontSize = 13, FontWeight = FontWeights.Medium });
         content.Children.Add(new TextBlock { Text = $"{count} of 3 complete · Your everyday essentials", FontSize = 10, Opacity = .55, Margin = new Thickness(0, 5, 0, 7) });
@@ -33,6 +33,7 @@ public partial class MainWindow
             row.Children.Add(new TextBlock { Text = (vault.Document!.Settings.CompletedSetupSteps.Contains(id) ? "✓  " : (i + 1) + "  ") + titles[i], FontSize = 13 });
             row.Children.Add(new TextBlock { Text = descriptions[i], FontSize = 11, Opacity = .55, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(20, 5, 0, 0) });
             var action = Button(titles[i], () => ShowGuideStep(id)); action.Content = row; action.Padding = new Thickness(10, 14, 10, 14); stack.Children.Add(action);
+            action.Opacity = vault.Document!.Settings.CompletedSetupSteps.Contains(id) ? .45 : 1;
         }
     }
     private void ShowGuideStep(string id)
@@ -53,12 +54,7 @@ public partial class MainWindow
         var stack = Form("Protect a backup", "", "settings", parent: ShowSetupGuide);
         stack.Children.Add(Text("Restore with your backup password and recovery key. Keep both somewhere safe.", 11, true));
         var enabled = Check(stack, "Enable automatic backups", s.BackupEnabled);
-        var directory = Input(stack, "Backup folder", s.BackupDirectory);
-        stack.Children.Add(Button("Choose folder…", () =>
-        {
-            var picker = new Microsoft.Win32.OpenFolderDialog(); modalDepth++;
-            try { if (picker.ShowDialog(this) == true) directory.Text = picker.FolderName; } finally { modalDepth--; }
-        }));
+        var directory = FolderInput(stack, "Backup folder", s.BackupDirectory);
         var password = vault.Document.Backup is null ? Password(stack, "Backup password · at least 12 characters") : null;
         var confirm = password is null ? null : Password(stack, "Confirm backup password");
         if (password is null) stack.Children.Add(Text("Your existing backup password will be used.", 11, true));

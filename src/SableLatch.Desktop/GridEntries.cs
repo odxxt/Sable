@@ -10,7 +10,7 @@ public partial class MainWindow
           <Border x:Name="TileHover" Background="#0FFFFFFF" CornerRadius="8" Opacity="0" IsHitTestVisible="False"/>
           <Grid Visibility="{Binding ContentVisibility}">
             <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="32"/></Grid.ColumnDefinitions>
-            <Button Tag="copy" Grid.ColumnSpan="2" Style="{DynamicResource EntryButton}" Padding="12,8,36,8" HorizontalContentAlignment="Stretch" IsEnabled="{Binding Available}" ToolTip="{Binding Title}">
+            <Button Tag="copy" Grid.ColumnSpan="2" Style="{DynamicResource EntryButton}" Padding="12,8,36,8" HorizontalContentAlignment="Stretch" IsEnabled="{Binding Available}" ToolTip="{Binding HoverDetails}">
               <StackPanel VerticalAlignment="Center">
                 <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="Medium" TextTrimming="CharacterEllipsis"/>
                 <TextBlock Text="{Binding CompactSubtitle}" Visibility="{Binding SubtitleVisibility}" FontSize="11" Foreground="{DynamicResource Muted}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"/>

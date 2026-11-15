@@ -16,6 +16,9 @@ public sealed class VaultItem
     public string ContentType { get; set; } = "sable.secret";
     public int ContentVersion { get; set; } = 1;
     public string Label { get; set; } = "";
+    public string Description { get; set; } = "";
+    public string ClickBehavior { get; set; } = "auto";
+    public Dictionary<string, string> ScriptValues { get; set; } = [];
     public bool IsSensitive { get; set; } = true;
     public AdvancedEntry? Advanced { get; set; }
     public Guid? FolderId { get; set; }
@@ -35,6 +38,7 @@ public sealed class VaultFolder
     public Guid? ParentId { get; set; }
     public string Name { get; set; } = "New folder";
     public string Icon { get; set; } = "folder";
+    public string Layout { get; set; } = "rows";
     public int Order { get; set; }
 }
 
@@ -96,6 +100,7 @@ public sealed class VaultDocument
         }
         foreach (var i in Items)
         {
+            if (i.Description is null || i.Description.Length > 2000 || i.ClickBehavior is not ("auto" or "copy" or "run" or "run-copy") || i.ScriptValues is null || i.ScriptValues.Count > 20 || i.ScriptValues.Any(p => !ScriptBindings.IsValueName(p.Key) || p.Value is null || p.Value.Length > 100_000)) throw new InvalidDataException("Invalid entry details.");
             i.Advanced?.Validate();
             if (i.Id == Guid.Empty || string.IsNullOrWhiteSpace(i.ContentType) || i.ContentVersion < 1 || i.FolderId is Guid f && !folders.ContainsKey(f)) throw new InvalidDataException("Invalid entry.");
         }

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Windows.Media.Animation;
 
 namespace SableLatch.Desktop;
 
@@ -16,33 +17,37 @@ public partial class MainWindow
     private string editorSharedLabel = "";
     private bool editorIsNew;
     private bool editorIsDuplicate;
-    private AdvancedEntry? advancedDraft;
     private string? editorTestedAction;
     private void ShowEditor(VaultItem? existing = null, string? selectedType = null, bool? advanced = null)
     {
         if (!vault.IsUnlocked) return;
         if (selectedType == "sable.text") selectedType = "sable.secret"; // Old callers/archives.
-        if (screen == "editor" && editorIsNew && existing is null && captureEditorDraft is not null)
-        {
-            var draft = captureEditorDraft(); editorDrafts[draft.ContentType] = draft; advancedDraft = draft.Advanced; editorSharedLabel = draft.Label;
-        }
+        if (existing is null && selectedType is null) { ShowEntryStarters(); return; }
+        if (existing is null) KeepEditorDraft();
         editorIsNew = existing is null;
+        refreshEntryDetails = null; refreshScriptFields = null; refreshScriptLabels = null;
         editorIsDuplicate = existing is not null && !vault.Document!.Items.Any(i => i.Id == existing.Id);
-        advancedEditor = advanced ?? (existing is not null ? existing.Advanced?.Action?.Enabled == true : screen == "editor" && advancedEditor);
         var types = content.All.Where(p => !vault.Document!.Settings.DisabledModules.Contains(p.Descriptor.Id)).ToList();
         if (types.Count == 0) { ShowError("Enable at least one content module in Settings."); return; }
         var type = existing?.ContentType ?? selectedType ?? types[0].Descriptor.Id;
+        var draftItem = existing ?? editorDrafts.GetValueOrDefault(type);
+        advancedEditor = advanced ?? draftItem?.Advanced?.Action?.Enabled == true;
         var provider = content.Find(type);
+        if (vault.Document!.Settings.DisabledModules.Contains(type)) { ShowError("Enable this entry type in Settings first."); return; }
         if (provider is null || existing is not null && !ModuleAvailable(existing)) { ShowError("This entry's editor is not installed or its schema is incompatible. Its data is preserved."); return; }
         if (type == "sable.shortcut") advancedEditor = true;
-        var advancedSwitch = new CheckBox { Content = "Advanced", IsChecked = advancedEditor, Style = (Style)FindResource("CompactSwitch"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0, 0, 0) };
-        System.Windows.Automation.AutomationProperties.SetName(advancedSwitch, "Advanced options");
-        advancedSwitch.Click += (_, _) => { if (advancedSwitch.IsChecked != advancedEditor) toggleAdvancedEditor?.Invoke(); };
-        var stack = Form(existing is null ? "New entry" : editorIsDuplicate ? "Duplicate entry" : "Edit entry", "", "editor", accessory: type == "sable.shortcut" ? null : advancedSwitch);
-        stack.Children.Add(EntryChoices(provider, existing));
+        if (provider is DeclarativeProvider { Package.Manifest.Handler: "rdp" or "putty" }) advancedEditor = false;
+        var title = provider.Descriptor.Id is "sable.secret" or "sable.login" ? "Secret or login" : TemplateName(provider);
+        var stack = Form(existing is null ? title : editorIsDuplicate ? "Duplicate entry" : "Edit entry", "", "editor", parent: existing is null ? IsConnection(provider) ? ShowConnectionStarters : ShowEntryStarters : ShowList, accessory: existing is null ? EntryChoices(provider, existing) : null, compact: true);
         if (!extensions.Editors.TryGetValue(type, out var editor)) { stack.Children.Add(Text("This content type needs its editor extension.")); return; }
+        var details = new StackPanel();
+        var applyDetails = BuildEntryDetails(details, provider, existing ?? editorDrafts.GetValueOrDefault(type));
         stack.Children.Add(editor.Build(existing ?? editorDrafts.GetValueOrDefault(type), item =>
         {
+            applyDetails(item);
+            if (IsShortcut(provider) && item.ClickBehavior != "auto" && item.Advanced?.Action is { } savedAction) savedAction.CopyOnRun = item.ClickBehavior == "run-copy";
+            if (item.ClickBehavior is "run" or "run-copy" && !IsShortcut(provider) && item.Advanced?.Action is not { Enabled: true }) { ShowError("Add an action to use Run, or choose Copy."); return; }
+            if (item.ClickBehavior is "copy" or "run-copy" && type == "sable.shortcut" && !item.ScriptValues.ContainsKey("value1")) { ShowError("Add $value1 under Script fields to use copying."); return; }
             EntryMetadata.MarkSaved(item, vault.Document!.Items.FirstOrDefault(i => i.Id == item.Id), DateTimeOffset.UtcNow);
             if (Change(d => { var index = d.Items.FindIndex(i => i.Id == item.Id); if (index < 0) { d.Items.Add(item); d.Settings.FirstEntryTourPending = false; } else d.Items[index] = item; }))
             {
@@ -50,21 +55,68 @@ public partial class MainWindow
                 ShowList(); SetStatus("Entry saved");
             }
         }, ShowList));
+        stack.Children.Add(details);
+        var captureFields = captureEditorDraft;
+        if (captureFields is not null) captureEditorDraft = () => { var draft = captureFields(); applyDetails(draft); return draft; };
     }
     private FrameworkElement BuildFields(IContentProvider provider, VaultItem? existing, Action<VaultItem> save)
     {
         var stack = new StackPanel();
-        var label = Input(stack, provider.Descriptor.Sensitive || provider.Descriptor.Id == "sable.shortcut" ? "Label" : "Label · optional", editorIsNew ? editorSharedLabel : existing?.Label ?? "");
+        var label = Input(stack, provider.Descriptor.Sensitive || provider.Descriptor.Id == "sable.shortcut" ? "Name" : "Name · optional", editorIsNew ? editorSharedLabel : existing?.Label ?? "");
+        var combined = provider.Descriptor.Id is "sable.secret" or "sable.login";
+        var withUsername = provider.Descriptor.Id == "sable.login";
+        var usernameHost = new StackPanel { Visibility = withUsername ? Visibility.Visible : Visibility.Collapsed };
+        TextBox? username = null; TextBlock? secretCaption = null; Button? usernameToggle = null;
+        FrameworkElement? secretSurface = null;
+        var credentialsCaption = Text(withUsername ? "Username" : "Secret value", 11, true); credentialsCaption.Margin = new Thickness(0); credentialsCaption.VerticalAlignment = VerticalAlignment.Center;
+        Action usernameChanged = () => { };
+        Func<Dictionary<string, string>> readScriptValues = () => existing?.ScriptValues ?? [];
+        if (combined)
+        {
+            usernameToggle = Button(withUsername ? "Remove username" : "Add username", () =>
+            {
+                if (!withUsername && readScriptValues().ContainsKey("value2"))
+                {
+                    RejectInput(usernameToggle!, "$value2 becomes the password. Move your custom $value2 to another script field before adding a username."); return;
+                }
+                withUsername = !withUsername;
+                usernameHost.Visibility = withUsername ? Visibility.Visible : Visibility.Collapsed;
+                usernameToggle!.Content = withUsername ? "Remove username" : "Add username";
+                credentialsCaption.Text = withUsername ? "Username" : "Secret value";
+                if (secretCaption is not null) { secretCaption.Text = "Password"; secretCaption.Visibility = withUsername ? Visibility.Visible : Visibility.Collapsed; }
+                usernameChanged(); if (withUsername) username!.Focus();
+                foreach (var updated in new FrameworkElement?[] { usernameHost, secretSurface, credentialsCaption, secretCaption })
+                {
+                    if (updated is null) continue;
+                    updated.BeginAnimation(OpacityProperty, null);
+                    if (updated.Visibility == Visibility.Visible && SystemParameters.ClientAreaAnimation)
+                        updated.BeginAnimation(OpacityProperty, new DoubleAnimation(.4, 1, TimeSpan.FromMilliseconds(190)) { EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }, FillBehavior = FillBehavior.Stop });
+                }
+            });
+            usernameToggle.FontSize = 11; usernameToggle.Padding = new Thickness(8, 4, 8, 4); usernameToggle.Margin = new Thickness(0); usernameToggle.HorizontalAlignment = HorizontalAlignment.Right;
+            usernameToggle.ToolTip = "Add a username to copy it first, then the password on the next click.";
+            System.Windows.Automation.AutomationProperties.SetName(usernameToggle, "Toggle username");
+            usernameToggle.IsEnabled = !vault.Document!.Settings.DisabledModules.Contains(withUsername ? "sable.secret" : "sable.login");
+            var credentialsHeader = new DockPanel { Margin = new Thickness(0, 0, 0, 4) }; DockPanel.SetDock(usernameToggle, Dock.Right); credentialsHeader.Children.Add(usernameToggle); credentialsHeader.Children.Add(credentialsCaption);
+            stack.Children.Add(credentialsHeader); stack.Children.Add(usernameHost);
+            username = Input(usernameHost, "Username", existing?.Field("username") ?? "");
+            usernameHost.Children.RemoveAt(0);
+        }
+        string CurrentType() => combined ? withUsername ? "sable.login" : "sable.secret" : provider.Descriptor.Id;
         var formattedHtml = provider.Descriptor.Id is "sable.text" or "sable.secret" ? existing?.Field("html") ?? "" : "";
         var formattedPlain = existing?.Field("text") ?? "";
         var readers = new Dictionary<string, Func<string>>();
         var controls = new Dictionary<string, Control>();
-        foreach (var field in provider.EditorFields)
+        var editorFields = combined ? provider.EditorFields.Where(f => f.Kind == EditorFieldKind.Secret).ToArray() : provider.EditorFields.ToArray();
+        foreach (var field in editorFields)
         {
             if (field.Kind == EditorFieldKind.Secret)
             {
-                stack.Children.Add(Text(field.Label, 11, true));
-                var valueBox = new Grid { Margin = new Thickness(0, 0, 0, 13) }; stack.Children.Add(valueBox);
+                var caption = Text(combined ? withUsername ? "Password" : "Secret value" : field.Label, 11, true); stack.Children.Add(caption);
+                caption.Margin = new Thickness(0, 0, 0, 4);
+                if (combined) { secretCaption = caption; caption.Visibility = withUsername ? Visibility.Visible : Visibility.Collapsed; }
+                var valueBox = new Grid { Margin = new Thickness(0, 0, 0, 8) }; stack.Children.Add(valueBox);
+                if (combined) secretSurface = valueBox;
                 var inputs = new StackPanel(); valueBox.Children.Add(inputs);
                 var masked = new MaskedSecretBox { MinHeight = 36, MaxHeight = 180, Padding = new Thickness(10, 8, 38, 8), Password = existing?.Field(field.Key) ?? "", ToolTip = "Shift+Enter adds a line" };
                 System.Windows.Automation.AutomationProperties.SetName(masked, field.Label); inputs.Children.Add(masked); eraseEditors.Add(masked.Clear);
@@ -137,15 +189,38 @@ public partial class MainWindow
             }
         }
         Action refreshFooter = () => { };
-        var advancedState = BuildAdvancedFields(stack, editorIsNew ? advancedDraft ?? existing?.Advanced : existing?.Advanced, () => refreshFooter(), provider.Descriptor.Id);
+        var advancedState = BuildAdvancedFields(stack, existing?.Advanced, () => refreshFooter(), provider.Descriptor.Id);
+        var scriptHost = new StackPanel(); stack.Children.Add(scriptHost);
+        var scriptValues = BuildScriptValues(scriptHost, existing, CurrentType); readScriptValues = scriptValues;
+        usernameChanged = () =>
+        {
+            advancedState.Tested = null; editorTestedAction = null; refreshScriptLabels?.Invoke(); refreshFooter();
+            foreach (var control in LogicalDescendants(stack).OfType<Control>().Where(c => c is MaskedSecretBox || c is TextBox && System.Windows.Automation.AutomationProperties.GetName(c).EndsWith(" revealed", StringComparison.Ordinal)))
+                System.Windows.Automation.AutomationProperties.SetName(control, (withUsername ? "Password" : "Secret value") + (control is TextBox ? " revealed" : ""));
+        };
+        refreshScriptFields = () =>
+        {
+            var action = advancedState.Capture()?.Action;
+            scriptHost.Visibility = action is { Enabled: true, Kind: "powershell" } || provider is ShortcutProvider && action is { Enabled: true, Kind.Length: > 0 } && editorClickChoice is "copy" or "run-copy" ? Visibility.Visible : Visibility.Collapsed;
+            var toggle = LogicalDescendants(scriptHost).OfType<Button>().First();
+            toggle.Content = action?.Kind == "powershell" ? "Script fields · optional" : "Copy value";
+        };
         if (editorIsNew) advancedState.Tested = editorTestedAction;
         VaultItem Capture()
         {
             var item = existing is null ? new VaultItem { ContentType = provider.Descriptor.Id, FolderId = folder, Order = vault.Document!.Items.Count } : Codec.Clone(existing);
+            item.ContentType = CurrentType();
             item.Label = label.Text.Trim(); item.IsSensitive = provider.Descriptor.Sensitive;
+            item.ScriptValues = scriptValues(); if (item.ScriptValues.Count > 0) item.IsSensitive = true;
             if (provider is DeclarativeProvider module) item.ModuleSchema = module.Package.Manifest.SchemaFingerprint();
             item.Advanced = advancedState.Capture();
             var values = readers.ToDictionary(x => x.Key, x => x.Value());
+            if (combined)
+            {
+                var secret = values[editorFields[0].Key]; values.Clear();
+                if (withUsername) { values["username"] = username!.Text; values["password"] = secret; }
+                else values["text"] = secret;
+            }
             if (provider.Descriptor.Id is "sable.text" or "sable.secret" && formattedHtml.Length > 0 && values.GetValueOrDefault("text") == formattedPlain) values["html"] = formattedHtml;
             item.Payload = JsonSerializer.SerializeToElement(values); return item;
         }
@@ -155,19 +230,23 @@ public partial class MainWindow
             var name = label.Text.Trim();
             if ((provider.Descriptor.Sensitive || provider.Descriptor.Id == "sable.shortcut") && name.Length == 0) { RejectInput(label, "Add a label."); return; }
             var values = readers.ToDictionary(x => x.Key, x => x.Value());
-            var missing = provider.EditorFields.FirstOrDefault(f => f.Required && values[f.Key].Length == 0);
+            if (withUsername && string.IsNullOrWhiteSpace(username!.Text)) { username.BringIntoView(); RejectInput(username, "Enter a username, or remove the username field."); return; }
+            var missing = editorFields.FirstOrDefault(f => f.Required && values[f.Key].Length == 0);
             if (missing is not null) { controls[missing.Key].BringIntoView(); RejectInput(controls[missing.Key], "Enter " + missing.Label.ToLowerInvariant() + "."); return; }
-            if (name.Length > 300 || values.Values.Any(v => v.Length > 100_000)) { ShowError("Use at most 300 characters for the label and 100,000 per field."); return; }
+            if (name.Length > 300 || values.Values.Any(v => v.Length > 100_000) || withUsername && username!.Text.Length > 100_000) { ShowError("Use at most 300 characters for the name and 100,000 per field."); return; }
             if (!advancedState.Validate()) return;
             if (advancedState.NeedsTest) return;
-            save(Capture());
+            var item = Capture();
+            try { ScriptBindings.For(item); } catch (InvalidDataException ex) { ShowError(ex.Message); return; }
+            save(item);
         }
         void TestAction()
         {
             if (!vault.IsUnlocked || busy || modalDepth > 0 || !advancedState.Validate() || advancedState.Capture()?.Action is not { Enabled: true } action) return;
-            void LaunchTest()
+            try { ScriptBindings.For(Capture()); } catch (InvalidDataException ex) { ShowError(ex.Message); return; }
+            async void LaunchTest()
             {
-                if (!LaunchEntryAction(action, advancedState.RejectFailure)) return;
+                if (!await LaunchEntryAction(action, advancedState.RejectFailure, Capture())) return;
                 advancedState.Tested = editorTestedAction = AdvancedEditorState.Fingerprint(action);
                 if (!editorIsNew && existing is not null) RememberAction(existing.Id, action);
                 refreshFooter();
@@ -183,6 +262,7 @@ public partial class MainWindow
         run.Background = (Brush)FindResource("ControlSurface");
         refreshFooter = () =>
         {
+            refreshEntryDetails?.Invoke(advancedState.Capture()?.Action); refreshScriptFields();
             primary.Opacity = advancedState.NeedsTest ? .35 : 1;
             System.Windows.Automation.AutomationProperties.SetHelpText(primary, advancedState.NeedsTest ? "Test the action before saving" : "Save entry");
             run.Visibility = advancedEditor ? Visibility.Visible : Visibility.Collapsed;
@@ -191,9 +271,9 @@ public partial class MainWindow
             footer.ColumnDefinitions[1].Width = new GridLength(advancedEditor ? 8 : 0);
             run.IsEnabled = advancedState.Capture()?.Action is { Enabled: true };
         };
-        refreshFooter(); PageAction(footer); pageSubmit = primary;
+        refreshEditorFooter = refreshFooter; refreshFooter(); PageAction(footer); pageSubmit = primary;
         if (provider.Descriptor.Id == "sable.secret" && controls.GetValueOrDefault("text") is MaskedSecretBox secretInput && editorIsNew) GuideSecretFields(label, secretInput, primary);
-        Dispatcher.BeginInvoke(() => label.Focus());
+        Dispatcher.BeginInvoke(() => { if (screen == "editor" && !contextOpen && label.IsVisible) { label.Focus(); FindParent<ScrollViewer>(label)?.ScrollToTop(); } });
         return stack;
     }
     private void ShowTrash()

@@ -9,7 +9,7 @@ internal static class ValidationFeedback
     public static void Failed(Control field, string message)
     {
         // The lock screen owns its five-attempt countdown and its dedicated feedback.
-        if (field.Tag as string == "bare-secret") return;
+        if (field.Tag as string is "bare-secret" or "quiet-validation") return;
         var state = States.GetValue(field, _ =>
         {
             var value = new State();

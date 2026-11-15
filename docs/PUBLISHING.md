@@ -1,46 +1,60 @@
 # Publishing Sable and its module catalog
 
-The app and module catalog use the same public repository: `odxxt/Sable`.
+The app source and signed module catalog share the public repository [odxxt/Sable](https://github.com/odxxt/Sable). A source push updates code and documentation. **It does not create a GitHub Release or update an existing downloadable ZIP.**
 
 ## Push source changes
 
-From this repository in Git Bash or PowerShell:
+Work from a checkout of this repository. Review the diff and run checks appropriate to the code changes; a documentation-only edit needs link/content checks rather than another complete remote-session test.
 
 ```sh
 git status
+git diff --check
+git diff
+git fetch origin
+```
+
+Confirm what will be included. Keep vault data, recovery keys, publisher private keys, credentials, build output and scratch fixtures out of Git. Stage the intended paths, inspect the staged diff, commit and push without force:
+
+```sh
+git add <reviewed-paths>
+git diff --cached --check
+git diff --cached --stat
+git commit -m "Describe the update"
 git push origin main
 ```
 
-Use your normal Windows terminal if an automation session cannot access Git Credential Manager. Do not put GitHub tokens in source, scripts, command arguments, chat, or module packages.
+If the remote has advanced, integrate and verify its changes before pushing. Use normal Git Credential Manager authentication; never put tokens in scripts, command arguments, chat or package files. The repository does not currently have a GitHub Actions release workflow, so pushing main alone does not build or publish assets.
 
-## Publish an app download
+## Build and publish an app download
 
-A source push does not upload the standalone app to Releases. Build and verify the portable ZIP, source ZIP and SHA256SUMS file, commit the corresponding source, and create a matching version tag. Push main and the tag without force, then create a GitHub prerelease with those three files as assets. Verify uploaded asset hashes before publishing. Existing published assets are not overwritten.
+1. Set the executable version and release notes consistently. The current source identifies as **0.9.1 Preview**. Review README, user/security/architecture/module guides and verification evidence for the same behavior.
+2. On Windows with .NET 10 SDK, run `.\build.ps1 -Portable`. This runs core and native module checks and publishes to `artifacts/Sable-portable`. Record environment-dependent failures accurately; do not substitute historical passing counts for the current build.
+3. Exercise the relevant Debug UI fixture with fictional data in a **fresh disposable directory**, never a real vault. For current starter/window-mode checks use `--preview --preview-starters --data-dir <fresh-directory>`. Test hooks are excluded from Release. Record manual Windows/DPI/remote-session gaps in VERIFICATION.md.
+4. Build the portable ZIP with the **entire** self-contained publish output, licenses/notices, current documentation and public module artifacts. Verify it launches without an external .NET installation. Do not distribute just `Sable.exe` or a framework-dependent build.
+5. Prepare a source ZIP from the exact committed tree, excluding Git metadata, bin/obj, data directories and private material. Name assets consistently: `Sable-v<version>-win-x64.zip`, `Sable-v<version>-source.zip`, `SHA256SUMS-v<version>.txt`. For 0.9.1, substitute `0.9.1` throughout.
+6. Compute SHA-256 checksums for both ZIPs and inspect their entries for missing files and unwanted private data. Ensure source, executable metadata, release tag and documentation describe the same build.
+7. Create a version tag on that source commit, push main and that tag without force, and create a GitHub **prerelease** with those three assets and concise change/upgrade notes. Verify the uploaded assets and checksums. Never silently replace a published version with different bytes; use a new version for a new release.
+
+Keep earlier releases available for rollback. Current platform packaging is standalone Windows x64; installer and ARM64 packages are not shipped. A source-only update can precede a release, but README must not imply that unuploaded assets are already downloadable.
 
 ## Make modules appear in the app
 
-The app fetches this file only when the user clicks **Settings → Plugins & modules → Catalog → Check GitHub catalog**:
+Settings → Plugins & modules offers **Add a connection** for bundled offline SSH/RDP packages, **Install from ZIP…** and **Online catalog**. The app fetches the signed catalog only after **Check GitHub catalog**:
 
-https://raw.githubusercontent.com/odxxt/Sable/main/modules/catalog.json
+[Official catalog](https://raw.githubusercontent.com/odxxt/Sable/main/modules/catalog.json)
 
-Each catalog entry points to a ZIP under the same repository and specifies its SHA-256. The catalog payload is signed using the Sable publisher key; the ZIP's manifest is independently signed. The client checks both and the archive hash. Uploading an unsigned JSON list or editing signed bytes invalidates the catalog.
+Each entry specifies an allowed repository ZIP URL and SHA-256. The catalog payload and each official manifest are independently ECDSA-signed against the embedded publisher key. The ZIP hash must also match. Editing signed bytes without re-signing invalidates the catalog/package.
 
-The existing catalog still has signed URLs containing `odxxt/SableLatch`. Host 0.9 verifies those exact bytes and maps only that old official raw-GitHub prefix to `odxxt/Sable` before the request. Do not edit the signed payload just to rename URLs without re-signing it. Existing module IDs and embedded resource names also remain compatible.
-
-The PuTTY catalog and ZIP were fetched from public GitHub on 24 September 2026; the catalog signature and ZIP hash matched. No separate hosting or server is needed. Pushing a compatible, correctly signed catalog/package update to main makes it available on the next explicit catalog check. Both included PuTTY and RDP modules also work offline.
+Existing signed payloads can contain `odxxt/SableLatch` URLs. The host verifies those exact bytes first, then maps only that old official prefix to `odxxt/Sable`. Do not edit signed URLs solely for branding. Stable `sablelatch.*` module IDs, embedded resource names and crypto purpose strings likewise remain intentional compatibility identifiers.
 
 For a new official module:
 
-1. Implement and test any required new host capability in an app release first. API 1 ZIPs cannot contain arbitrary code. In particular, an RDP manifest alone cannot implement RDP.
-2. Define the manifest; preserve the schema or use a new module ID when incompatible.
-3. Sign the exact manifest bytes with `modules/Sign-Official.ps1`, then pack it using `modules/Pack-Module.ps1`.
-4. Update the catalog payload with its name, description, allowed repository URL and archive SHA-256. Sign those exact payload bytes and put the payload and signature, each base64 encoded, in catalog.json.
-5. Verify the signature, package and download hashes locally; commit only public artifacts and push them.
+1. Implement/test any required host capability in an app version first; API 1 ZIPs cannot supply arbitrary code or invent a new protocol handler.
+2. Define a supported manifest. Preserve its schema or use a new ID for an incompatible change.
+3. Sign the exact manifest with `modules/Sign-Official.ps1`, then pack with `modules/Pack-Module.ps1`.
+4. Update the catalog payload with name, description, allowed URL and ZIP SHA-256. Sign the exact payload bytes and place base64 payload/signature in `catalog.json`.
+5. Verify signatures, archives and downloads; commit only public artifacts and push. The next explicit catalog check sees the change. No separate server is needed.
 
-Keep the encrypted publisher private key and its unlock password outside Git and release ZIPs, backed up separately. The repository contains only the public verification key. See [the module author guide](../modules/README.md).
+Installed enabled `putty`/`rdp` modules automatically appear under **New entry → Connection**; field modules get individual starters. UI/docs-only host changes do not require re-signing unchanged packages. Editing the source sample README does not modify an already packed ZIP; repacking is a separate package update because it changes its archive hash.
 
-## v0.9.0 release inventory
-
-Publish the final UI-polished build, not an earlier local ZIP with the same version. Release assets are `Sable-v0.9.0-win-x64.zip`, `Sable-v0.9.0-source.zip` and `SHA256SUMS-v0.9.0.txt`. The version tag must point to the clean source commit used for these assets. The source ZIP excludes Git metadata, build output, vault data and private publisher keys. The standalone ZIP includes the desktop runtime, current documentation and verification reports.
-
-The signed API 1 module ZIPs and catalog remain compatible with this host update. Changing host UI, native RDP clipboard settings or folder behavior does not require re-signing an unchanged manifest. Do not change signed package bytes solely to update prose in the source documentation.
+Keep publisher private keys and unlock passwords outside Git and release ZIPs, backed up separately. The repository contains public verification material only. See [module authoring](../modules/README.md), [security boundaries](../SECURITY.md) and [verification](../VERIFICATION.md).

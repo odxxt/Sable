@@ -69,7 +69,7 @@ public partial class MainWindow : Window
         Loaded += (_, _) => { PositionWindow(); if (!App.PreviewMode) ShowUnlock(); };
         IsVisibleChanged += (_, _) => { if (!IsVisible) { ResetLoginCopy(); CloseTourHint(); suggestionHost?.Children.Clear(); } else { ApplyTaskbarVisibility(); FocusLockInput(); QueueSuggestions(); } };
         Activated += (_, _) => FocusLockInput();
-        Deactivated += (_, _) => { if (screen == "list" && !session.IsPinned && !holdForPassword && !busy && !contextOpen && modalDepth == 0) Hide(); };
+        Deactivated += (_, _) => HandlePanelDeactivated();
         PreviewKeyDown += (_, e) =>
         {
             if (e.Key == Key.Escape && closeChoicePicker is not null) { closeChoicePicker(); e.Handled = true; return; }
@@ -185,10 +185,9 @@ public partial class MainWindow : Window
     private void TogglePin(object sender, RoutedEventArgs e)
     {
         if (!vault.IsUnlocked && !App.PreviewMode) return;
-        session.IsPinned = !session.IsPinned; Topmost = session.IsPinned || holdForPassword;
+        session.CycleMode(); UpdatePanelTopmost();
         ApplyTaskbarVisibility();
-        PinButton.Background = session.IsPinned ? (Brush)FindResource("HoverSurface") : Brushes.Transparent;
-        PinButton.ToolTip = session.IsPinned ? "Unpin · resume session timeout" : "Pin · keep open and pause session timeout";
+        UpdatePinButton();
         if (vault.IsUnlocked && session.Expired(vault.Document!.Settings.SessionMinutes)) ForceLock("Session expired");
         else UpdateStatus();
     }
@@ -286,7 +285,7 @@ public partial class MainWindow : Window
     {
         CloseTourHint(); suggestionHost?.Children.Clear(); suggestionHost = null;
         CancelEditHover(); ClearDropMarker(); ClearFolderMarker(); folderChips = null; dragHandle = null;
-        captureEditorDraft = null; toggleAdvancedEditor = null;
+        captureEditorDraft = null; toggleAdvancedEditor = null; refreshEntryDetails = null; refreshScriptFields = null; refreshScriptLabels = null; refreshEditorFooter = null;
         clearingEditors = true;
         if (entryList is not null) { entryList.ItemsSource = null; entryList = null; }
         foreach (var clear in eraseEditors) clear();
@@ -294,10 +293,11 @@ public partial class MainWindow : Window
     }
     private void SetBody(FrameworkElement element, string mode)
     {
+        BrandTitle.Visibility = Visibility.Visible;
         ApplyTaskbarVisibility();
         closeChoicePicker?.Invoke();
         ResetSettingsDraft();
-        if (mode != "editor") { editorDrafts.Clear(); editorSharedLabel = ""; advancedDraft = null; editorTestedAction = null; }
+        if (mode != "editor") { editorDrafts.Clear(); editorSharedLabel = ""; editorTestedAction = null; }
         EraseEditors(); recordingShortcut = false; ErrorToast.Visibility = Visibility.Collapsed; Body.Content = element; screen = mode; formError = null;
         CloseContextMenu();
         backAction = null;
@@ -306,7 +306,7 @@ public partial class MainWindow : Window
         SearchButton.IsEnabled = vault.IsUnlocked;
         SearchButton.Background = mode == "list" && searchVisible ? (Brush)FindResource("HoverSurface") : Brushes.Transparent;
         SettingsButton.Background = mode is "settings" or "about" or "audit" or "pin-setup" ? (Brush)FindResource("HoverSurface") : Brushes.Transparent;
-        PinButton.Background = session.IsPinned ? (Brush)FindResource("HoverSurface") : Brushes.Transparent;
+        UpdatePinButton();
         SettingsButton.IsEnabled = vault.IsUnlocked;
         LockButton.IsEnabled = vault.IsUnlocked;
         PinButton.IsEnabled = vault.IsUnlocked || App.PreviewMode;
@@ -333,7 +333,7 @@ public partial class MainWindow : Window
     private void ApplyTaskbarVisibility()
     {
         if (vault.IsUnlocked) taskbarMode = vault.Document!.Settings.TaskbarMode;
-        var visible = taskbarMode == "always" || taskbarMode != "never" && session.IsPinned;
+        var visible = taskbarMode == "always" || taskbarMode != "never" && session.KeepsPanelOpen;
         // WPF owns taskbar registration; keep its state in sync with native Alt+Tab styles.
         if (ShowInTaskbar != visible) ShowInTaskbar = visible;
         Native.SetAltTabVisibility(handle, visible);

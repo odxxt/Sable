@@ -7,7 +7,7 @@
     <StackPanel Orientation="Horizontal" VerticalAlignment="Center"><TextBlock x:Name="BrandTitle" Text="Sable" FontSize="13" FontWeight="SemiBold"/></StackPanel>
     <StackPanel Grid.Column="1" Orientation="Horizontal">
      <StackPanel x:Name="ExtensionToolbar" Orientation="Horizontal"/>
-     <Button x:Name="SearchButton" Style="{StaticResource HeaderButton}" Content="&#xE721;" ToolTip="Search" Click="ToggleSearch"/><Button x:Name="PinButton" Style="{StaticResource HeaderButton}" Content="&#xE718;" ToolTip="Pin · keep open and pause the session timeout" Click="TogglePin"/>
+     <Button x:Name="SearchButton" Style="{StaticResource HeaderButton}" Content="&#xE721;" ToolTip="Search" Click="ToggleSearch"/><Button x:Name="PinButton" Style="{StaticResource HeaderButton}" ToolTip="Tray mode · click to keep on top" Click="TogglePin"/>
      <Button x:Name="LockButton" Style="{StaticResource HeaderButton}" Content="&#xE72E;" ToolTip="Lock now" Click="LockNow"/>
      <Button x:Name="SettingsButton" Style="{StaticResource HeaderButton}" Content="&#xE713;" ToolTip="Settings" Click="OpenSettings"/>
      <Button Style="{StaticResource HeaderButton}" Content="&#xE8BB;" ToolTip="Hide to tray" Click="HidePanel"/>

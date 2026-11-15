@@ -12,8 +12,8 @@ public partial class MainWindow
         var label = Input(stack, "Name", editorIsNew ? editorSharedLabel : existing?.Label ?? "");
         var host = Input(stack, "Host", existing?.Field("host") ?? "");
         var username = Input(stack, "Username", existing?.Field("username") ?? "");
-        stack.Children.Add(Text("Password", 11, true));
-        var secretHost = new Grid { Margin = new Thickness(0, 0, 0, 13) }; stack.Children.Add(secretHost);
+        var passwordCaption = Text("Password", 11, true); passwordCaption.Margin = new Thickness(0, 0, 0, 4); stack.Children.Add(passwordCaption);
+        var secretHost = new Grid { Margin = new Thickness(0, 0, 0, 8) }; stack.Children.Add(secretHost);
         var password = new PasswordBox { Password = existing?.Field("password") ?? "", MaxLength = 1024, MinHeight = 36, Padding = new Thickness(10, 8, 38, 8) };
         var visible = new TextBox { Visibility = Visibility.Collapsed, MaxLength = 1024, IsUndoEnabled = false, MinHeight = 36, Padding = new Thickness(10, 8, 38, 8) };
         System.Windows.Automation.AutomationProperties.SetName(password, "SSH password");
@@ -30,8 +30,9 @@ public partial class MainWindow
         eye.Content = eyeGraphic; eye.Style = (Style)FindResource("RowIcon"); eye.HorizontalAlignment = HorizontalAlignment.Right; eye.VerticalAlignment = VerticalAlignment.Top; eye.Opacity = .55; eye.ToolTip = "Reveal or hide password";
         secretHost.Children.Add(eye);
         var advancedFields = new StackPanel { Visibility = advancedEditor ? Visibility.Visible : Visibility.Collapsed };
-        stack.Children.Add(advancedFields);
+        stack.Children.Add(GroupedOptions("More options", advancedFields, advancedEditor));
         toggleAdvancedEditor = () => { advancedEditor = !advancedEditor; advancedFields.Visibility = advancedEditor ? Visibility.Visible : Visibility.Collapsed; };
+
         var port = Input(advancedFields, "Port", existing?.Field("port") is { Length: > 0 } portValue ? portValue : "22");
         var fingerprint = Input(advancedFields, "Expected server fingerprint · optional", existing?.Field("hostKey") ?? "");
         var family = Select(advancedFields, "Network", new[] { "Automatic", "IPv4", "IPv6" }, existing?.Field("addressFamily") switch { "ipv4" => "IPv4", "ipv6" => "IPv6", _ => "Automatic" });
@@ -67,7 +68,7 @@ public partial class MainWindow
             try { var item = Capture(); PuttyProfile.From(item).Validate(); save(item); }
             catch (InvalidDataException ex) { RejectInput(fingerprint, ex.Message); }
         }, true));
-        Dispatcher.BeginInvoke(() => label.Focus()); return stack;
+        Dispatcher.BeginInvoke(() => { if (label.IsVisible) { label.Focus(); FindParent<ScrollViewer>(label)?.ScrollToTop(); } }); return stack;
     }
     private void RunPutty(VaultItem item)
     {
@@ -101,7 +102,9 @@ public partial class MainWindow
                     finally { CryptographicOperations.ZeroMemory(secret); }
                     if (epoch != startEpoch || !vault.IsUnlocked) return;
                     if (remember) moduleApprovals.Remember(digest);
-                    Audit(AuditEvent.EntryActionStarted); ShowList(); SetStatus("PuTTY opened"); if (!session.IsPinned) Hide();
+                    Audit(AuditEvent.EntryActionStarted); ShowList(); SetStatus("PuTTY opened");
+                    if (latest.ClickBehavior == "run-copy") await CopyEntry(latest, "Password", new Button());
+                    else if (!session.KeepsPanelOpen) Hide();
                 }
                 catch (OperationCanceledException) { if (epoch == startEpoch && vault.IsUnlocked) ShowError("The password handoff timed out or was cancelled. Try again."); }
                 catch (Exception ex) when (ex is IOException or InvalidOperationException or UnauthorizedAccessException or CryptographicException or System.ComponentModel.Win32Exception)

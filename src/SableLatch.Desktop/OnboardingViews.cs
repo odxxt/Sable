@@ -74,8 +74,8 @@ public partial class MainWindow
     {
         var page = new Grid(); page.RowDefinitions.Add(new()); page.RowDefinitions.Add(new() { Height = GridLength.Auto }); SetBody(page, "onboarding-ready");
         var stack = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(12, 0, 12, 10) }; page.Children.Add(stack);
-        stack.Children.Add(new TextBlock { Text = "✓", FontSize = 42, Foreground = new SolidColorBrush(Color.FromRgb(153, 195, 164)), HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 0, 14) });
-        var title = Heading("Welcome to Sable"); title.TextAlignment = TextAlignment.Center; stack.Children.Add(title);
+        stack.Children.Add(OnboardingScene());
+        var title = Heading("Sable is ready."); title.TextAlignment = TextAlignment.Center; stack.Children.Add(title);
         var caption = Text("Setup is complete.\nLet's create your first secret.", 13, true); caption.TextAlignment = TextAlignment.Center; stack.Children.Add(caption);
         var shortcut = Text(vault.Document!.Settings.Shortcut, 15); shortcut.TextAlignment = TextAlignment.Center; shortcut.Margin = new Thickness(0, 15, 0, 5); shortcut.ToolTip = "Open Sable from anywhere. Change this in Settings."; stack.Children.Add(shortcut);
         var tip = Text("Always close, in your tray", 10, true); tip.TextAlignment = TextAlignment.Center; stack.Children.Add(tip);

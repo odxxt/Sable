@@ -12,8 +12,8 @@ public partial class MainWindow
         var label = Input(stack, "Name", editorIsNew ? editorSharedLabel : existing?.Label ?? "");
         var host = Input(stack, "Host", existing?.Field("host") ?? "");
         var username = Input(stack, "Username", existing?.Field("username") ?? "");
-        stack.Children.Add(Text("Password", 11, true));
-        var secretHost = new Grid { Margin = new Thickness(0, 0, 0, 13) }; stack.Children.Add(secretHost);
+        var passwordCaption = Text("Password", 11, true); passwordCaption.Margin = new Thickness(0, 0, 0, 4); stack.Children.Add(passwordCaption);
+        var secretHost = new Grid { Margin = new Thickness(0, 0, 0, 8) }; stack.Children.Add(secretHost);
         var password = new PasswordBox { Password = existing?.Field("password") ?? "", MaxLength = 1024, MinHeight = 36, Padding = new Thickness(10, 8, 38, 8) };
         var visible = new TextBox { Visibility = Visibility.Collapsed, MaxLength = 1024, IsUndoEnabled = false, MinHeight = 36, Padding = new Thickness(10, 8, 38, 8) };
         System.Windows.Automation.AutomationProperties.SetName(password, "RDP password"); System.Windows.Automation.AutomationProperties.SetName(visible, "RDP password revealed");
@@ -27,20 +27,13 @@ public partial class MainWindow
             else { visible.Text = password.Password; password.Clear(); password.Visibility = Visibility.Collapsed; visible.Visibility = Visibility.Visible; slash.Visibility = Visibility.Visible; }
         });
         eye.Content = graphic; eye.Style = (Style)FindResource("RowIcon"); eye.HorizontalAlignment = HorizontalAlignment.Right; eye.VerticalAlignment = VerticalAlignment.Top; eye.Opacity = .55; eye.ToolTip = "Reveal or hide password"; secretHost.Children.Add(eye);
-        var advancedFields = new StackPanel { Visibility = advancedEditor ? Visibility.Visible : Visibility.Collapsed }; stack.Children.Add(advancedFields);
+        var advancedFields = new StackPanel { Visibility = advancedEditor ? Visibility.Visible : Visibility.Collapsed }; stack.Children.Add(GroupedOptions("More options", advancedFields, advancedEditor));
         toggleAdvancedEditor = () => { advancedEditor = !advancedEditor; advancedFields.Visibility = advancedEditor ? Visibility.Visible : Visibility.Collapsed; };
+
         string Value(string key, string fallback) => existing?.Field(key) is { Length: > 0 } value ? value : fallback;
         var domain = Input(advancedFields, "Domain · optional", Value("domain", ""));
         var port = Input(advancedFields, "Port", Value("port", "3389"));
         var fullScreen = Check(advancedFields, "Start in full screen", Value("fullScreen", "true") != "false");
-        stack.Children.Add(Text("When clicked", 11, true));
-        var modes = new System.Windows.Controls.Primitives.UniformGrid { Columns = 2 };
-        var group = "rdp-mode-" + Guid.NewGuid().ToString("N");
-        var launchOnly = new RadioButton { Content = "Launch", GroupName = group, Style = (Style)FindResource("SegmentChoice"), IsChecked = Value("copyOnLaunch", "false") != "true" };
-        var launchCopy = new RadioButton { Content = "Launch & copy", GroupName = group, Style = (Style)FindResource("SegmentChoice"), IsChecked = Value("copyOnLaunch", "false") == "true" };
-        modes.Children.Add(launchOnly); modes.Children.Add(launchCopy);
-        stack.Children.Add(new Border { Background = (Brush)FindResource("ControlSurface"), CornerRadius = new CornerRadius(10), Padding = new Thickness(3), Margin = new Thickness(0, 0, 0, 8), Child = modes });
-        stack.Children.Add(Text("Click the shortcut to open Remote Desktop. Launch & copy also copies its password.", 11, true));
         string ReadPassword() => visible.Visibility == Visibility.Visible ? visible.Text : password.Password;
         VaultItem Capture()
         {
@@ -49,7 +42,7 @@ public partial class MainWindow
             item.Payload = JsonSerializer.SerializeToElement(new Dictionary<string, string>
             {
                 ["host"] = host.Text.Trim(), ["username"] = username.Text.Trim(), ["password"] = ReadPassword(), ["domain"] = domain.Text.Trim(), ["port"] = port.Text.Trim(),
-                ["fullScreen"] = fullScreen.IsChecked == true ? "true" : "false", ["copyOnLaunch"] = launchCopy.IsChecked == true ? "true" : "false"
+                ["fullScreen"] = fullScreen.IsChecked == true ? "true" : "false", ["copyOnLaunch"] = Value("copyOnLaunch", "false")
             }); return item;
         }
         captureEditorDraft = Capture;
@@ -65,7 +58,7 @@ public partial class MainWindow
             if (!int.TryParse(port.Text, out var p) || p is < 1 or > 65535) { RejectAdvanced(port, "Use a port from 1 to 65535."); return; }
             try { var item = Capture(); RdpProfile.From(item).Validate(); save(item); } catch (InvalidDataException ex) { RejectAdvanced(domain, ex.Message); }
         }, true));
-        Dispatcher.BeginInvoke(() => label.Focus()); return stack;
+        Dispatcher.BeginInvoke(() => { if (label.IsVisible) { label.Focus(); FindParent<ScrollViewer>(label)?.ScrollToTop(); } }); return stack;
     }
 #if DEBUG
     private Func<RdpProfile, Task>? previewRdpLaunch;
@@ -76,7 +69,7 @@ public partial class MainWindow
         var current = vault.Document.Items.FirstOrDefault(i => i.Id == item.Id && i.DeletedAt is null); if (current is null) return; item = current;
         try
         {
-            var profile = RdpProfile.From(item); var copy = copyOnLaunch ?? profile.CopyOnLaunch; string hash;
+            var profile = RdpProfile.From(item); var copy = copyOnLaunch ?? (item.ClickBehavior == "auto" ? profile.CopyOnLaunch : item.ClickBehavior == "run-copy"); string hash;
             using (var executable = new NativeRdpExecutable()) hash = executable.Hash;
             var digest = profile.Fingerprint(provider.Package.Fingerprint + ":native-dpapi-v3-native-resources:" + copy, hash, item.Id); var startEpoch = epoch;
             async Task Launch(bool remember)
@@ -108,7 +101,7 @@ public partial class MainWindow
                     if (remember) moduleApprovals.Remember(digest);
                     Audit(AuditEvent.EntryActionStarted); ShowList(); SetStatus("Remote Desktop opened");
                     if (copy) await CopyEntry(latest, "Password", new Button());
-                    else if (!session.IsPinned) Hide();
+                    else if (!session.KeepsPanelOpen) Hide();
                 }
                 catch (OperationCanceledException) { if (epoch == startEpoch && vault.IsUnlocked) ShowError("The RDP handoff timed out or was cancelled. Try again."); }
                 catch (Exception ex) when (ex is IOException or InvalidOperationException or UnauthorizedAccessException or CryptographicException or System.ComponentModel.Win32Exception)

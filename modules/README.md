@@ -1,6 +1,8 @@
 # Modules for Sable
 
-Modules add entry types and actions while keeping Sable small. Install a ZIP from **Settings → Plugins & modules → Install ZIP**, or open **Catalog** to install the included PuTTY SSH and Remote Desktop modules without a download. **Check GitHub catalog** fetches the signed catalog only when clicked.
+Connection placement is automatic: installed, enabled packages with `handler: "putty"` or `handler: "rdp"` appear under **New entry → Connection**. Field modules remain their own starters, with the manifest description used as their help text. No module installer appears in entry creation; use Settings → Plugins & modules. This is host-owned categorization, not a new permission or executable plugin hook. Unsupported handlers still fail validation.
+
+Modules add entry types and actions while keeping Sable small. Open **Settings → Plugins & modules**: use **Add a connection** for the included offline SSH · PuTTY and Remote Desktop packages, **Install from ZIP…** for a local package, or **Online catalog → Check GitHub catalog** for the signed online list. Installed modules show a check and version and open their settings instead of offering installation again. No background catalog check runs.
 
 ## Start with a sample
 
@@ -13,7 +15,7 @@ Modules add entry types and actions while keeping Sable small. Install a ZIP fro
    ```
 
 4. Install the ZIP in Sable and review its permission summary.
-5. Choose **+ → New entry → More**. Select your module, enter a name and its values, then save.
+5. Choose **+ → New entry**, then your module's described starter. Enter a name and its values, then save. Only connection handlers are grouped under Connection.
 
 You do not need Visual Studio, a compiler, a developer account or a signing certificate to make a community module. The sample ZIP in `packages/example.quick-note.zip` is ready to try. Community modules show **Not reviewed by Sable**.
 
@@ -69,19 +71,19 @@ Sable validates the result; an AI-generated package does not receive special tru
 
 ## PuTTY SSH 1.0
 
-Install the included official PuTTY module, then use **+ → New entry → More → PuTTY SSH**. Enter name, host, username and password. Advanced options include port, one expected server fingerprint, IPv4/IPv6 preference, SSH compression, keepalive (0-600 seconds) and terminal font/size.
+Install the included official PuTTY module, then use **+ → New entry → Connection → SSH · PuTTY**. Enter name, host, username and password. **More options** includes port, one expected server fingerprint, IPv4/IPv6 preference, SSH compression, keepalive (0-600 seconds) and terminal font/size.
 
-Click the entry to view details. Its **Run** button launches PuTTY. The first connection reviews the destination, with an optional **Don't ask again for this connection**. Editing the destination/options, changing the module manifest, changing the PuTTY executable or moving to a new machine invalidates the remembered approval.
+Click the entry to launch PuTTY by default; right-click → Edit opens its fields. The independent Run action and primary Copy / Run / Run and copy choice use host-owned behavior, not package code. The first connection reviews the destination, with an optional **Don't ask again for this connection**. Editing the destination/options, changing the module manifest, changing the PuTTY executable or moving to a new machine invalidates the remembered approval.
 
 The app detects the standard PuTTY installation directories. In the module's settings, choose a different installed `putty.exe` or follow the official download link. PuTTY is not bundled. It must be a locally installed, Windows-trusted executable signed by **Simon Tatham**, with PuTTY identity and version 0.77 or newer. The handoff was exercised against PuTTY 0.85; other supported versions require compatibility testing.
 
-Passwords stay in the encrypted vault. Sable creates a local-only, unpredictable, single-instance Windows pipe, launches PuTTY directly and checks that the pipe client is that exact launched process before writing the password. The command line contains the pipe name, never the password. Passwords are not sent through the clipboard, environment, files or logs. The host clears its mutable transfer buffers. .NET's existing unlocked document and PuTTY's memory are separate and cannot be promised immediate physical erasure.
+Passwords stay in the encrypted vault. Sable creates a local-only, unpredictable, single-instance Windows pipe, launches PuTTY directly and checks that the pipe client is that exact launched process before writing the password. The command line contains the pipe name, never the password. The launch handoff does not send passwords through the clipboard, environment, files or logs. An explicit Copy or Run and copy choice separately uses the host's sensitive clipboard path. The host clears its mutable transfer buffers. .NET's existing unlocked document and PuTTY's memory are separate and cannot be promised immediate physical erasure.
 
 A temporary **non-secret** PuTTY session is created under the current user's PuTTY registry Sessions key to avoid inherited logging, proxy commands or other saved-session behavior. It is deleted after the handoff. A process crash may leave an inert session entry behind; it contains no password. Server host-key checking stays enabled. Do not accept an unknown or changed host identity without verifying it independently.
 
 Locking cancels pending password delivery; the pending child process is stopped if delivery fails. Established SSH sessions stay open after Sable locks. The 15-second delivery timeout does not limit how long the SSH session may remain open.
 
-**Not in this release:** SSH private-key storage/authentication, existing PuTTY saved sessions, jump hosts/proxies, tunnels, remote commands, rich-text composition, image/file attachments or arbitrary executable module code. These need separate host capabilities and tests. HTML clipboard preservation is now part of the built-in Secret type (including sensitive clipboard handling). The RDP host capability is available in 0.8.0; see [RDP implementation](../docs/RDP-DESIGN.md).
+**Not in this release:** SSH private-key storage/authentication, existing PuTTY saved sessions, jump hosts/proxies, tunnels, remote commands, rich-text composition, image/file attachments or arbitrary executable module code. These need separate host capabilities and tests. HTML clipboard preservation is now part of the built-in Secret type (including sensitive clipboard handling). The RDP host capability is also available; see [RDP implementation](../docs/RDP-DESIGN.md).
 
 ## Updates, removal and recovery
 
@@ -99,10 +101,10 @@ The signed PuTTY catalog is published and was verified online on 24 September 20
 
 Official signing material must remain outside the repository and release archives. Back up the publisher private key and keep its unlock password separately. Losing the key requires an explicit trust-key transition in a future app version. A valid signature verifies publisher identity and package integrity; it is not an independent security audit.
 
-## Remote Desktop 1.0 (requires Sable 0.8.0)
+## Remote Desktop 1.0
 
 `handler: "rdp"` and `icon: "desktop"` request the host-owned RDP editor and launcher. Fields and actions must be empty, just like the protected PuTTY capability: ZIP authors cannot add credential extraction, arbitrary arguments, shell commands or executable files. See `samples/rdp/manifest.json`. A community example must use its own namespace rather than `sablelatch.*` and omit the official signature.
 
-Install Remote Desktop from the bundled catalog. With host 0.9, a connection is a Shortcut: click its row or tile to launch. Choose Launch or Launch & copy in its editor or explicitly in the right-click menu. The first-use review is remembered only on this Windows environment; destination, account, client, launch mode, host resource policy or package changes require a new review. Disabling/uninstalling preserves encrypted entries. Windows verifies the server certificate and offers its normal warning/choice when verification fails, subject to policy. See the [user guide](../docs/USER-GUIDE.md#remote-desktop-085) for setup and limitations.
+Install Remote Desktop from **Add a connection**, then choose **New entry → Connection → Remote Desktop**. Host 0.9.1 launches on the default row click. **When I click the entry** supports Copy, Run and Run and copy; the menu also offers explicit Launch / Launch & copy. **More options** groups domain, port and initial full-screen preference. The first-use review is remembered only on this Windows environment; destination, account, client, launch mode, host resource policy or package changes require a new review. Disabling/uninstalling preserves encrypted entries. Windows verifies the server certificate and offers its normal warning/choice when verification fails, subject to policy. See the [user guide](../docs/USER-GUIDE.md#remote-desktop) for setup and limitations.
 
-The catalog at `main/modules/catalog.json` includes the signed PuTTY and RDP packages. Check GitHub catalog retrieves those packages on demand; bundled catalog installation also works offline. Host 0.8.5 adds native display defaults and remote clipboard support without changing the signed module schema.
+The catalog at `main/modules/catalog.json` includes the signed PuTTY and RDP packages. Check GitHub catalog retrieves those packages on demand; bundled catalog installation also works offline. Native display defaults and remote clipboard support are implemented by the host without changing the signed module schema. The package supports host 0.8.0+, whose original embedded RDP window differs from the current native mstsc path.

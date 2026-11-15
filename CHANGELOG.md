@@ -1,3 +1,23 @@
+# Changelog
+
+## 0.9.1 preview — Clear entry templates and native interaction polish
+
+- Add three window modes to the pin cycle: Tray, Always on top and Normal window. Both kept-open modes retain the panel; Normal window respects ordinary stacking and timed locking. Use one fixed-size pin with distinct orientations.
+- Document current setup, entry creation, module installation, scripts, recovery and all three window modes; keep older UI and test records explicitly historical.
+- Mute Change, replace connection chooser glyphs with monitor/terminal vectors, center back icons, remove the starter focus marker and apply consistent inner padding to starters and expanded options.
+
+- Refine welcome branding and add a visibility-scoped native animation loop. Overlay recovery copy feedback inside the key box and release textbox mouse capture so navigation stays interactive.
+- Show the settings checklist after three entries, dim completed steps, and align folder browse controls beside their paths.
+- Simplify the module manager into Installed/Add connection rows with optional standard-template controls. Group connection settings visually and show action/script controls only when relevant.
+- Name the action starter Shortcut and derive About's version from the executable.
+- Add recursive folder deletion through the folder editor with two deliberate presses, scope counts, an irreversible-action notice and rapid-double-click protection.
+
+- Replace the long template menu with flat, described starter rows: Secret or login, Shortcut and installed Connections. Add/remove username above the value with brief fade feedback. Keep an optional hybrid shortcut independent of secret copying, preserve drafts while changing starters, and share compact color/description controls across entry types. SSH/RDP options live below credentials in More options.
+- Add encrypted custom PowerShell fields, opt-in variable access, a restricted first-instance local pipe verified against the launched process, and optional Windows UAC elevation. Remove diagnostics from the new-action list while preserving saved ones.
+- Add recovery-key file saving and click-to-copy, with hidden-by-default presentation and quiet repeated validation.
+- Add a native onboarding scene that loops only while visible and shared quick press feedback. Confirm Delete inside its original context menu.
+- Size folder chips to names with a maximum width and full-name tooltips. Immediate folder drags reorder/nest with a pointer-following preview; wheel/edge scrolling reaches overflow. Save row/grid views independently per folder.
+
 # 0.9.0 — Sable, shortcuts and clipboard suggestions
 
 - Rename the visible application and executable to Sable. Use the renamed repository for catalog downloads while retaining verification of existing signed catalog/module bytes and legacy storage identifiers.

@@ -59,5 +59,7 @@ public sealed class ShortcutProvider : IContentProvider
 {
     public ContentDescriptor Descriptor => new("sable.shortcut", 1, "Shortcut", "\uE768", false);
     public IReadOnlyList<string> CopyActions => [];
-    public CopyValue Copy(VaultItem item, string action) => throw new InvalidOperationException("Shortcuts run actions; they do not copy a value.");
+    public CopyValue Copy(VaultItem item, string action) => item.ScriptValues.TryGetValue("value1", out var value)
+        ? new("text/plain", System.Text.Encoding.UTF8.GetBytes(value), true, false)
+        : throw new InvalidOperationException("Add $value1 to this entry before copying.");
 }

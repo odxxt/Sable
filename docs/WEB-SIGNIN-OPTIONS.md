@@ -1,6 +1,6 @@
 # Web sign-in options — research, not implemented
 
-Goal: choose Run on an entry, open its website and fill/submit the login without simulated keyboard input or clipboard transfer. Findings reviewed September 29, 2026.
+Goal: choose Run on an entry, open its website and fill/submit the login without simulated keyboard input or clipboard transfer. Findings reviewed September 29, 2026. This historical research is not a shipped Sable 0.9.1 feature; the current local connection capabilities are SSH and RDP. See the [documentation index](README.md).
 
 ## Recommended: a small Chrome / Edge extension
 

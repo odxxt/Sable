@@ -1,4 +1,6 @@
-# Sable 0.9 interface pass
+# Historical: Sable 0.9.0 interface pass
+
+This records the shipped 0.9.0 design. Folder sizing/drag gestures, entry creation and window modes changed in 0.9.1; use [current interface notes](UI-REFINEMENTS-0.9.1.md) and the [user guide](USER-GUIDE.md) for current behavior.
 
 This is a polish pass within the existing compact WPF tray window. It keeps the dark theme, Segoe UI typography, fixed window size and established actions.
 

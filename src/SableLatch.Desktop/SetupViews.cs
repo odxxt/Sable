@@ -16,16 +16,11 @@ public partial class MainWindow
     {
         var page = new Grid(); page.RowDefinitions.Add(new RowDefinition()); page.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         SetBody(page, "setup");
+        BrandTitle.Visibility = Visibility.Collapsed;
         var stack = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(16, 0, 16, 12) }; page.Children.Add(stack);
-        var emblem = new Canvas { Width = 64, Height = 72, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 0, 6) };
-        var shackle = new System.Windows.Shapes.Path { Data = Geometry.Parse("M 19,32 L 19,22 C 19,5 45,5 45,22 L 45,32"), Stroke = new SolidColorBrush(Color.FromRgb(190, 190, 199)), StrokeThickness = 2.5, StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round };
-        var turn = new RotateTransform(0, 19, 32); shackle.RenderTransform = turn; emblem.Children.Add(shackle);
-        var latch = new Border { Width = 46, Height = 36, Background = new SolidColorBrush(Color.FromRgb(37, 37, 42)), CornerRadius = new CornerRadius(11) };
-        Canvas.SetLeft(latch, 9); Canvas.SetTop(latch, 30);
-        latch.Child = new System.Windows.Shapes.Path { Data = Geometry.Parse("M 23,12 L 23,21"), Stroke = Brushes.White, StrokeThickness = 2.5, StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round };
-        emblem.Children.Add(latch); stack.Children.Add(emblem);
-        var title = Heading("A little privacy.\nA lot less searching."); title.FontSize = 23; title.TextAlignment = TextAlignment.Center; stack.Children.Add(title);
-        var caption = Text("Keep your everyday secrets close.", 11, true); caption.TextAlignment = TextAlignment.Center; caption.Margin = new Thickness(0, 1, 0, 8); stack.Children.Add(caption);
+        var title = Heading("Sable"); title.FontSize = 42; title.TextAlignment = TextAlignment.Center; title.Margin = new Thickness(0, 0, 0, 8); stack.Children.Add(title);
+        var caption = Text("Your secrets, shortcuts, and connections.\nReady when you are.", 12, true); caption.TextAlignment = TextAlignment.Center; caption.Margin = new Thickness(0, 0, 0, 16); stack.Children.Add(caption);
+        stack.Children.Add(OnboardingScene(loop: true));
         var create = Button("Create your vault  →", () => ShowSetupPassword(new()), true); create.HorizontalContentAlignment = HorizontalAlignment.Center; create.Height = 40; stack.Children.Add(create);
         pageSubmit = create;
         create.ToolTip = "Three short steps. Your vault stays encrypted on this computer.";
@@ -33,11 +28,6 @@ public partial class MainWindow
         Grid.SetRow(restore, 1); page.Children.Add(restore);
         restore.ToolTip = "Bring back a vault using an encrypted backup and its recovery key.";
         WelcomeMotion(page);
-        if (SystemParameters.ClientAreaAnimation)
-        {
-            emblem.Loaded += (_, _) => turn.BeginAnimation(RotateTransform.AngleProperty, new System.Windows.Media.Animation.DoubleAnimation(-24, 0, TimeSpan.FromMilliseconds(650)) { BeginTime = TimeSpan.FromMilliseconds(150), EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut } });
-            emblem.Unloaded += (_, _) => turn.BeginAnimation(RotateTransform.AngleProperty, null);
-        }
     }
     private void ShowSetupPassword(SetupDraft draft)
     {
@@ -84,9 +74,9 @@ public partial class MainWindow
             : SetupPage(1, "Keep a way back", "Your recovery key works if you forget your password.", previous, "recovery-key");
         stack.Children.Add(Text(replacement ? "Older backups still need their original key." : "Save it somewhere safe, outside this vault.", 11, true));
         var keyHost = new Grid { Height = 68 };
-        var key = new TextBox { Text = "", IsReadOnly = true, Visibility = Visibility.Hidden, FontFamily = new FontFamily("Consolas"), FontSize = 11, TextWrapping = TextWrapping.Wrap, Padding = new Thickness(8), VerticalContentAlignment = VerticalAlignment.Center };
+        var key = new TextBox { Text = "", Background = Brushes.Transparent, BorderThickness = new Thickness(0), IsReadOnly = true, Visibility = Visibility.Hidden, FontFamily = new FontFamily("Consolas"), FontSize = 11, TextWrapping = TextWrapping.Wrap, Padding = new Thickness(8), VerticalContentAlignment = VerticalAlignment.Center };
         var mask = new TextBlock { Text = "••••   ••••   ••••   ••••", Opacity = .4, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center };
-        keyHost.Children.Add(key); keyHost.Children.Add(mask); stack.Children.Add(keyHost); eraseEditors.Add(key.Clear);
+        keyHost.Children.Add(key); keyHost.Children.Add(mask); stack.Children.Add(new Border { Child = keyHost, Background = (Brush)FindResource("ControlSurface"), CornerRadius = new CornerRadius(10) }); eraseEditors.Add(key.Clear);
         var actions = new System.Windows.Controls.Primitives.UniformGrid { Columns = 2 };
         var revealed = false;
         Button? reveal = null;
@@ -98,24 +88,54 @@ public partial class MainWindow
         });
         actions.Children.Add(reveal);
         reveal.ToolTip = "Show your recovery key only when you're ready to save it.";
-        Button? copyKey = null; var copyFeedback = 0;
-        copyKey = AsyncButton("Copy key", async () =>
+        var copied = new TextBlock { Text = "✓ Copied", Opacity = 0, FontSize = 13, Foreground = new SolidColorBrush(Color.FromRgb(131, 171, 146)), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, IsHitTestVisible = false };
+        keyHost.Children.Add(copied);
+        var copyFeedback = 0;
+        async Task Feedback(string message)
+        {
+            var generation = ++copyFeedback; copied.Text = message;
+            void Fade(UIElement element, double value) { var from = element.Opacity; element.Opacity = value; element.BeginAnimation(OpacityProperty, SystemParameters.ClientAreaAnimation ? new System.Windows.Media.Animation.DoubleAnimation(from, value, TimeSpan.FromMilliseconds(150)) { FillBehavior = System.Windows.Media.Animation.FillBehavior.Stop } : null); }
+            Fade(key, 0); Fade(copied, 1);
+            await Task.Delay(900);
+            if (generation != copyFeedback || !keyHost.IsLoaded) return;
+            Fade(copied, 0); Fade(key, 1);
+        }
+        async Task CopyKey()
         {
             var bytes = Encoding.UTF8.GetBytes(recovery);
             try
             {
                 clipboard.Copy(new("text/plain", bytes, true, true), new Preferences { ClipboardSeconds = 120 });
-                copyKey!.Content = new TextBlock { Text = "✓ Copied", Foreground = new SolidColorBrush(Color.FromRgb(131, 171, 146)) };
+                _ = Feedback("✓ Copied");
             }
             catch { ShowError("Clipboard is busy. Try again."); return; }
             finally { CryptographicOperations.ZeroMemory(bytes); }
-            var generation = ++copyFeedback; await Task.Delay(1500);
-            if (generation == copyFeedback && copyKey!.IsLoaded) { copyKey.Content = "Copy key"; copyKey.ClearValue(Control.ForegroundProperty); }
-        }, false);
-        actions.Children.Add(copyKey);
-        copyKey.ToolTip = "Copies for two minutes, then clears if the clipboard still contains the key.";
+            await Task.CompletedTask;
+        }
+        key.ToolTip = "Click the key to copy. Clears after two minutes if unchanged.";
+        System.Windows.Automation.AutomationProperties.SetName(key, "Recovery key · click to copy");
+        key.PreviewMouseLeftButtonDown += (_, e) => { e.Handled = true; key.Focus(); };
+        key.PreviewMouseLeftButtonUp += async (_, e) => { e.Handled = true; if (key.IsMouseCaptureWithin) Mouse.Capture(null); await CopyKey(); };
+        key.PreviewKeyDown += async (_, e) => { if (e.Key is Key.Enter or Key.Space) { e.Handled = true; await CopyKey(); } };
+        CommandManager.AddPreviewExecutedHandler(key, async (_, e) => { if (e.Command == ApplicationCommands.Copy) { e.Handled = true; await CopyKey(); } });
+        var saveKey = Button("Save key", () =>
+        {
+            var dialog = new Microsoft.Win32.SaveFileDialog { Title = "Save recovery key", FileName = "Sable-recovery-key.txt", Filter = "Recovery key text file|*.txt", AddExtension = true, OverwritePrompt = true };
+            modalDepth++;
+            try
+            {
+                if (dialog.ShowDialog(this) != true) return;
+                File.WriteAllText(dialog.FileName, "Sable recovery key\r\nKeep this file private, outside your vault. Anyone with this key can recover the vault.\r\n\r\n" + recovery + "\r\n", new UTF8Encoding(false));
+                _ = Feedback("✓ Key saved");
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { ShowError("Couldn't save the key. Choose another location."); }
+            finally { modalDepth--; }
+        });
+        saveKey.ToolTip = "Save a readable recovery-key file. Keep it private and separate from your vault.";
+        actions.Children.Add(saveKey);
         stack.Children.Add(actions);
         var saved = Check(stack, "I have saved my recovery key", false);
+        saved.Tag = "quiet-validation";
         PageAction(AsyncButton("Next  →", async () => { if (saved.IsChecked != true) { RejectInput(saved, "Save your recovery key first."); return; } await complete(); }));
         // This compact step always fits; only ordinary forms can scroll.
         if (stack.Parent is ScrollViewer scroll) scroll.VerticalScrollBarVisibility = ScrollBarVisibility.Disabled;

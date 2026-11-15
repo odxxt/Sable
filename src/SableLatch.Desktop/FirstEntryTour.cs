@@ -50,9 +50,9 @@ public partial class MainWindow
         void Update()
         {
             if (!FirstEntryTour || screen != "editor" || !label.IsLoaded) return;
-            if (string.IsNullOrWhiteSpace(label.Text)) TourHint(label, "3 · Name your secret", "Choose a label you'll recognize. Only this label appears in the list.");
-            else if (value.Password.Length == 0) TourHint(value, "4 · Add the value", "A password, note or any text. The eye lets you check it.");
-            else { save.Background = (Brush)FindResource("HoverSurface"); TourHint(save, "5 · Save your secret", "Then click its row whenever you want to copy the value.", PlacementMode.Top); }
+            if (string.IsNullOrWhiteSpace(label.Text)) TourHint(label, "4 · Name your secret", "Choose a name you'll recognize. Only this name appears in the list.");
+            else if (value.Password.Length == 0) TourHint(value, "5 · Add the value", "A password, note or any text. The eye lets you check it.");
+            else { save.Background = (Brush)FindResource("HoverSurface"); TourHint(save, "6 · Save your secret", "Then click its row whenever you want to copy the value.", PlacementMode.Top); }
         }
         label.Loaded += (_, _) => Dispatcher.BeginInvoke(Update);
         label.IsVisibleChanged += (_, e) => { if ((bool)e.NewValue) Dispatcher.BeginInvoke(Update); };

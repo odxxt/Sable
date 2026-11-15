@@ -1,9 +1,11 @@
 # Remote Desktop module
 
-The declarative package is compatible with host 0.8.0+. Host 0.8.1 changes row clicks to copy the password and launches Windows mstsc.exe via a temporary DPAPI-encrypted .rdp file. Choose Launch / Launch & copy in the editor; both are also available in the right-click menu and details.
+This API 1 package requests Sable's trusted `rdp` handler; it contains no executable code and never receives a password. The official `sablelatch.*` ID and signature are compatibility identifiers. For a community derivative, use your own namespace and omit the official signature.
 
-The ZIP receives no passwords or executable capability. Secrets stay in the encrypted vault; trusted host code performs copying and launch. This is not protection from software running as the Windows user, which can capture and decrypt a temporary file. A user reported successful login with host 0.8.2; compatibility with other Windows configurations remains unverified; see [RDP design](../../../docs/RDP-DESIGN.md). The old host 0.8.0 opens its own ActiveX session window instead.
+In Sable 0.9.1, install from Settings → Plugins & modules → Add a connection, then use **+ → New entry → Connection → Remote Desktop**. Clicking launches by default. The primary behavior can be Copy, Run or Run and copy; the context menu offers explicit Launch / Launch & copy. Right-click → Edit changes the connection, with domain, port and initial full-screen preference below credentials in **More options**.
 
-Host 0.8.3 removes fixed desktop dimensions and forced stretching. It starts in native full screen by default, with a per-entry option to start windowed. Existing entries and this module ZIP remain compatible.
+The host opens native Windows `mstsc.exe` through a temporary `.rdp` file containing a DPAPI-encrypted password, then attempts cleanup after startup. Passwords remain encrypted in the vault at rest. Same-user software can capture/decrypt the temporary file; this is not password withholding from the local user. There is no Credential Manager write, proxy or plaintext password file. See [RDP design](../../../docs/RDP-DESIGN.md) and [Security](../../../SECURITY.md).
 
-Host 0.8.5 enables remote clipboard sharing for existing and new entries and removes extra resource/performance restrictions. Windows/client defaults and server policy apply. The module package and encrypted entry schema remain compatible.
+Native full screen is the default; windowed start is optional. Windows owns resizing, certificate prompts, resource defaults and server policy. Remote clipboard sharing is enabled independently from Launch & copy. Established sessions can survive Sable locking/exiting.
+
+The manifest schema supports host 0.8.0+, but behavior belongs to the host: 0.8.0 used an embedded ActiveX window; 0.8.1 introduced native mstsc and copy-on-click; 0.8.5 restored native display/resource defaults and clipboard sharing; 0.9 changed the default click to launch. Current installation instructions are in [the module guide](../../README.md).

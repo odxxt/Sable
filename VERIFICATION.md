@@ -1,4 +1,37 @@
-# Verification — Sable 0.9.0 preview
+# Verification
+
+## Current 0.9.1 preview — window modes and spacing
+
+- **305 core checks** and **53 focused native interface checks** pass. Core checks use a controlled monotonic clock to verify all three mode transitions, exact normal-window expiry, overdue expiry after leaving Always on top, no timer reset on cycling, temporary login topmost rules and system-lock precedence in every mode.
+- Native checks exercise the production mode-cycle and deactivation handlers, taskbar visibility, topmost flags, unchanged toolbar geometry, both login-copy stages, Run and copy, taskbar overrides, and locked normal-window presentation. They also rerun the starter, draft, action and module coverage below, and verify that shared padding leaves recovery setup free of scrolling.
+- Native 342 × 411 renders were reviewed for starter spacing, monitor/terminal icons, muted Change, centered Back, expanded Advanced and Color & description padding, and all three pin orientations. The test build uses a disposable vault and intercepted action launches; real remote sessions, UAC and the Windows compatibility matrix were not rerun.
+- Debug compilation has no warnings/errors; self-contained Release publishing and the bundled-runtime startup smoke also passed. Reproduce the UI fixture with a Debug build using `--preview --preview-starters --data-dir <fresh-disposable-directory>`. Test-only hooks are excluded from the portable Release build.
+
+## Earlier 0.9.1 iteration — starter editor update
+
+- Debug build: zero warnings/errors. **35 focused native UI checks** passed using a fresh disposable vault, plus **293 core checks**. The self-contained x64 Release publish completed successfully.
+- Coverage includes combined secret/login conversion and multiline retention, drafts across starter changes, repeated username toggles, independent secret Copy and Run and copy behavior, unpinned username/password sequencing, action testing and approval identity, shortcut script values, colors and descriptions, installed/disabled connection categories, SSH/RDP More options, and draft erasure on lock.
+- Reviewed native renders at the fixed 342 × 411 size. Starter rows use the flat dark treatment with subtle hover feedback, descriptions and tooltips. Username changes use a 190 ms opacity transition with no resident timer and respect the Windows animation preference.
+- Action launches are intercepted in this fixture; no live scripts, SSH/RDP sessions, UAC prompts, real vaults or real clipboard values were used. Credential transport and cryptography are unchanged. Physical input, varied DPI and live connections remain manual checks. Earlier UI suites below describe their historical versions and selectors.
+- Reproduce using a Debug build with `--preview --preview-starters --data-dir <fresh-disposable-directory>`; `renders/checks.txt`, `complete.txt` and the native PNGs are written there. Test-only hooks are excluded from Release builds.
+
+## Earlier 0.9.1 iteration — refined interface
+
+- Debug build passed with zero warnings/errors. **293 core checks** passed, including subtree collection, rejection without mutation for missing folders, nested deletion including Trash, and preservation of unrelated folders/entries.
+- **31 focused native interface checks** passed with a fresh fictional vault. They cover the looping welcome, removed duplicate brand, animation-clock cleanup on navigation, released recovery textbox capture, same-box copy feedback and geometry, immediate Next navigation, restored key display, checklist threshold/completed state, inline folder browse placement, module availability/installation status, conditional action fields, normal secret saving, menu toggling, grouped connection options, assembly-driven About version and two-press recursive folder deletion including rapid-double-click rejection.
+- WPF renders were reviewed at 342 × 411. At this earlier iteration, connection fields retained their 300-pixel width; the current spacing pass adds inner group padding. The interface is still native WPF; no runtime dependency was added. The welcome animation intentionally loops only while visible and respects reduced motion.
+- Earlier development runs stopped at harness assumptions about deferred layout/focus events and inherited connection expansion state. The final run completed all checks. The PowerShell handoff is unchanged and was not re-executed in this interface-only run; its prior live transport check is recorded below.
+- No real vault, user clipboard values or credentials were used. Physical mouse gestures, UAC acceptance, live SSH/RDP sessions and Windows 10 capture remain manual checks. See docs/UI-REFINEMENTS-0.9.1.md.
+
+# Earlier verification — initial Sable 0.9.1 preview
+
+- Debug and self-contained Windows x64 Release builds completed successfully. Debug reported zero warnings/errors; publishing reported no warnings/errors. The executable is Sable 0.9.1.0 with the bundled .NET 10.0.11 desktop runtime. **288 core checks passed**, including exact script-field values, reserved/colliding field rejection, independent folder views, metadata round trips and renewed consent for field access/elevation.
+- **40 focused native UI/transport checks passed** in a fresh fictional vault: recovery hiding/copy feedback, no repeated recovery text, no-scroll recovery layout, single template picker, installed SSH/RDP choices, name preservation, common behavior controls, test-before-save, tooltip secrecy, two-step in-menu deletion, login run/copy sequencing, immediate folder drag handler, reorder/nesting/cycle prevention, and independent views.
+- A real hidden Windows PowerShell process received a fictional multiline value containing quotes and shell-like text through the restricted pipe; its output hash matched the input exactly. The first sandboxed attempt timed out because of IPC/process restrictions; the same native test completed outside the sandbox. UAC configuration was inspected but an elevated prompt was not accepted automatically.
+- Visually inspected the actual 342 × 411 WPF window and early/middle/settled onboarding frames. No web runtime or persistent animation loop was introduced. See [native rehearsal notes](docs/REHEARSAL-0.9.1.md).
+- No real vault, user clipboard values, credentials or remote connections were used. Save-key file picker interaction, physical mouse drags, elevated execution, Windows 10 capture and varied DPI remain manual checks. Previous full UI counts below belong to their stated versions; the legacy all-features harness still contains old UI selectors and is not claimed as passing 0.9.1.
+
+# Previous verification — Sable 0.9.0 preview
 
 - Final Debug and self-contained Windows x64 Release builds succeeded. The portable executable identifies itself as **Sable 0.9.0.0**, and includes Microsoft.NETCore.App and Microsoft.WindowsDesktop.App **10.0.11**.
 - **276 core checks passed**, including address/port parsing, rejected shell syntax, diagnostic matching, optional suggestion preferences, encrypted shortcut round trips, retained legacy data-directory selection and unchanged approval fingerprints when new options are disabled.

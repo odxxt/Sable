@@ -1,3 +1,7 @@
+# 0.9.0 reference
+
+This page describes the original 0.9.0 release. In 0.9.1 the nested type tabs, four equal folder slots and hold-before-drag gesture have been replaced. Read the [current entry guide](ENTRY-MODEL.md) and [user guide](USER-GUIDE.md).
+
 # Sable 0.9 — secrets and everyday shortcuts
 
 Sable keeps its compact tray window, lock/PIN behavior and encrypted storage. Shortcuts are a separate entry type, not a secret with a dummy value. The application remains local and portable.
@@ -8,7 +12,7 @@ Use **+ → New entry → Shortcut → Action**. Give it a label and choose Appl
 
 Choose **Connection** or **More** for the installed SSH/RDP modules. Their dedicated editors keep host, username and password together. Clicking these entries now launches PuTTY or Windows Remote Desktop, including for existing connection entries. Credentials remain encrypted in the vault, and existing first-use approvals still apply. RDP's explicit Launch & copy option remains available in its right-click menu. There is no new credential store, proxy or authentication transport.
 
-**Secret → Value** copies a saved value. **Secret → Login** retains username-first, password-second copying. Existing secret entries with optional actions keep working. All stored shortcuts and their settings remain encrypted too.
+**Secret or login** copies a saved value. **Add username** enables username-first, password-second copying. Existing secret entries with optional actions keep working. All stored shortcuts and their settings remain encrypted too.
 
 ## Suggest a configured diagnostic
 

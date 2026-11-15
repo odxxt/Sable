@@ -2,7 +2,7 @@ using System.Windows.Media.Animation;
 
 namespace SableLatch.Desktop;
 
-// A four-folder viewport. Animation exists only while the user scrolls; no idle timer.
+// Content-sized folders. Mouse drags move folders; wheel/trackpad browses overflow.
 internal sealed class FolderRail : ScrollViewer
 {
     private static readonly DependencyProperty AnimatedOffsetProperty = DependencyProperty.Register(nameof(AnimatedOffset), typeof(double), typeof(FolderRail), new PropertyMetadata(0d, (d, e) => ((FolderRail)d).ScrollToHorizontalOffset((double)e.NewValue)));
@@ -15,7 +15,7 @@ internal sealed class FolderRail : ScrollViewer
     internal Func<MouseEventArgs, bool>? PreviewPressed;
     internal Func<MouseEventArgs, double>? PreviewPosition;
 #endif
-    internal static bool ShouldBrowse(bool overflow, long heldMilliseconds, Vector movement) => overflow && heldMilliseconds < 350 && Math.Abs(movement.X) > Math.Abs(movement.Y) * 1.25;
+    internal static bool ShouldBrowse(bool overflow, long heldMilliseconds, Vector movement) => false;
 
     public FolderRail()
     {
@@ -32,7 +32,7 @@ internal sealed class FolderRail : ScrollViewer
     private void ResizeChips()
     {
         if (Content is not System.Windows.Documents.AdornerDecorator { Child: StackPanel panel }) return;
-        foreach (var chip in panel.Children.OfType<Button>()) chip.Width = Math.Max(1, SlotWidth - 4);
+        foreach (var chip in panel.Children.OfType<Button>()) { chip.Width = double.NaN; chip.MaxWidth = Math.Max(80, Math.Min(150, ActualWidth * .5)); }
     }
     private void UpdateEdgeMask()
     {

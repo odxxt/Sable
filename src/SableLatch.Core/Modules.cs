@@ -155,7 +155,7 @@ public sealed class DeclarativeProvider(ModulePackage package) : IContentProvide
     public CopyValue Copy(VaultItem item, string action)
     {
         // Explicit host-owned RDP capability, never a module-defined secret-field action.
-        if (package.Manifest.Handler == "rdp" && action == "Password")
+        if (package.Manifest.Handler is "rdp" or "putty" && action == "Password")
             return new("text/plain", SecretBuffers.Utf8(item, "password"), true, false);
         var definition = package.Manifest.Actions.Single(a => a.Label == action);
         if (!package.Manifest.Fields.Any(f => f.Key == definition.Field && f.Kind != "secret")) throw new InvalidOperationException("Secret fields cannot be read by module actions.");

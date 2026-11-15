@@ -72,12 +72,18 @@ public sealed class LoginProvider : IContentProvider
     };
 }
 
+public enum PanelMode { Tray, AlwaysOnTop, Window }
+
 public sealed class SessionPolicy(TimeProvider? clock = null)
 {
     private readonly TimeProvider time = clock ?? TimeProvider.System;
     private long opened;
     public bool IsUnlocked { get; private set; }
-    public bool IsPinned { get; set; }
+    public PanelMode Mode { get; set; } = PanelMode.Tray;
+    public bool IsPinned { get => Mode == PanelMode.AlwaysOnTop; set => Mode = value ? PanelMode.AlwaysOnTop : PanelMode.Tray; }
+    public bool KeepsPanelOpen => Mode != PanelMode.Tray;
+    public bool NeedsTopmost(bool awaitingPassword) => IsPinned || Mode == PanelMode.Tray && awaitingPassword;
+    public void CycleMode() => Mode = Mode switch { PanelMode.Tray => PanelMode.AlwaysOnTop, PanelMode.AlwaysOnTop => PanelMode.Window, _ => PanelMode.Tray };
     public void Unlock() { opened = time.GetTimestamp(); IsUnlocked = true; }
     public void Lock() { IsUnlocked = false; }
     public bool Expired(int minutes) => IsUnlocked && !IsPinned && time.GetElapsedTime(opened).TotalMinutes >= minutes;

@@ -89,6 +89,17 @@ Check(legacyItem.ContentType == "sable.secret" && legacyItem.IsSensitive && lega
 ItemOperations.UpgradeTextEntries(legacyDoc); Check(!ItemOperations.Search(legacyDoc, "Hello").Any(), "Repeated upgrade is safe and former text values are excluded from search");
 Check(providers.Find("sable.text")!.Copy(new() { Payload = JsonSerializer.SerializeToElement(new { text = "Legacy text" }) }, "Copy").MediaType == "text/plain", "Existing plain-text entries keep their original clipboard representation");
 var clock = new TestClock(); var policy = new SessionPolicy(clock); policy.Unlock(); clock.Advance(TimeSpan.FromMinutes(61)); Check(policy.Expired(60), "Session expires after configured duration"); policy.IsPinned = true; Check(!policy.Expired(60), "Pin suspends time-based locking"); policy.IsPinned = false; Check(policy.Expired(60), "Unpin applies overdue timeout immediately"); policy.IsPinned = true; policy.SystemLocked(); Check(!policy.IsUnlocked, "System lock overrides pin");
+var modeClock = new TestClock(); var modes = new SessionPolicy(modeClock); modes.Unlock();
+Check(modes.Mode == PanelMode.Tray && !modes.KeepsPanelOpen && !modes.NeedsTopmost(false), "Panel starts in tray mode");
+Check(modes.NeedsTopmost(true), "Tray login sequence can temporarily stay on top");
+modes.CycleMode(); Check(modes.Mode == PanelMode.AlwaysOnTop && modes.KeepsPanelOpen && modes.NeedsTopmost(false), "First cycle keeps the panel open and always on top");
+modeClock.Advance(TimeSpan.FromMinutes(61)); Check(!modes.Expired(60), "Always-on-top mode pauses timeout enforcement");
+modes.CycleMode(); Check(modes.Mode == PanelMode.Window && modes.KeepsPanelOpen && !modes.NeedsTopmost(false) && !modes.NeedsTopmost(true), "Normal window stays open but never adopts temporary login topmost");
+Check(modes.Expired(60), "Normal window immediately enforces an overdue session without resetting its clock");
+modes.Unlock(); modeClock.Advance(TimeSpan.FromMinutes(59)); Check(!modes.Expired(60), "Normal window retains its configured session duration");
+modeClock.Advance(TimeSpan.FromMinutes(1)); Check(modes.Expired(60), "Normal window expires at the configured deadline");
+modes.CycleMode(); Check(modes.Mode == PanelMode.Tray && !modes.KeepsPanelOpen && modes.Expired(60), "Third cycle returns to tray mode without extending the session");
+foreach (var mode in Enum.GetValues<PanelMode>()) { modes.Mode = mode; modes.Unlock(); modes.SystemLocked(); Check(!modes.IsUnlocked, "Windows lock overrides " + mode + " mode"); }
 var badFolders = new VaultDocument(); var a = new VaultFolder(); var b = new VaultFolder { ParentId = a.Id }; a.ParentId = b.Id; badFolders.Folders.AddRange([a,b]); Reject(badFolders.Validate, "Folder cycles rejected");
 var oldCount = vault.Document!.Items.Count; Reject(() => vault.Mutate(d => d.Items.Add(new() { FolderId = Guid.NewGuid() })), "Invalid mutation rejected before disk write"); Check(vault.Document.Items.Count == oldCount, "Failed mutation leaves active document unchanged");
 var backupFolder = TestDir("backups"); Backups.Save(vault, backupFolder, 2); Backups.Save(vault, backupFolder, 2); Backups.Save(vault, backupFolder, 2); Check(Directory.GetFiles(backupFolder).Length == 2, "Backup retention keeps configured number for this vault");

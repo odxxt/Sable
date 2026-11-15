@@ -36,27 +36,34 @@ public partial class MainWindow
         return true;
     }
     private void GoBack() => NavigateSettings(() => { if (backAction is not null) backAction(); else if (vault.IsUnlocked) ShowList(); else ShowUnlock(); });
-    private StackPanel Form(string title, string subtitle = "", string mode = "form", bool back = true, Action? parent = null, FrameworkElement? accessory = null)
+    private StackPanel Form(string title, string subtitle = "", string mode = "form", bool back = true, Action? parent = null, FrameworkElement? accessory = null, bool compact = false)
     {
-        var stack = new StackPanel { Margin = new Thickness(2, 0, 6, 4) };
+        var stack = new StackPanel { Margin = new Thickness(4, 4, 4, 4) };
         var page = new Grid();
         page.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         page.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         page.RowDefinitions.Add(new RowDefinition());
         page.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        if (back)
+        if (back && !compact)
         {
-            var previous = Button("‹  Back", GoBack); previous.Height = 31; previous.Margin = new Thickness(0);
-            previous.Padding = new Thickness(10, 6, 10, 6); page.Children.Add(previous);
+            var previous = Button("‹  Back", GoBack); previous.Height = 32; previous.Margin = new Thickness(4, 0, 4, 0);
+            previous.Padding = new Thickness(12, 6, 12, 6); page.Children.Add(previous);
         }
-        var heading = Heading(title); var headingRow = new DockPanel(); Grid.SetRow(headingRow, 1); page.Children.Add(headingRow);
+        var heading = Heading(title); var headingRow = new DockPanel { Margin = new Thickness(4, 0, 4, 0) }; Grid.SetRow(headingRow, 1); page.Children.Add(headingRow);
+        if (compact && back)
+        {
+            var previous = Button("\uE76B", GoBack); previous.Style = (Style)FindResource("IconButton"); previous.Width = previous.Height = 32; previous.Margin = new Thickness(0, 0, 8, 0); previous.ToolTip = "Back";
+            previous.HorizontalContentAlignment = HorizontalAlignment.Center; previous.VerticalContentAlignment = VerticalAlignment.Center;
+            AutomationProperties.SetName(previous, "Back"); DockPanel.SetDock(previous, Dock.Left); headingRow.Children.Add(previous);
+            heading.FontSize = 18; heading.Margin = new Thickness(0, 8, 0, 12);
+        }
         if (accessory is not null) { DockPanel.SetDock(accessory, Dock.Right); headingRow.Children.Add(accessory); }
         headingRow.Children.Add(heading);
         if (subtitle.Length > 0 && mode is "recovery-key" or "recover" or "restore" or "restored") stack.Children.Add(Text(subtitle, 12, true));
         var scroll = new ScrollViewer { Content = stack, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
         Grid.SetRow(scroll, 2); page.Children.Add(scroll);
         SetBody(page, mode);
-        pageFooter = new ContentControl { Margin = new Thickness(0, 6, 0, 0), HorizontalContentAlignment = HorizontalAlignment.Stretch };
+        pageFooter = new ContentControl { Margin = new Thickness(4, 6, 4, 0), HorizontalContentAlignment = HorizontalAlignment.Stretch };
         Grid.SetRow(pageFooter, 3); page.Children.Add(pageFooter);
         backAction = parent ?? (mode is "settings" or "about" or "audit" ? ShowSettings : null);
         formError = Text("", 11); formError.Foreground = new SolidColorBrush(Color.FromRgb(255, 150, 156)); formError.Visibility = Visibility.Collapsed; stack.Children.Add(formError);
@@ -64,8 +71,8 @@ public partial class MainWindow
     }
     private TextBox Input(StackPanel stack, string label, string value = "", bool multiline = false)
     {
-        stack.Children.Add(Text(label, 11, true));
-        var box = new TextBox { Text = value, Margin = new Thickness(0, 0, 0, 13), AcceptsReturn = multiline, TextWrapping = multiline ? TextWrapping.Wrap : TextWrapping.NoWrap, VerticalScrollBarVisibility = multiline ? ScrollBarVisibility.Auto : ScrollBarVisibility.Hidden, MinHeight = multiline ? 68 : 35, MaxHeight = multiline ? 220 : 36 };
+        var caption = Text(label, 11, true); if (screen == "editor") caption.Margin = new Thickness(0, 0, 0, 4); stack.Children.Add(caption);
+        var box = new TextBox { Text = value, Margin = new Thickness(0, 0, 0, screen == "editor" ? 8 : 13), AcceptsReturn = multiline, TextWrapping = multiline ? TextWrapping.Wrap : TextWrapping.NoWrap, VerticalScrollBarVisibility = multiline ? ScrollBarVisibility.Auto : ScrollBarVisibility.Hidden, MinHeight = multiline ? 68 : screen == "editor" ? 32 : 35, MaxHeight = multiline ? 220 : 36 };
         AutomationProperties.SetName(box, label); stack.Children.Add(box); eraseEditors.Add(() => box.Clear()); return box;
     }
     private PasswordBox Password(StackPanel stack, string label)

@@ -51,7 +51,9 @@ public partial class MainWindow
         var s = vault.Document!.Settings;
         var stack = Form("Security.", "The master recovery key is never stored in readable form or shown again.", "settings");
         var minutes = Input(stack, "Session duration · minutes (1–1,440)", s.SessionMinutes.ToString());
-        var every = Check(stack, "Lock on every opening when unpinned", s.LockEveryOpen);
+        minutes.ToolTip = "Active in Tray and Normal window modes. Always on top pauses enforcement; leaving it applies any overdue timeout.";
+        var every = Check(stack, "Lock when reopened", s.LockEveryOpen);
+        every.ToolTip = "Requires unlocking after reopening a hidden window, except in Always on top mode.";
         SettingsSave(stack, Button("Save lock settings", () =>
         {
             if (!int.TryParse(minutes.Text, out var n)) { ShowError("Enter a whole number of minutes."); return; }
@@ -118,11 +120,7 @@ public partial class MainWindow
     {
         var s = vault.Document!.Settings; var stack = Form("Backups & restore", "Restoring requires both the backup password and that backup's recovery key.", "settings", parent: ShowAdvancedSettings);
         var enabled = Check(stack, "Back up automatically when unlocked and changed", s.BackupEnabled);
-        var directory = Input(stack, "Backup folder", s.BackupDirectory);
-        stack.Children.Add(Button("Choose folder…", () =>
-        {
-            var dialog = new Microsoft.Win32.OpenFolderDialog(); modalDepth++; try { if (dialog.ShowDialog(this) == true) directory.Text = dialog.FolderName; } finally { modalDepth--; }
-        }));
+        var directory = FolderInput(stack, "Backup folder", s.BackupDirectory);
         var hours = Input(stack, "Minimum interval · hours (1–720)", s.BackupHours.ToString());
         var keep = Input(stack, "Keep latest backups (1–100)", s.BackupKeep.ToString());
         var password = Password(stack, vault.Document.Backup is null ? "Set backup password · at least 12 characters" : "New backup password · leave blank to keep current");
@@ -146,8 +144,9 @@ public partial class MainWindow
     private void ShowAppearanceSettings()
     {
         var s = vault.Document!.Settings; var stack = Form("App preferences", "", "settings");
-        var taskbarOptions = new Dictionary<string, string> { ["Only when pinned"] = "pinned", ["Always"] = "always", ["Never · tray only"] = "never" };
-        var taskbar = Select(stack, "Taskbar & Alt+Tab", taskbarOptions.Keys, taskbarOptions.FirstOrDefault(p => p.Value == s.TaskbarMode).Key ?? "Only when pinned");
+        var taskbarOptions = new Dictionary<string, string> { ["When kept open"] = "pinned", ["Always"] = "always", ["Never · tray only"] = "never" };
+        var taskbar = Select(stack, "Taskbar & Alt+Tab", taskbarOptions.Keys, taskbarOptions.FirstOrDefault(p => p.Value == s.TaskbarMode).Key ?? "When kept open");
+        taskbar.ToolTip = "When kept open shows Sable in Always on top and Normal window modes. Always and Never override visibility in every mode.";
         var startup = Check(stack, "Start quietly with Windows", s.Startup);
         var shortcut = ShortcutRecorder(stack, s.Shortcut);
         var theme = Select(stack, "Theme preset", ThemeCatalog.All().Select(t => t.Name), s.Theme);
@@ -181,7 +180,7 @@ public partial class MainWindow
     private void OpenAbout(object sender, RoutedEventArgs e)
     {
         var stack = Form("Sable.", "A little space. Only yours.", "about", parent: ShowSettings);
-        stack.Children.Add(Text("VERSION 0.9.0 · PREVIEW", 11, true));
+        stack.Children.Add(Text("Version " + typeof(App).Assembly.GetName().Version!.ToString(3) + " · Preview", 11, true));
         stack.Children.Add(Text("Portable for Windows 10 and 11 (64-bit). Built with native Windows UI, without a browser engine or background network service."));
         stack.Children.Add(Text("Local encryption: AES-256-GCM\nPassword protection: Argon2id\nDevice protection: Windows DPAPI\nBackup wrapping: RSA-OAEP + AES-GCM", 12, true));
         stack.Children.Add(Text("This first build has automated checks, but has not received an independent security audit. An unlocked or compromised computer can expose displayed and copied data.", 11, true));

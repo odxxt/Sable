@@ -24,21 +24,21 @@ public partial class MainWindow
     private AdvancedEditorState BuildAdvancedFields(StackPanel stack, AdvancedEntry? existing, Action changed, string contentType)
     {
         var section = new StackPanel { Visibility = advancedEditor ? Visibility.Visible : Visibility.Collapsed };
-
-        var colors = new StackPanel(); var colorHost = contentType == "sable.shortcut" ? colors : stack;
-        colorHost.Children.Add(Text("Entry color", 11, true));
-        var selectedColor = existing?.Color ?? "default";
-        var swatches = new WrapPanel { Margin = new Thickness(0, 0, 0, 12) }; colorHost.Children.Add(swatches);
-        var buttons = new Dictionary<string, Button>();
-        foreach (var pair in EntryColors.All)
+        StackPanel actionHost = stack;
+        if (contentType != "sable.shortcut")
         {
-            var choice = Button("", () => { selectedColor = pair.Key; foreach (var button in buttons) button.Value.Content = button.Key == selectedColor ? "✓" : ""; });
-            choice.Width = 27; choice.Height = 25; choice.FontSize = 11; choice.Margin = new Thickness(0, 0, 7, 0); choice.Padding = new Thickness(0); choice.HorizontalContentAlignment = HorizontalAlignment.Center;
-            choice.Background = pair.Key == "default" ? (Brush)FindResource("ControlSurface") : EntryColors.Brush(pair.Key); choice.Content = selectedColor == pair.Key ? "✓" : ""; choice.ToolTip = pair.Key;
-            System.Windows.Automation.AutomationProperties.SetName(choice, "Entry color " + pair.Key); buttons.Add(pair.Key, choice); swatches.Children.Add(choice);
+            var advanced = new StackPanel(); stack.Children.Add(GroupedOptions("Advanced", advanced, advancedEditor));
+            actionHost = advanced;
+            var enable = Check(advanced, "Include a shortcut", advancedEditor);
+            enable.ToolTip = "Click the entry to copy. Use its Run button to launch the shortcut.";
+            enable.Checked += (_, _) => { advancedEditor = true; section.Visibility = Visibility.Visible; changed(); };
+            enable.Unchecked += (_, _) => { advancedEditor = false; section.Visibility = Visibility.Collapsed; changed(); };
         }
-        stack.Children.Add(section); if (contentType == "sable.shortcut") stack.Children.Add(colors); var fields = section;
-        var names = new Dictionary<string, string> { ["Choose an action…"] = "", ["Application"] = "application", ["Windows & Control Panel"] = "windows", ["Run"] = "run", ["PowerShell"] = "powershell", ["CMD"] = "cmd", ["File or folder"] = "file", ["Ping"] = "ping", ["Test port"] = "tcp", ["DNS lookup"] = "lookup" };
+
+        actionHost.Children.Add(section);
+        var fields = section;
+        var names = new Dictionary<string, string> { ["Choose an action…"] = "", ["Application"] = "application", ["Windows & Control Panel"] = "windows", ["Run"] = "run", ["PowerShell"] = "powershell", ["CMD"] = "cmd", ["File or folder"] = "file" };
+        if (existing?.Action is { } legacy && ShortcutTargets.IsDiagnostic(legacy.Kind)) names[ActionKindName(legacy.Kind) + " · saved action"] = legacy.Kind;
         if (existing?.Action is { } unknown && unknown.Kind != "control-panel" && !names.ContainsValue(unknown.Kind)) names["Unavailable · " + unknown.Kind] = unknown.Kind;
         var kind = Select(fields, "Action", names.Keys, names.FirstOrDefault(p => p.Value == (existing?.Action?.Kind == "control-panel" ? "windows" : existing?.Action?.Kind)).Key ?? "Choose an action…");
         var details = new StackPanel(); fields.Children.Add(details);
@@ -55,22 +55,26 @@ public partial class MainWindow
         directoryHost.Children.Add(Text("Used for relative file paths, such as .\\report.txt. Leave blank to start in your Windows user folder.", 11, true));
         var hint = Text("", 11, true); details.Children.Add(hint);
         var terminal = Check(details, "Keep terminal open when finished", existing?.Action?.KeepTerminalOpen ?? true);
+        var administrator = Check(details, "Run as administrator", existing?.Action?.RunAsAdministrator ?? false);
+        administrator.ToolTip = "Windows will ask for permission through UAC.";
+        var variables = Check(details, "Pass this entry's fields to PowerShell", existing?.Action?.UseEntryVariables ?? false);
+        variables.ToolTip = "$name and $value1, $value2… arrive through a single-use pipe. Only enable for scripts you trust.";
+        foreach (var option in new[] { administrator, variables }) { option.Checked += (_, _) => changed(); option.Unchecked += (_, _) => changed(); }
         terminal.Checked += (_, _) => changed(); terminal.Unchecked += (_, _) => changed();
         var suggest = Check(details, "Suggest for matching clipboard", existing?.Action?.SuggestFromClipboard ?? false);
         var copyOnRun = existing?.Action?.CopyOnRun == true;
         var canCopy = contentType is "sable.text" or "sable.secret" or "sable.login";
         if (canCopy)
         {
-            details.Children.Add(Text("When the action runs", 11, true));
-            var modes = new System.Windows.Controls.Primitives.UniformGrid { Columns = 2 };
-            var group = "copy-mode-" + Guid.NewGuid().ToString("N");
-            var runOnly = new RadioButton { Content = "Run", GroupName = group, Style = (Style)FindResource("SegmentChoice"), IsChecked = !copyOnRun };
-            var runCopy = new RadioButton { Content = "Run & copy", GroupName = group, Style = (Style)FindResource("SegmentChoice"), IsChecked = copyOnRun };
-            runOnly.Checked += (_, _) => { copyOnRun = false; changed(); }; runCopy.Checked += (_, _) => { copyOnRun = true; changed(); };
-            System.Windows.Automation.AutomationProperties.SetName(runOnly, "Action mode Run"); System.Windows.Automation.AutomationProperties.SetName(runCopy, "Action mode Run and copy");
-            modes.Children.Add(runOnly); modes.Children.Add(runCopy);
-            details.Children.Add(new Border { Background = (Brush)FindResource("ControlSurface"), CornerRadius = new CornerRadius(10), Padding = new Thickness(3), Margin = new Thickness(0, 0, 0, 8), Child = modes });
-            details.Children.Add(Text(contentType == "sable.login" ? "Copies the username first. Click the entry again for the password." : contentType == "sable.secret" ? "Also copies the secret after the action starts." : "Also copies the text after the action starts.", 11, true));
+            details.Children.Add(Text("Run button", 11, true));
+            var modes = new Grid { Margin = new Thickness(0, 0, 0, 12) }; modes.ColumnDefinitions.Add(new()); modes.ColumnDefinitions.Add(new());
+            var group = "run-mode-" + Guid.NewGuid().ToString("N");
+            foreach (var copy in new[] { false, true })
+            {
+                var option = new RadioButton { Content = copy ? "Run and copy" : "Run", GroupName = group, IsChecked = copyOnRun == copy, Style = (Style)FindResource("SegmentChoice"), ToolTip = copy ? "Run the shortcut and copy the value. Logins copy the username first, then the password on the next entry click." : "Run the shortcut without copying" };
+                option.Checked += (_, _) => { copyOnRun = copy; changed(); }; Grid.SetColumn(option, copy ? 1 : 0); modes.Children.Add(option);
+            }
+            details.Children.Add(modes);
         }
         var verify = Check(details, "Verify each time", existing?.Action?.VerifyEachTime ?? false);
         void BrowseFile()
@@ -109,6 +113,8 @@ public partial class MainWindow
             if (clear) { target.Clear(); arguments.Clear(); directory.Clear(); terminal.IsChecked = script || diagnostic; directoryHost.Visibility = Visibility.Collapsed; }
             suggest.Visibility = diagnostic && contentType == "sable.shortcut" ? Visibility.Visible : Visibility.Collapsed;
             terminal.Visibility = script || diagnostic ? Visibility.Visible : Visibility.Collapsed;
+            administrator.Visibility = script || id is "application" or "run" ? Visibility.Visible : Visibility.Collapsed;
+            variables.Visibility = id == "powershell" ? Visibility.Visible : Visibility.Collapsed;
             targetLabel.Text = id switch { "file" => "File or folder path", "ping" or "lookup" => "Host", "tcp" => "Host and port", "application" => "Application path", "windows" => "Settings destination", "control-panel" => "Control Panel name", "run" => "Run command", _ => "Script" };
             target.AcceptsReturn = id == "powershell"; target.MinHeight = script ? 85 : 36;
             browse.Visibility = id is "file" or "application" or "windows" or "control-panel" ? Visibility.Visible : Visibility.Collapsed;
@@ -127,13 +133,15 @@ public partial class MainWindow
         {
             advancedEditor = !advancedEditor; section.Visibility = advancedEditor ? Visibility.Visible : Visibility.Collapsed; changed();
         };
-        AdvancedEntry? Capture() => !advancedEditor && selectedColor == "default" && existing?.Action is null ? null : new AdvancedEntry
+        AdvancedEntry? Capture() => !advancedEditor && existing?.Action is null ? null : new AdvancedEntry
         {
-            Color = selectedColor,
+            Color = existing?.Color ?? "default",
             Action = advancedEditor || existing?.Action is not null ? new EntryAction
             {
                 Enabled = advancedEditor, Kind = names[(string)kind.SelectedItem], Label = "Run", Target = target.Text,
-                Arguments = names[(string)kind.SelectedItem] == "application" ? arguments.Text : "", WorkingDirectory = directory.Text.Trim(), VerifyEachTime = verify.IsChecked == true, CopyOnRun = canCopy && copyOnRun,
+                RunAsAdministrator = administrator.Visibility == Visibility.Visible && administrator.IsChecked == true,
+                UseEntryVariables = names[(string)kind.SelectedItem] == "powershell" && variables.IsChecked == true,
+                Arguments = names[(string)kind.SelectedItem] == "application" ? arguments.Text : "", WorkingDirectory = directory.Text.Trim(), VerifyEachTime = verify.IsChecked == true, CopyOnRun = contentType == "sable.shortcut" ? editorClickChoice == "run-copy" : canCopy && copyOnRun,
                 SuggestFromClipboard = contentType == "sable.shortcut" && ShortcutTargets.IsDiagnostic(names[(string)kind.SelectedItem]) && suggest.IsChecked == true,
                 KeepTerminalOpen = (names[(string)kind.SelectedItem] is "cmd" or "powershell" || ShortcutTargets.IsDiagnostic(names[(string)kind.SelectedItem])) && terminal.IsChecked == true
             } : null

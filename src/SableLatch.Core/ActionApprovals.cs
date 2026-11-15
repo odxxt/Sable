@@ -13,7 +13,9 @@ public sealed class ActionApprovals(string directory, IDeviceProtector protector
     public static string Fingerprint(EntryAction action)
     {
         // Keep existing approvals valid when the new option is off; opting in changes consent.
-        var bytes = action.SuggestFromClipboard
+        var bytes = action.RunAsAdministrator || action.UseEntryVariables
+            ? Codec.Encode(new { action.Kind, action.Target, action.Arguments, action.WorkingDirectory, action.CopyOnRun, action.KeepTerminalOpen, action.SuggestFromClipboard, action.RunAsAdministrator, action.UseEntryVariables })
+            : action.SuggestFromClipboard
             ? Codec.Encode(new { action.Kind, action.Target, action.Arguments, action.WorkingDirectory, action.CopyOnRun, action.KeepTerminalOpen, action.SuggestFromClipboard })
             : action.KeepTerminalOpen
             ? Codec.Encode(new { action.Kind, action.Target, action.Arguments, action.WorkingDirectory, action.CopyOnRun, action.KeepTerminalOpen })

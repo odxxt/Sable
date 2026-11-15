@@ -27,6 +27,9 @@ public partial class MainWindow
     public async void ShowPreview()
     {
 #if DEBUG
+        if (Environment.GetCommandLineArgs().Contains("--preview-starters")) { await PreviewStarters(); return; }
+        if (Environment.GetCommandLineArgs().Contains("--preview-refine")) { await PreviewRefine(); return; }
+        if (Environment.GetCommandLineArgs().Contains("--preview-v91")) { await PreviewV91(); return; }
         try
         {
             if (vault.Exists) throw new InvalidOperationException("Preview requires an empty, disposable data directory.");

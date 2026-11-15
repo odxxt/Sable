@@ -29,13 +29,17 @@ public partial class MainWindow
 
     private void ResetLoginCopy()
     {
-        holdForPassword = false; pendingLogin = null; Topmost = session.IsPinned;
+        holdForPassword = false; pendingLogin = null; UpdatePanelTopmost();
         if (entryList is not null) foreach (var row in entryList.Items.Cast<RowModel>()) { row.PendingPassword = false; row.Refresh(); }
     }
     private void ArmDelete(RowModel row)
     {
-        CancelEditHover(); armedDelete = row.Item.Id;
-        if (entryList is not null) foreach (var model in entryList.Items.Cast<RowModel>()) { model.DeleteArmed = model.Item.Id == row.Item.Id; model.Refresh(); }
+        CancelEditHover(); CancelDelete();
+        var menu = BuildEntryContext(row);
+        menu.PlacementTarget = entryList?.ItemContainerGenerator.ContainerFromItem(row) as FrameworkElement ?? Body;
+        menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+        menu.Items.OfType<MenuItem>().Single(m => m.Header as string == "Delete…").RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+        menu.IsOpen = true;
     }
     private void CancelDelete()
     {
@@ -116,7 +120,7 @@ public partial class MainWindow
         insertionLayer ??= AdornerLayer.GetAdornerLayer(entryList);
         if (insertionMarker is null && insertionLayer is not null) { insertionMarker = new(entryList) { IsHitTestVisible = false }; insertionLayer.Add(insertionMarker); }
         if (insertionMarker is not null) { insertionMarker.Y = Math.Clamp(y, 2, Math.Max(2, entryList.ActualHeight - 2)); insertionMarker.InvalidateVisual(); }
-        if (vault.Document!.Settings.Layout == "grid" && realized.Count > 0 && insertionMarker is not null)
+        if (CurrentEntryLayout == "grid" && realized.Count > 0 && insertionMarker is not null)
         {
             var tile = realized.OrderBy(li => { var p = li.TranslatePoint(new Point(li.ActualWidth / 2, li.ActualHeight / 2), entryList); return Math.Abs(p.Y - point.Y) * 1000 + Math.Abs(p.X - point.X); }).First();
             var p = tile.TranslatePoint(new Point(), entryList); var after = point.X >= p.X + tile.ActualWidth / 2;

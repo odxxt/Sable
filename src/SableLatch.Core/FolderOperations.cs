@@ -2,6 +2,20 @@ namespace SableLatch.Core;
 
 public static class FolderOperations
 {
+    public static HashSet<Guid> Subtree(VaultDocument doc, Guid id)
+    {
+        if (!doc.Folders.Any(f => f.Id == id)) throw new InvalidDataException("Folder no longer exists.");
+        var children = doc.Folders.ToLookup(f => f.ParentId);
+        var result = new HashSet<Guid>(); var pending = new Queue<Guid>(); pending.Enqueue(id);
+        while (pending.TryDequeue(out var next)) if (result.Add(next)) foreach (var child in children[next]) pending.Enqueue(child.Id);
+        return result;
+    }
+    public static void DeleteTree(VaultDocument doc, Guid id)
+    {
+        var subtree = Subtree(doc, id);
+        doc.Items.RemoveAll(i => i.FolderId is Guid folder && subtree.Contains(folder));
+        doc.Folders.RemoveAll(f => subtree.Contains(f.Id));
+    }
     public static bool CanMove(VaultDocument doc, Guid id, Guid? destination)
     {
         var folders = doc.Folders.ToDictionary(f => f.Id);

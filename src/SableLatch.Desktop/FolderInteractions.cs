@@ -71,6 +71,11 @@ public partial class MainWindow
                 rail.PanTo(e.GetPosition(rail).X); e.Handled = true; return;
             }
             activeDragFolder = id; modalDepth++; Mouse.Capture(null); e.Handled = true;
+            var dragLayer = AdornerLayer.GetAdornerLayer(Shell);
+            var ghost = new FolderDragPreview(Shell, chip, new Point(Math.Clamp(start.X - chip.TranslatePoint(new Point(), this).X, 0, chip.ActualWidth), chip.ActualHeight / 2)) { IsHitTestVisible = false };
+            dragLayer?.Add(ghost); ghost.Follow(Shell);
+            GiveFeedbackEventHandler feedback = (_, args) => { ghost.Follow(Shell); args.UseDefaultCursors = false; Mouse.SetCursor(Cursors.Arrow); args.Handled = true; };
+            chip.GiveFeedback += feedback;
             QueryContinueDragEventHandler cancel = (_, args) => { if (!vault.IsUnlocked || screen != "list") args.Action = DragAction.Cancel; };
             chip.QueryContinueDrag += cancel;
             try
@@ -82,7 +87,7 @@ public partial class MainWindow
 #endif
                 DragDrop.DoDragDrop(chip, data, DragDropEffects.Move);
             }
-            finally { chip.QueryContinueDrag -= cancel; activeDragFolder = null; modalDepth--; ClearFolderMarker(); }
+            finally { chip.GiveFeedback -= feedback; dragLayer?.Remove(ghost); chip.QueryContinueDrag -= cancel; activeDragFolder = null; modalDepth--; ClearFolderMarker(); }
         }), handledEventsToo: true);
         chip.PreviewKeyDown += (_, e) =>
         {

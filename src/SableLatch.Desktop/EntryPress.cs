@@ -15,7 +15,7 @@ public static class EntryPress
         void Move(bool pressed)
         {
             if (!SystemParameters.ClientAreaAnimation) return;
-            var animation = new DoubleAnimation(pressed ? .985 : 1, TimeSpan.FromMilliseconds(pressed ? 65 : 120)) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
+            var animation = new DoubleAnimation(pressed ? .97 : 1, TimeSpan.FromMilliseconds(pressed ? 85 : 190)) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
             scale.BeginAnimation(ScaleTransform.ScaleXProperty, animation); scale.BeginAnimation(ScaleTransform.ScaleYProperty, animation);
         }
         button.PreviewMouseLeftButtonDown += (_, _) => Move(true);
@@ -24,5 +24,10 @@ public static class EntryPress
         button.MouseLeave += (_, _) => Move(false);
         button.PreviewKeyDown += (_, key) => { if (!key.IsRepeat && key.Key is Key.Enter or Key.Space) Move(true); };
         button.PreviewKeyUp += (_, key) => { if (key.Key is Key.Enter or Key.Space) Move(false); };
+    }
+    internal static void Pulse(FrameworkElement element)
+    {
+        if (!SystemParameters.ClientAreaAnimation) return;
+        element.BeginAnimation(UIElement.OpacityProperty, new DoubleAnimation(.55, 1, TimeSpan.FromMilliseconds(210)) { FillBehavior = FillBehavior.Stop });
     }
 }

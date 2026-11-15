@@ -23,36 +23,47 @@ public partial class MainWindow
         }
     }
     private bool ModuleAvailable(VaultItem item) => content.Find(item.ContentType) is not DeclarativeProvider provider || item.ModuleSchema == provider.Package.Manifest.SchemaFingerprint();
-    private void ShowMoreTypes()
-    {
-        if (!vault.IsUnlocked) return;
-        string? previousType = null;
-        if (captureEditorDraft is not null) { var draft = captureEditorDraft(); previousType = draft.ContentType; editorDrafts[draft.ContentType] = draft; editorSharedLabel = draft.Label; advancedDraft = draft.Advanced; }
-        var stack = Form("More types", "", "editor", parent: () => ShowEditor(selectedType: previousType));
-        foreach (var provider in content.All.OfType<DeclarativeProvider>().Where(p => !vault.Document!.Settings.DisabledModules.Contains(p.Descriptor.Id)))
-            stack.Children.Add(Button(provider.Descriptor.Name + "  ›", () => ShowEditor(selectedType: provider.Descriptor.Id)));
-        stack.Children.Add(Button("Install a module  ›", ShowModules));
-    }
+    private void ShowMoreTypes() => ShowEntryStarters();
     private void ShowPluginManager()
     {
         if (!vault.IsUnlocked) return;
         var stack = Form("Plugins & modules", "", "settings", parent: ShowSettings);
-        var top = new System.Windows.Controls.Primitives.UniformGrid { Columns = 2 };
-        top.Children.Add(Button("Install ZIP", PickModule)); top.Children.Add(Button("Catalog", ShowModuleCatalog)); stack.Children.Add(top);
-        if (rejectedModules > 0) stack.Children.Add(Text($"{rejectedModules} invalid package(s) were blocked.", 11, true));
-        foreach (var package in installedModules)
+        if (rejectedModules > 0) stack.Children.Add(Text("An invalid module was blocked.", 11, true));
+        void ModuleRow(ModulePackage package, bool installed)
         {
-            stack.Children.Add(Button(package.Manifest.Name + "  ✓", () => ShowModuleSettings(package)));
-            stack.Children.Add(Text(package.Official ? "Sable · verified signature" : "Community · not reviewed by Sable", 10, true));
+            var body = new Grid(); body.ColumnDefinitions.Add(new()); body.ColumnDefinitions.Add(new() { Width = GridLength.Auto });
+            var text = new StackPanel();
+            text.Children.Add(new TextBlock { Text = package.Manifest.Handler switch { "putty" => "SSH · PuTTY", "rdp" => "Remote Desktop", _ => package.Manifest.Name }, FontSize = 13, FontWeight = FontWeights.Medium });
+            text.Children.Add(new TextBlock { Text = installed ? "Installed · " + package.Manifest.Version : package.Manifest.Handler == "putty" ? "Connect to SSH servers" : "Open saved RDP connections", FontSize = 11, Opacity = .6, Margin = new Thickness(0, 4, 8, 0), TextWrapping = TextWrapping.Wrap });
+            body.Children.Add(text);
+            var status = new TextBlock { Text = installed ? "✓   ›" : "+ Add", FontSize = 11, Opacity = .7, VerticalAlignment = VerticalAlignment.Center }; Grid.SetColumn(status, 1); body.Children.Add(status);
+            var row = Button(package.Manifest.Name, () => { if (installed) ShowModuleSettings(package); else ReviewModule(package); });
+            row.Content = body; row.HorizontalContentAlignment = HorizontalAlignment.Stretch; row.Padding = new Thickness(10, 12, 10, 12); row.Margin = new Thickness(0, 3, 0, 3); row.Background = (Brush)FindResource("ControlSurface");
+            System.Windows.Automation.AutomationProperties.SetName(row, package.Manifest.Name + (installed ? " installed" : " add")); stack.Children.Add(row);
         }
-        if (installedModules.Count == 0) stack.Children.Add(Text("Add entry types and actions. Modules run only when you use them.", 12, true));
-        stack.Children.Add(Text("Built-in types", 11, true));
-        var choices = content.All.Where(p => p is not DeclarativeProvider).ToDictionary(p => p.Descriptor.Id, p => Check(stack, p.Descriptor.Name, !vault.Document!.Settings.DisabledModules.Contains(p.Descriptor.Id)));
-        SettingsSave(stack, Button("Save module settings", () =>
+        if (installedModules.Count > 0)
         {
-            if (Change(d => { foreach (var pair in choices) { d.Settings.DisabledModules.Remove(pair.Key); if (pair.Value.IsChecked != true) d.Settings.DisabledModules.Add(pair.Key); } })) ShowSettings();
-        }, true));
+            stack.Children.Add(Text("Installed", 11, true));
+            foreach (var module in installedModules) ModuleRow(module, true);
+        }
+        var available = new[] { "putty.zip", "rdp.zip" }.Select(r => ModulePackages.Read(ModuleTrust.Resource(r), ModuleTrust.Verify)).Where(p => !installedModules.Any(i => i.Manifest.Id == p.Manifest.Id)).ToArray();
+        if (available.Length > 0)
+        {
+            var caption = Text("Add a connection", 11, true); caption.Margin = new Thickness(0, 14, 0, 6); stack.Children.Add(caption);
+            foreach (var package in available) ModuleRow(package, false);
+        }
+        var sources = new System.Windows.Controls.Primitives.UniformGrid { Columns = 2, Margin = new Thickness(0, 10, 0, 8) };
+        sources.Children.Add(Button("Install from ZIP…", PickModule)); sources.Children.Add(Button("Online catalog  ↗", ShowModuleCatalog)); stack.Children.Add(sources);
+        var defaults = new StackPanel(); defaults.Children.Add(Text("Choose which standard templates appear in New entry.", 11, true));
+        var choices = content.All.Where(p => p is not DeclarativeProvider).ToDictionary(p => p.Descriptor.Id, p => Check(defaults, TemplateName(p), !vault.Document!.Settings.DisabledModules.Contains(p.Descriptor.Id)));
+        defaults.Children.Add(Button("Save entry types", () =>
+        {
+            if (choices.Values.All(c => c.IsChecked != true) && installedModules.All(p => vault.Document!.Settings.DisabledModules.Contains(p.Manifest.ContentType))) { ShowError("Keep at least one entry type enabled."); return; }
+            if (Change(d => { foreach (var pair in choices) { d.Settings.DisabledModules.Remove(pair.Key); if (pair.Value.IsChecked != true) d.Settings.DisabledModules.Add(pair.Key); } })) ShowModules();
+        }));
+        stack.Children.Add(GroupedOptions("Default entry types", defaults));
     }
+
     private void PickModule()
     {
         var dialog = new Microsoft.Win32.OpenFileDialog { Filter = "Sable module (*.zip)|*.zip", Title = "Install module", CheckFileExists = true };
@@ -79,10 +90,9 @@ public partial class MainWindow
         var stack = Form(current is null ? "Install module" : "Update module", "", "settings", parent: ShowModules);
         stack.Children.Add(Text(package.Manifest.Name, 17));
         stack.Children.Add(Text(package.Manifest.Author + " · " + package.Manifest.Version, 11, true));
-        stack.Children.Add(Text(package.Manifest.Handler == "rdp" ? "Copy saved RDP passwords and launch Windows Remote Desktop using temporary Windows-encrypted connection files." : package.Manifest.Description, 12));
+        stack.Children.Add(Text(package.Manifest.Handler switch { "rdp" => "Adds Remote Desktop entries using the Windows app.", "putty" => "Adds SSH entries. PuTTY must also be installed on this PC.", _ => package.Manifest.Description }, 12));
         stack.Children.Add(Text(package.Official ? "Verified Sable module" : "Not reviewed by Sable. Install only packages whose purpose you understand.", 12, !package.Official));
-        stack.Children.Add(Text(package.Manifest.Handler == "rdp" ? "Can request a Remote Desktop connection to the host you configure. The host owns credential delivery; the ZIP cannot read passwords." : package.Manifest.Handler == "putty" ? "Can request a PuTTY connection to the host you configure. Passwords stay in Sable's protected launcher." : "Can define fields and request copying of its own non-secret fields. It cannot read other entries.", 12, true));
-        stack.Children.Add(Text("No executable code, background activity or direct internet access.", 11, true));
+        stack.Children.Add(Text(package.Manifest.Handler is "rdp" or "putty" ? "Sable handles saved passwords. The module cannot read them or other entries." : "Uses only its own fields. Cannot read other entries.", 11, true));
         var reviewedPage = Body.Content; var startEpoch = epoch;
         PageAction(Button(current is null ? "Install" : "Update", () =>
         {
