@@ -1,4 +1,4 @@
-# Sable architecture — 0.9.1 preview
+# Sable architecture — 0.9.4 preview
 
 The public app name is Sable. Existing `SableLatch` namespaces, cryptographic purposes, module IDs and Windows binding identifiers are compatibility details, not a second product. The current architecture is below; historical changes belong in [CHANGELOG.md](CHANGELOG.md).
 
@@ -39,7 +39,7 @@ Password derivation and backup work run off the UI thread, serialized. Unlock co
 
 Time uses a monotonic clock. Cycling modes never resets the deadline; leaving Always on top applies an overdue lock immediately. Windows lock/unlock, suspend/resume, sign-out and explicit Lock take precedence. `IsPinned` remains a compatibility accessor for AlwaysOnTop. Modes start in Tray for each process and are not persisted.
 
-`PanelModes` centralizes mode cycling, deactivation and flags. `KeepsPanelOpen` governs copy and SSH/RDP completion; `NeedsTopmost` allows the temporary login hold only in Tray. The pin rotates inside a fixed 16-pixel drawing area/28-pixel button. The compatible taskbar preference `pinned` now means both kept-open modes; `always` and `never` override it. WPF and native taskbar/tool-window flags update together, and capture protection is reapplied.
+`PanelModes` centralizes mode cycling, deactivation and flags. `KeepsPanelOpen` governs copy and SSH/RDP completion; `NeedsTopmost` allows the temporary login hold only in Tray. Distinct static tray/pin/window drawings share a fixed 16-pixel drawing area/28-pixel button. The compatible taskbar preference `pinned` now means both kept-open modes; `always` and `never` override it. WPF and native taskbar/tool-window flags update together, and capture protection is reapplied.
 
 `QuickUnlock` retains a process-only encrypted ticket after full-password unlock. Quick lock still destroys the active data key/document. Five failed PINs destroy the ticket; synchronized validation plus a UI submission latch prevents overlapping attempts or view reconstruction from resetting the budget. Password/PIN changes invalidate it. The typed lock input receives focus after layout/activation without stealing focus for a background timeout.
 
@@ -77,7 +77,11 @@ Trusted `IEntryActionHandler` implementations prepare launches; registration is 
 
 Formatted secrets keep sanitized HTML beside plain text. AngleSharp parses data without a browsing context. The host reconstructs an allowlisted CF_HTML representation with correct UTF-8 offsets, sanitizes imported output again, and never fetches resources. Changing the value invalidates its old formatting.
 
-`ClipboardSuggestions` listens while the unlocked list is visible, bounds text reads, skips self-owned/protected formats and holds only a parsed target. `ShortcutTargets` rejects invalid hosts/ports/shell syntax. Only existing explicitly opted-in diagnostics match; execution uses a clone without changing the saved target and rechecks approvals. Hiding/navigation/lock clears suggestions. No history, network inference, automatic execution or arbitrary script substitution is added.
+`ClipboardSuggestions` listens while the unlocked All items list is visible and not minimized, bounds text reads, skips self-owned/protected formats and holds only a parsed target. Folders skip analysis and rendering; returning to All items evaluates only the current clipboard. One-time dismissal explanation state is an encrypted preference; dismissed targets use only a sequence number and slot. `ShortcutTargets` rejects invalid hosts/ports/shell syntax. Built-in diagnostics use a bounded 512-character linear scanner independently of saved entries. It extracts IPs and canonical inline/labelled ports, caps three targets, skips oversized allocations and only invokes the trusted fixed launch handler after a click. Existing saved diagnostics remain compatible. Hiding/navigation/lock clears suggestions. No history, network inference, automatic execution or arbitrary script substitution is added.
+
+`DiagnosticTerminal` tags the launched trusted console command with a random non-secret window title, grants its process foreground permission and makes a bounded native handoff. It supports classic console and delegated Windows Terminal window classes, stops if the user switches elsewhere, and has no idle listener or permanent topmost flag. It does not alter arbitrary scripts or credential broker paths.
+
+`EntryIdentity` caches frozen native vector parts with optical keylines and a uniform 1.25px stroke. Rows, grid tiles, Run controls and matching starter/welcome identities reuse them. The eight approved entry/action identities animate only on entry hover; other contexts remain static. A finite 460ms native clock uses the approved easing, snapshots its current pose on interruption, and is removed at completion. Hiding/unloading resets motion and unsubscribes the owning button. Windows reduced motion disables movement. No icon web runtime, frame subscription, polling loop or idle animation is bundled. Launch-only grid tiles omit a redundant secondary Run button; copying entries keep a distinct Run action. Copy/run feedback replaces the left grid identity in a fixed slot.
 
 `CaptureProtection` requests and checks native display affinity for the main HWND and popup HWNDs. Windows 10 uses an opaque rounded configuration; Windows 11 keeps transparency. Older builds/failures may fall back to blank-content protection. No polling or capture worker is used; native dialogs and launched applications remain outside the policy. [Security](SECURITY.md#screen-capture) records the limits.
 
@@ -92,6 +96,10 @@ Formatted secrets keep sanitized HTML beside plain text. AngleSharp parses data 
 Internal content/editor/presenter/clipboard/layout/toolbar interfaces support trusted composition. They are not the public ZIP API or a sandbox. See [Extensions](EXTENSIONS.md) and [module authoring](modules/README.md).
 
 ## Setup, audit and scaling
+
+`TypeClipboardText` bounds/validates text, removes trailing navigation keys and normalizes CRLF to one input unit. `TypeClipboardRunner` sends one scalar/key at a time with cancellable delays and destination checks. `NativeTyping` owns operation-scoped mouse/keyboard/foreground hooks, cursor restoration and Unicode/layout-based SendInput; disposal removes every hook. It neither opens the vault nor logs text. `TypeClipboardReader` reads bounded CF_UNICODETEXT. The optional signed `type` manifest appears under Extras and in the tray. Global non-secret `type-host.json` preferences permit locked tray use; entry overrides remain encrypted. UI dialogs explain first use/multiline navigation without previewing clipboard content. Foreground checks reduce accidental delivery but are not an atomic secure input channel. See [Type](docs/TYPE-CLIPBOARD.md).
+
+Module categorization is optional metadata (`auto`, `connection`, `extras`); handler/field security fingerprints stay stable. The root chooser sizes its rows for three or four categories; utilities are grouped on a separate Extras page. New protocols/capabilities still require reviewed host code. New public Type identities use the Sable name.
 
 `SetupViews` composes password, hidden recovery key and optional PIN with preserved Back drafts. `OnboardingScene` loops native animation only while visible; reduced motion settles it. Recovery feedback overlays the key and releases textbox capture. Save key deliberately writes a readable key file. After creation, `FirstEntryTour` guides the real editor; its pending flag is encrypted. `SetupGuideViews` appears after three active entries and records only backup/Trash/shortcut review progress, not proof of a backup.
 

@@ -1,12 +1,14 @@
 # Choose a starter
 
-Sable keeps one encrypted entry model and offers three focused starting points. Open **+ → New entry** to see short descriptions and tooltips, without a long template dropdown or module installation inside the editor.
+Sable keeps one encrypted entry model and offers up to four focused starting points. Open **+ → New entry** to see short descriptions and tooltips, without a long template dropdown or module installation inside the editor.
 
 ```mermaid
 flowchart TD
     A[New entry] --> S[Secret or login]
     A --> C[Shortcut]
     A --> R[Connection — installed modules only]
+    A --> E[Extras — installed utility modules]
+    E --> TYPE[Type clipboard — host-owned typing]
     S --> V[Name and secret value]
     V --> U[Add username — optional]
     U --> P[Username and password]
@@ -14,7 +16,7 @@ flowchart TD
     C --> K[Application, file, Windows setting or command]
     R --> SSH[SSH — PuTTY module]
     R --> RDP[Remote Desktop — RDP module]
-    X & K & SSH & RDP --> D[Optional color and description]
+    X & K & SSH & RDP & TYPE --> D[Optional color and description]
     D --> SAVE[Save entry]
 ```
 
@@ -23,6 +25,7 @@ flowchart TD
 | Secret or login | Copy the secret; with a username, copy username then password | Advanced → Include a shortcut adds an independent Run / Run and copy button |
 | Shortcut | Run by default | All existing action types, script fields, administrator mode, terminal preferences, verification, and optional copying |
 | Connection | Launch by default | Installed SSH/RDP providers; **More options** below the credentials; optional copy behavior |
+| Extras | Run the selected tool | Type clipboard entries inherit module defaults or supply their own timing/mode settings |
 
 **Add username / Remove username** sits above the credential inputs. Without a username, the field is labelled **Secret value**. Adding a username changes it to **Password** and reveals **Username**. The changed fields briefly fade in, respecting the Windows animation preference. Both values survive toggling while editing. A removed username is not included in the saved secret.
 
@@ -57,7 +60,7 @@ Test-Connection -ComputerName $value1 -Count 4
 
 Do not turn an untrusted value into executable code with `Invoke-Expression`. Scripts run with the permissions you grant them and can disclose values you pass. CMD remains available for ordinary scripts; secret-variable binding is PowerShell-only. Windows UAC handles **Run as administrator** for supported application and command actions.
 
-Ping, DNS lookup and Test port are removed from the new-action picker. Existing diagnostic entries and their opt-in clipboard suggestions remain readable and runnable; no saved actions are silently deleted. Generic clipboard-to-script binding is not enabled.
+Ping, DNS lookup and Test port are removed from the new-action picker. Existing diagnostic entries remain readable and runnable; built-in clipboard diagnostics now work independently of entries, so their old suggestion opt-in is no longer needed. No saved actions are silently deleted. Generic clipboard-to-script binding is not enabled.
 
 ## Storage and transport
 

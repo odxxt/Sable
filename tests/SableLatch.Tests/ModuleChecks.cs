@@ -57,6 +57,10 @@ internal static class ModuleChecks
         entry.ModuleSchema = manifest.SchemaFingerprint();
         check(Codec.Clone(entry).ModuleSchema == entry.ModuleSchema, "Module schema binding survives vault serialization");
         var profile = new PuttyProfile("example.test", "operator"); var arguments = profile.Arguments("SableLatch-" + new string('A', 64));
+        var livePipe = PuttyProfile.NewCredentialPipeName();
+        check(profile.Arguments(livePipe).Contains(@"\\.\pipe\" + livePipe), "PuTTY accepts the actual host-generated credential pipe name after branding changes");
+        check(livePipe != PuttyProfile.NewCredentialPipeName(), "Credential pipes receive fresh random identities");
+        reject(() => profile.Arguments(livePipe + "\n"), "Credential pipe validation rejects trailing newline");
         check(arguments.Contains("-pwfile") && !arguments.Contains("-pw") && arguments.Contains("-noagent") && arguments.Contains("-restrict-acl"), "PuTTY uses pipe password and restricted launch arguments");
         reject(() => new PuttyProfile("-proxycmd", "user").Validate(), "PuTTY host cannot inject an option");
         reject(() => new PuttyProfile("example.test", "user\ncommand").Validate(), "PuTTY username rejects control characters");

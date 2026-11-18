@@ -69,6 +69,7 @@ public partial class MainWindow : Window
         Loaded += (_, _) => { PositionWindow(); if (!App.PreviewMode) ShowUnlock(); };
         IsVisibleChanged += (_, _) => { if (!IsVisible) { ResetLoginCopy(); CloseTourHint(); suggestionHost?.Children.Clear(); } else { ApplyTaskbarVisibility(); FocusLockInput(); QueueSuggestions(); } };
         Activated += (_, _) => FocusLockInput();
+        StateChanged += (_, _) => { if (WindowState == WindowState.Minimized) { suggestionHost?.Children.Clear(); CloseTourHint(); } else { QueueSuggestions(); FocusLockInput(); } };
         Deactivated += (_, _) => HandlePanelDeactivated();
         PreviewKeyDown += (_, e) =>
         {
@@ -110,6 +111,9 @@ public partial class MainWindow : Window
             menu.Opened += (_, _) => CaptureProtection.Protect(menu.Handle);
             menu.Items.Add("Open Sable", null, (_, _) => Dispatcher.Invoke(OpenPanel));
             menu.Items.Add("Lock", null, (_, _) => Dispatcher.Invoke(() => ForceLock("Locked")));
+            typeTray = new Forms.ToolStripMenuItem("Type clipboard", null, (_, _) => Dispatcher.Invoke(() => { if (TrayTypePackage is { } package) StartTypeClipboard(package); }));
+            menu.Items.Add(typeTray); menu.Opening += (_, _) => { typeTray.Visible = TrayTypePackage is not null; };
+            typeTray.Visible = TrayTypePackage is not null;
             menu.Items.Add(new Forms.ToolStripSeparator());
             menu.Items.Add("Exit", null, (_, _) => Dispatcher.Invoke(ExitApp));
             tray.ContextMenuStrip = menu;
@@ -143,8 +147,8 @@ public partial class MainWindow : Window
             if (File.Exists(file)) { var p = Codec.Decode<double[]>(File.ReadAllBytes(file)); if (p.Length == 2 && p.All(double.IsFinite)) { savedLeft = p[0]; savedTop = p[1]; } }
         }
         catch { /* Position is cosmetic; fall back to the primary work area. */ }
-        Left = Math.Clamp(savedLeft ?? work.Right - Width - 18, work.Left, Math.Max(work.Left, work.Right - Width));
-        Top = Math.Clamp(savedTop ?? work.Bottom - Height - 18, work.Top, Math.Max(work.Top, work.Bottom - Height));
+        if (savedLeft is double x && savedTop is double y) { Left = x; Top = y; MonitorPlacement.Place(handle, false); }
+        else { Left = work.Right - Width - 18; Top = work.Bottom - Height - 18; MonitorPlacement.Place(handle, true); }
     }
     private void HeaderDrag(object sender, MouseButtonEventArgs e)
     {
@@ -160,11 +164,13 @@ public partial class MainWindow : Window
     }
     private void ResetWindowPosition()
     {
-        var work = SystemParameters.WorkArea;
-        Left = Math.Max(work.Left, work.Right - Width - 18); Top = Math.Max(work.Top, work.Bottom - Height - 18);
-        savedLeft = Left; savedTop = Top;
-        try { if (!App.PreviewMode) File.WriteAllBytes(Path.Combine(App.DataDirectory, "window.json"), Codec.Encode(new[] { Left, Top })); }
-        catch (IOException) { SetStatus("Position could not be saved"); }
+        if (!MonitorPlacement.Place(handle, true)) { SetStatus("Position could not be restored"); return; }
+        Dispatcher.BeginInvoke(() =>
+        {
+            savedLeft = Left; savedTop = Top;
+            try { if (!App.PreviewMode) File.WriteAllBytes(Path.Combine(App.DataDirectory, "window.json"), Codec.Encode(new[] { Left, Top })); }
+            catch (IOException) { SetStatus("Position could not be saved"); }
+        });
     }
     internal static T? FindParent<T>(DependencyObject? obj) where T : DependencyObject
     {
@@ -180,7 +186,7 @@ public partial class MainWindow : Window
     {
         if (!IsVisible && vault.IsUnlocked && vault.Document!.Settings.LockEveryOpen && !session.IsPinned) ForceLock("Unlock to continue");
         if (vault.IsUnlocked && session.Expired(vault.Document!.Settings.SessionMinutes)) ForceLock("Session expired");
-        ApplyTaskbarVisibility(); Show(); Activate(); FocusLockInput();
+        ApplyTaskbarVisibility(); if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal; Show(); Activate(); FocusLockInput();
     }
     private void TogglePin(object sender, RoutedEventArgs e)
     {
@@ -200,6 +206,7 @@ public partial class MainWindow : Window
     private void HidePanel(object sender, RoutedEventArgs e) => Hide();
     private void ForceLock(string reason)
     {
+        typing?.Cancel();
         if (session.IsUnlocked) Audit(AuditEvent.Locked);
         epoch++; session.Lock(); ResetLoginCopy(); armedDelete = null;
         heartbeat.Stop();
@@ -286,6 +293,7 @@ public partial class MainWindow : Window
         CloseTourHint(); suggestionHost?.Children.Clear(); suggestionHost = null;
         CancelEditHover(); ClearDropMarker(); ClearFolderMarker(); folderChips = null; dragHandle = null;
         captureEditorDraft = null; toggleAdvancedEditor = null; refreshEntryDetails = null; refreshScriptFields = null; refreshScriptLabels = null; refreshEditorFooter = null;
+        ensureCopyValue = null; validateCopyValue = null;
         clearingEditors = true;
         if (entryList is not null) { entryList.ItemsSource = null; entryList = null; }
         foreach (var clear in eraseEditors) clear();
@@ -336,6 +344,7 @@ public partial class MainWindow : Window
         var visible = taskbarMode == "always" || taskbarMode != "never" && session.KeepsPanelOpen;
         // WPF owns taskbar registration; keep its state in sync with native Alt+Tab styles.
         if (ShowInTaskbar != visible) ShowInTaskbar = visible;
+        ResizeMode = visible ? ResizeMode.CanMinimize : ResizeMode.NoResize;
         Native.SetAltTabVisibility(handle, visible);
         if (handle != IntPtr.Zero) CaptureProtection.Protect(handle);
     }
@@ -347,6 +356,7 @@ public partial class MainWindow : Window
     private void OnClosing(object? sender, CancelEventArgs e)
     {
         if (!quitting) { e.Cancel = true; Hide(); return; }
+        typing?.Cancel();
         Audit(AuditEvent.Exited); heartbeat.Stop(); quickUnlock?.Dispose(); clipboard.Dispose(); vault.Dispose(); tray?.Dispose();
         RemoveClipboardFormatListener(handle); Native.UnregisterHotKey(handle, 71); Native.WTSUnRegisterSessionNotification(handle);
         sessionCancellation.Cancel(); sessionCancellation.Dispose();

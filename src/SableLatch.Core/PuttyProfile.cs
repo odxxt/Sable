@@ -6,6 +6,7 @@ namespace SableLatch.Core;
 // No password in this object: it is safe to use for connection review and fingerprints.
 public sealed record PuttyProfile(string Host, string Username, int Port = 22, string HostKey = "", string Session = "", bool Compression = false, string AddressFamily = "auto", int KeepaliveSeconds = 30, string Font = "Consolas", int FontSize = 11)
 {
+    public static string NewCredentialPipeName() => "Sable-" + Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
     public void Validate()
     {
         if (Host.Length is < 1 or > 253 || Host[0] == '-' || (Uri.CheckHostName(Host) == UriHostNameType.Unknown && !IPAddress.TryParse(Host, out _))) throw new InvalidDataException("Enter a valid SSH host name or IP address.");
@@ -25,7 +26,7 @@ public sealed record PuttyProfile(string Host, string Username, int Port = 22, s
     public IReadOnlyList<string> Arguments(string pipeName)
     {
         Validate();
-        if (!System.Text.RegularExpressions.Regex.IsMatch(pipeName, "^SableLatch-[A-F0-9]{64}$")) throw new InvalidDataException("Invalid credential pipe.");
+        if (!System.Text.RegularExpressions.Regex.IsMatch(pipeName, "\\ASable(?:Latch)?-[A-F0-9]{64}\\z")) throw new InvalidDataException("Invalid credential pipe.");
         List<string> args = [];
         if (Session.Length > 0) { args.Add("-load"); args.Add(Session); }
         args.AddRange(["-ssh", "-2", "-noagent", "-a", "-x", "-restrict-acl", "-l", Username, "-P", Port.ToString(System.Globalization.CultureInfo.InvariantCulture)]);

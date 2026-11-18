@@ -68,7 +68,7 @@ var package = ModulePackages.Read(ModuleTrust.Resource("putty.zip"), ModuleTrust
 await RdpChecks.Run(Check, message => { checks.Add("BLOCKED: " + message); Console.WriteLine(checks[^1]); });
 Check(package.Official && package.Manifest.Handler == "putty", "Bundled PuTTY module passes actual publisher signature verification");
 var source = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../modules/catalog.json"));
-if (File.Exists(source)) Check(ModuleTrust.ReadCatalog(File.ReadAllBytes(source)).Count == 2, "Official GitHub catalog signature validates both modules");
+if (File.Exists(source)) Check(ModuleTrust.ReadCatalog(File.ReadAllBytes(source)).Count == 3, "Official GitHub catalog signature validates all three modules");
 var installed = PuttyBroker.Detect();
 if (installed.Length > 0)
 {

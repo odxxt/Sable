@@ -10,10 +10,10 @@ public partial class MainWindow
         var scene = new Grid { Width = 228, Height = 100, Margin = new Thickness(0, 0, 0, 14), HorizontalAlignment = HorizontalAlignment.Center, IsHitTestVisible = false };
         var rows = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
         scene.Children.Add(rows);
-        foreach (var (title, glyph, index) in new[] { ("Your secrets, close.", "\uE72E", 0), ("Your shortcuts, ready.", "\uE768", 1) })
+        foreach (var (title, kind, index) in new[] { ("Your secrets, close.", "secret", 0), ("Your shortcuts, ready.", "shortcut", 1) })
         {
             var content = new Grid(); content.ColumnDefinitions.Add(new() { Width = new GridLength(28) }); content.ColumnDefinitions.Add(new()); content.ColumnDefinitions.Add(new() { Width = new GridLength(20) });
-            content.Children.Add(new TextBlock { Text = glyph, FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 14, VerticalAlignment = VerticalAlignment.Center, Foreground = (Brush)FindResource("Muted") });
+            content.Children.Add(new EntryIdentity { Kind = kind, Width = 20, Height = 20, VerticalAlignment = VerticalAlignment.Center });
             var label = new TextBlock { Text = title, FontSize = 12, VerticalAlignment = VerticalAlignment.Center }; Grid.SetColumn(label, 1); content.Children.Add(label);
             var check = new TextBlock { Text = "\uE73E", FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 12, Foreground = new SolidColorBrush(Color.FromRgb(153, 195, 164)), VerticalAlignment = VerticalAlignment.Center }; Grid.SetColumn(check, 2); content.Children.Add(check);
             var row = new Border { Child = content, Height = 40, Padding = new Thickness(12, 0, 10, 0), Background = (Brush)FindResource("ControlSurface"), CornerRadius = new CornerRadius(9), Margin = new Thickness(index == 0 ? 0 : 12, 0, index == 0 ? 12 : 0, 8) };

@@ -89,8 +89,8 @@ public partial class MainWindow
     private void ShowClipboardSettings()
     {
         var s = vault.Document!.Settings; var stack = Form("Copying.", "Secret copies are excluded from Windows clipboard history and cloud sync. Other clipboard tools may still read them.", "settings");
-        var suggestions = Check(stack, "Suggest shortcuts from clipboard", s.ClipboardSuggestions);
-        suggestions.ToolTip = "Locally match small clipboard text while the unlocked panel is visible. Nothing runs automatically or is saved to history.";
+        var suggestions = Check(stack, "Suggest network checks from clipboard", s.ClipboardSuggestions);
+        suggestions.ToolTip = "Built-in Ping and Test port suggestions, with DNS for whole hostnames. Reads at most 512 characters while the unlocked panel is visible; larger items are skipped. No entry needed; nothing runs automatically.";
         var clear = Check(stack, "Automatically clear secret copies", s.ClearSecretClipboard);
         var seconds = Input(stack, "Clear after · seconds (1–3,600)", s.ClipboardSeconds.ToString());
         var close = Check(stack, "Close after copying when unpinned", s.CloseAfterCopy);

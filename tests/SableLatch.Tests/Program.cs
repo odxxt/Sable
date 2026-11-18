@@ -305,6 +305,9 @@ using (var shortcuts = new VaultStore(TestDir("shortcuts"), device))
     Check(shortcuts.Document!.Settings.Layout == "grid" && shortcuts.Document.Items.Single().Advanced!.Action!.SuggestFromClipboard, "Shortcut and grid state survive encrypted reopening");
 }
 ModuleChecks.Run(Check, Reject, root);
+TypeChecks.Run(Check, Reject);
+ClipboardDiagnosticChecks.Run(Check);
+PlacementChecks.Run(Check);
 OrganizationChecks.Run(Check, Reject);
 var moduleConsentDirectory = TestDir("module-approvals"); Directory.CreateDirectory(moduleConsentDirectory);
 var moduleConsent = new ModuleApprovals(moduleConsentDirectory, device);

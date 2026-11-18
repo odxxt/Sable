@@ -15,6 +15,7 @@ Sable-data/
 .session.lock
 window.json
 host.json
+type-host.json
 *.user
 *.suo
 .env

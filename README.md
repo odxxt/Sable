@@ -12,7 +12,7 @@ A compact Windows tray companion for the things you use every day: secrets, logi
   <img src="docs/images/template-picker.png" width="310" alt="Choose a starter: Secret or login, Shortcut, and installed Connections">
 </p>
 
-*Screenshots use fictional demonstration data. This documentation describes the 0.9.1 preview source; check the version on the release page when downloading.*
+*Screenshots use fictional demonstration data. This documentation describes the 0.9.7 preview source; check the version on the release page when downloading.*
 
 ## A small app, useful every day
 
@@ -26,9 +26,44 @@ A compact Windows tray companion for the things you use every day: secrets, logi
 - **Protect everyday copies.** Secret copies clear after 30 seconds by default if still owned by Sable. Clipboard history/cloud exclusion and supported screen-capture protection are requested. These Windows features have [limits](SECURITY.md).
 - **Stay local.** No account, cloud service, telemetry, embedded browser or resident service. ZIP modules are declarative data, not executable plugins. External applications run only when invoked; an open RDP session has its own Windows process.
 
-Existing opted-in Ping, Test port and DNS shortcuts can still suggest an action for a matching clipboard target. Matching is local and never runs anything automatically. New diagnostic presets are replaced by customizable commands; arbitrary scripts do not receive clipboard substitutions.
+Built-in clipboard suggestions offer Ping for an IP found in text and Test port for an IP/port pair, including a clearly labelled separate port. No saved entry is needed. Matching is local, limited to 512 characters and never executes automatically; larger clipboard items are skipped entirely. Dotted domains such as `alodat.me` offer DNS lookup; single words do not. Suggestions appear only in All items. The first X click offers Only this copy or Don't show again inside the card; later X clicks dismiss immediately. Settings can enable or disable suggestions at any time.
 
-## New in 0.9.1 preview
+## New in 0.9.7 preview
+
+- **Approved entry icons, now in the app:** a consistent key, login, Shortcut, SSH, Remote Desktop, Type, Run and Run and copy set. Small native hover movements respond smoothly; folders and toolbar icons stay static. Windows reduced motion is respected and there is no idle icon loop.
+- **Clear Shortcut identity:** the outward arrowhead now sits beyond the rounded box, with more separation around its edges.
+- **Recognizable Tray mode:** a static window with a minus sign replaces the download-like arrow. The pin and normal-window symbols stay unchanged.
+
+## Introduced in 0.9.6 preview
+
+- **Clear window modes:** a tray, an upright pin and an ordinary window replace the three pin orientations.
+- **Cleaner grid entries:** entry icons sit on the left; launch-only entries no longer repeat a Run button. Copying entries with an action keep their separate Run control. Shortcut now uses a curved arrow leaving a rounded box.
+- **More folder choices:** 20 static icons, with options for servers, networks, development, documents and everyday tools.
+- **Quieter suggestions:** All items only, aligned card controls, a one-time dismissal explanation and immediate dismissal afterward. Diagnostic terminals request the foreground on launch without becoming always-on-top.
+
+## Introduced in 0.9.5 preview
+
+- **Quieter clipboard suggestions:** DNS requires a dotted domain, and each card can be dismissed once or disabled inline. Minimized panels do not inspect the clipboard.
+- **Native taskbar behavior:** normal kept-open windows support minimize and restore without becoming resizable. Opening from the tray or shortcut restores a minimized panel.
+- **Stay on your monitor:** double-click Sable to dock at the bottom right of its current display. Saved secondary-monitor positions are retained.
+
+## Introduced in 0.9.4 preview
+
+- **Built-in network suggestions:** extract IPs from short prose, recognize `192.168.8.1:53` or `192.168.8.1 and port 53`, and reject leading-zero/out-of-range ports. No diagnostic entry or module installation is needed. Only explicit clicks run a check.
+- **Bounded lightweight detection:** a linear scanner examines at most 512 characters, skips larger clipboard items before reading their contents, caps suggestions at three and avoids regex-engine/backtracking work. Secret/history-excluded copies are still skipped.
+- **Typing for remote-control clients:** Automatic mode supplies virtual keys and scan codes for layout-mappable text, with Unicode for other characters. Existing Unicode defaults migrate while keeping timing; explicit current Unicode selections remain supported. This follows the keyboard-event approach studied in [ClickPaste](https://github.com/Collective-Software/ClickPaste/blob/master/Native.cs).
+- **Right-side Type prompts:** first-use, multiline and error prompts open at the bottom right of the monitor containing the pointer.
+
+## Introduced in 0.9.3 preview
+
+- **Type clipboard:** install the optional signed module, then create a reusable tool under **New entry → Extras**, or use **Type clipboard** from the tray even while locked. Choose a field with a crosshair; Sable types the current clipboard after an adjustable delay. Esc stops remaining input; changing foreground windows cancels it too.
+- **Precise whitespace handling:** internal Enter and Tab keys are preserved; trailing Enter/Tab characters are removed and no submit key is appended. Multiline/tabbed text asks for confirmation by default. Sensitive clipboard text is allowed after a first-use explanation.
+- **Global and per-entry settings:** defaults of 500 ms before typing and 25 ms per character, Unicode and keyboard-compatibility modes, with optional overrides on each Type entry.
+- **Four clear starters:** Secret or login, Shortcut, installed Connection modules and installed Extras. Available categories fit without scrolling. Shortcut uses a thin lightning bolt, distinct from the Run triangle.
+
+See the [Type guide](docs/TYPE-CLIPBOARD.md) for usage and compatibility limits. The preceding 0.9.2 fixes restore PuTTY pipe-name validation, focus missing copy values correctly, clarify password-copy labels and add green launch feedback.
+
+## Introduced in 0.9.1 preview
 
 - A described starter chooser, combined secret/login form, preserved drafts when changing starters, and installed-only Connection choices.
 - Consistent padding, centered back controls, quieter Change labels, clearer connection icons and brief feedback when username fields change.
@@ -124,7 +159,7 @@ dotnet run --project tests/SableLatch.Tests
 dotnet run --project src/SableLatch.Desktop
 ```
 
-The current update passed **305 core checks and 53 focused native UI checks**, plus self-contained Release publishing. These counts do not imply live SSH/RDP, UAC, every DPI or every Windows build was tested. [VERIFICATION.md](VERIFICATION.md) records current coverage, historical results and remaining manual checks.
+Verification covers storage/migration, editor/window behavior, native icon motion and cleanup, clipboard dismissal, grid actions and a real local diagnostic console without a network request. Current release checks include 371 core checks and 31 native module/credential checks. These checks do not imply live SSH/RDP, UAC, every DPI or every Windows build was tested. [VERIFICATION.md](VERIFICATION.md) records current coverage, historical results and remaining manual checks.
 
 ## Explore and contribute
 

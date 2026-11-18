@@ -100,6 +100,7 @@ public partial class MainWindow
                     if (epoch != startEpoch || !vault.IsUnlocked) return;
                     if (remember) moduleApprovals.Remember(digest);
                     Audit(AuditEvent.EntryActionStarted); ShowList(); SetStatus("Remote Desktop opened");
+                    _ = ShowRunFeedback(latest.Id);
                     if (copy) await CopyEntry(latest, "Password", new Button());
                     else if (!session.KeepsPanelOpen) Hide();
                 }

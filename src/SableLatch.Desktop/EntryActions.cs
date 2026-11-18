@@ -169,7 +169,8 @@ public partial class MainWindow
                 previewActionLaunch(start); launched = true; return true;
             }
 #endif
-            if (action.Kind == "powershell") await PowerShellBroker.Run(action, item ?? new VaultItem(), sessionCancellation.Token);
+            if (action.Kind is "ping" or "tcp" or "lookup") await DiagnosticTerminal.Run(start, handle, sessionCancellation.Token);
+            else if (action.Kind == "powershell") await PowerShellBroker.Run(action, item ?? new VaultItem(), sessionCancellation.Token);
             else { using var process = Process.Start(start); }
             if (!vault.IsUnlocked || epoch != startEpoch) return false;
             launched = true; Audit(AuditEvent.EntryActionStarted); SetStatus("Action started"); return true;
@@ -183,11 +184,27 @@ public partial class MainWindow
     {
         if (!vault.IsUnlocked) return;
         if (screen == "entry-action") ShowList();
+        _ = ShowRunFeedback(item.Id);
         if (!(action.CopyOnRun || item.ClickBehavior == "run-copy")) return;
         var row = entryList?.Items.Cast<RowModel>().FirstOrDefault(r => r.Item.Id == item.Id);
         var container = row is null ? null : entryList!.ItemContainerGenerator.ContainerFromItem(row) as ListBoxItem;
         var source = container is null ? new Button { DataContext = row } : Descendants<Button>(container).FirstOrDefault(b => b.Tag as string == "entry-action") ?? new Button { DataContext = row };
         await CopyEntry(item, item.ContentType == "sable.login" ? "Username" : "Copy", source);
+    }
+    private async Task ShowRunFeedback(Guid id)
+    {
+        var row = entryList?.Items.Cast<RowModel>().FirstOrDefault(r => r.Item.Id == id);
+        if (row is null || !vault.IsUnlocked) return;
+        var startedEpoch = epoch;
+        row.Started = true; row.Refresh();
+        if (entryList!.ItemContainerGenerator.ContainerFromItem(row) is ListBoxItem container)
+        {
+            var marker = Descendants<TextBlock>(container).FirstOrDefault(t => t.Tag as string == "copy-feedback");
+            if (marker is not null && SystemParameters.ClientAreaAnimation)
+                marker.BeginAnimation(OpacityProperty, new System.Windows.Media.Animation.DoubleAnimation(.25, 1, TimeSpan.FromMilliseconds(130)) { FillBehavior = System.Windows.Media.Animation.FillBehavior.Stop });
+        }
+        await Task.Delay(730);
+        if (epoch == startedEpoch) { row.Started = false; row.Refresh(); }
     }
     private async void ReviewEntryAction(VaultItem item, ShortcutTarget? suggestedTarget = null)
     {

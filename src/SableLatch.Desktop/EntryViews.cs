@@ -13,14 +13,16 @@ public sealed class RowModel : System.ComponentModel.INotifyPropertyChanged
     public required string Subtitle { get; init; }
     public string CompactSubtitle => !Available ? Subtitle : Shortcut ? Subtitle.Replace("Shortcut · ", "", StringComparison.Ordinal) : Item.IsSensitive ? "Secret" : Subtitle;
     public required string Symbol { get; init; }
-    public string HoverDetails => Title + "\n" + (Item.ClickBehavior == "run-copy" ? "Click to run and copy" : Item.ClickBehavior == "run" || Item.ClickBehavior == "auto" && Shortcut ? "Click to run" : Item.ContentType == "sable.login" ? "Copy username, then password" : "Click to copy") + (Item.Description.Length == 0 ? "" : "\n\n" + Item.Description);
+    public string IconKind { get; init; } = "note";
+    public string HoverDetails => Title + "\n" + (TypeAction ? "Choose where to type clipboard text · Esc cancels" : Item.ClickBehavior == "run-copy" ? "Click to run and copy" : Item.ClickBehavior == "run" || Item.ClickBehavior == "auto" && Shortcut ? "Click to run" : Item.ContentType == "sable.login" ? "Copy username, then password" : "Click to copy") + (Item.Description.Length == 0 ? "" : "\n\n" + Item.Description);
     public bool DeleteReady { get; set; }
     public bool DeleteArmed { get; set; }
     public bool Copied { get; set; }
+    public bool Started { get; set; }
     public bool PendingPassword { get; set; }
     public string EditSymbol => Copied ? "\uE73E" : DeleteReady ? "\uE74D" : "\uE70F";
     public Visibility EditVisibility => DeleteArmed ? Visibility.Collapsed : Visibility.Visible;
-    public Visibility CopyVisibility => Copied && !DeleteArmed ? Visibility.Visible : Visibility.Hidden;
+    public Visibility CopyVisibility => (Copied || Started) && !DeleteArmed ? Visibility.Visible : Visibility.Hidden;
     public Visibility DeleteVisibility => DeleteArmed ? Visibility.Visible : Visibility.Collapsed;
     public Visibility ContentVisibility => DeleteArmed ? Visibility.Collapsed : Visibility.Visible;
     public Visibility SubtitleVisibility => LoginVisibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
@@ -34,11 +36,16 @@ public sealed class RowModel : System.ComponentModel.INotifyPropertyChanged
     public Brush EntryBackground => EntryColors.Brush(Item.Advanced?.Color);
     public bool ModuleAction { get; init; }
     public bool Shortcut { get; init; }
-    public Visibility ActionVisibility => !Copied && !DeleteArmed && Available && (ModuleAction || Item.Advanced?.Action?.Enabled == true) ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility ActionVisibility => !Copied && !Started && !DeleteArmed && Available && (ModuleAction || Item.Advanced?.Action?.Enabled == true) ? Visibility.Visible : Visibility.Collapsed;
     public bool RdpAction { get; init; }
+    public bool TypeAction { get; init; }
     private bool CopiesOnAction => Item.ClickBehavior == "run-copy" || Item.Advanced?.Action?.CopyOnRun == true || Item.ClickBehavior == "auto" && RdpAction && Item.Field("copyOnLaunch") == "true";
-    public string ActionLabel => RdpAction ? (CopiesOnAction ? "Launch & copy" : "Launch") : CopiesOnAction ? "Run & copy" : "Run";
+    public string ActionLabel => TypeAction ? "Type clipboard" : RdpAction ? (CopiesOnAction ? "Launch & copy password" : "Launch") : ModuleAction && Shortcut && CopiesOnAction ? "Run & copy password" : CopiesOnAction ? "Run & copy" : "Run";
     public Visibility ActionCopyVisibility => CopiesOnAction ? Visibility.Visible : Visibility.Collapsed;
+    public string ActionIconKind => CopiesOnAction ? "run-copy" : "run";
+    private bool MainClickRuns => TypeAction || Item.ClickBehavior is "run" or "run-copy" || Item.ClickBehavior != "copy" && Shortcut;
+    public Visibility GridSecondaryVisibility => !MainClickRuns && Available && (ModuleAction || Item.Advanced?.Action?.Enabled == true) ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility GridIconVisibility => Copied || Started ? Visibility.Hidden : Visibility.Visible;
 }
 
 public partial class MainWindow
@@ -46,21 +53,18 @@ public partial class MainWindow
     private ListBox? entryList;
     private string CurrentEntryLayout => folder is Guid id ? vault.Document!.Folders.FirstOrDefault(f => f.Id == id)?.Layout ?? "rows" : vault.Document!.Settings.Layout;
     private static readonly string RowTemplate = """
-    <DataTemplate xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <DataTemplate xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:SableLatch.Desktop;assembly=Sable">
       <Border x:Name="Row" Background="{Binding EntryBackground}" CornerRadius="10" Height="56">
         <Grid><Grid Visibility="{Binding ContentVisibility}"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
           <Border x:Name="HoverShade" Grid.ColumnSpan="3" Background="#12FFFFFF" CornerRadius="9" Opacity="0" IsHitTestVisible="False"/>
           <Button Tag="copy" Style="{DynamicResource EntryButton}" HorizontalContentAlignment="Stretch" Padding="9,7" IsEnabled="{Binding Available}" ToolTip="{Binding HoverDetails}">
             <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="27"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-              <Grid Width="20" Height="20" HorizontalAlignment="Left" VerticalAlignment="Center">
-                <TextBlock x:Name="SymbolGlyph" Text="{Binding Symbol}" FontFamily="Segoe MDL2 Assets" FontSize="15" Foreground="#FFC0C0C7" VerticalAlignment="Center"/>
-                <Path x:Name="SshIcon" Visibility="Collapsed" Stroke="#FFC0C0C7" StrokeThickness="1.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Data="M 2,3 L 18,3 18,16 2,16 Z M 5,7 L 8,10 5,13 M 11,13 L 15,13"/><Path x:Name="NoteIcon" Visibility="Collapsed" Stroke="#FFC0C0C7" StrokeThickness="1" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M 4,4 L 16,4 16,17 4,17 Z M 7,2 L 7,6 M 10,2 L 10,6 M 13,2 L 13,6 M 7,9 L 13,9 M 7,12 L 13,12 M 7,15 L 11,15"/>
-              </Grid>
+              <local:EntryIdentity Kind="{Binding IconKind}" Interactive="True" Width="20" Height="20" HorizontalAlignment="Left" VerticalAlignment="Center"/>
               <StackPanel Grid.Column="1"><TextBlock Text="{Binding Title}" FontSize="13" FontWeight="Medium" TextTrimming="CharacterEllipsis"/><TextBlock Text="{Binding Subtitle}" Visibility="{Binding SubtitleVisibility}" FontSize="10" Foreground="#FFA3A3AA" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"/><StackPanel Orientation="Horizontal" Margin="0,4,0,0" Visibility="{Binding LoginVisibility}"><TextBlock Tag="Username" Text="username" FontSize="10" Opacity="{Binding UsernameOpacity}"/><TextBlock Text="  ·  " FontSize="10" Opacity=".35"/><TextBlock Tag="Password" Text="password" FontSize="10" Opacity="{Binding PasswordOpacity}"/></StackPanel></StackPanel>
             </Grid>
           </Button>
           <Grid Grid.Column="2" Width="28" Margin="0,0,4,0" VerticalAlignment="Center">
-            <Button Tag="entry-action" Visibility="{Binding ActionVisibility}" Opacity=".7" Style="{DynamicResource EntryRunButton}" ToolTip="{Binding ActionLabel}" AutomationProperties.Name="{Binding ActionLabel}"><Grid Width="18" Height="18"><Path Data="M 2,5 L 10,10 2,15 Z" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.3" StrokeLineJoin="Round"/><Path Visibility="{Binding ActionCopyVisibility}" Data="M 11,1 L 16,1 16,6 M 9,3 L 14,3 14,8 9,8 Z" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.1" StrokeLineJoin="Round"/></Grid></Button>
+            <Button Tag="entry-action" Visibility="{Binding ActionVisibility}" Opacity=".7" Style="{DynamicResource EntryRunButton}" ToolTip="{Binding ActionLabel}" AutomationProperties.Name="{Binding ActionLabel}"><local:EntryIdentity Kind="{Binding ActionIconKind}" Interactive="True" Width="20" Height="20"/></Button>
             <TextBlock Tag="copy-feedback" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="#FF99C3A4" Visibility="{Binding CopyVisibility}" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"/>
           </Grid>
         </Grid>
@@ -77,7 +81,7 @@ public partial class MainWindow
           </Border>
         </Grid>
       </Border>
-      <DataTemplate.Triggers><DataTrigger Binding="{Binding Item.ContentType}" Value="module.sablelatch.putty"><Setter TargetName="SymbolGlyph" Property="Visibility" Value="Collapsed"/><Setter TargetName="SshIcon" Property="Visibility" Value="Visible"/></DataTrigger><DataTrigger Binding="{Binding Item.ContentType}" Value="sable.text"><Setter TargetName="SymbolGlyph" Property="Visibility" Value="Collapsed"/><Setter TargetName="NoteIcon" Property="Visibility" Value="Visible"/></DataTrigger><Trigger SourceName="Row" Property="IsMouseOver" Value="True"><Trigger.EnterActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="HoverShade" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.12"/></Storyboard></BeginStoryboard></Trigger.EnterActions><Trigger.ExitActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="HoverShade" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.18"/></Storyboard></BeginStoryboard></Trigger.ExitActions></Trigger><Trigger SourceName="Row" Property="IsKeyboardFocusWithin" Value="True"><Setter TargetName="HoverShade" Property="Opacity" Value=".45"/></Trigger></DataTemplate.Triggers>
+      <DataTemplate.Triggers><Trigger SourceName="Row" Property="IsMouseOver" Value="True"><Trigger.EnterActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="HoverShade" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.12"/></Storyboard></BeginStoryboard></Trigger.EnterActions><Trigger.ExitActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="HoverShade" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.18"/></Storyboard></BeginStoryboard></Trigger.ExitActions></Trigger><Trigger SourceName="Row" Property="IsKeyboardFocusWithin" Value="True"><Setter TargetName="HoverShade" Property="Opacity" Value=".45"/></Trigger></DataTemplate.Triggers>
     </DataTemplate>
     """;
     private void ShowList()
@@ -183,9 +187,11 @@ public partial class MainWindow
             {
                 Item = i, Title = string.IsNullOrWhiteSpace(i.Label) ? i.IsSensitive ? "Secret" : i.Field("text").Split('\n')[0] : i.Label,
                 Shortcut = IsShortcut(provider),
-                Subtitle = !available ? "Module unavailable" : IsShortcut(provider) ? "Shortcut · " + (provider is ShortcutProvider ? ActionKindName(i.Advanced?.Action?.Kind) : provider!.Descriptor.Name) : i.IsSensitive ? "Secret · ••••••••" : string.IsNullOrWhiteSpace(i.Label) ? "Text" : i.Field("text").Replace('\n', ' '),
+                Subtitle = provider is DeclarativeProvider { Package.Manifest.Handler: "type" } && available ? "Type clipboard" : !available ? "Module unavailable" : IsShortcut(provider) ? "Shortcut · " + (provider is ShortcutProvider ? ActionKindName(i.Advanced?.Action?.Kind) : provider!.Descriptor.Name) : i.IsSensitive ? "Secret · ••••••••" : string.IsNullOrWhiteSpace(i.Label) ? "Text" : i.Field("text").Replace('\n', ' '),
                 Symbol = provider?.Descriptor.Symbol ?? "\uE74C", DeleteArmed = armedDelete == i.Id, Available = available, PendingPassword = pendingLogin == i.Id,
+                IconKind = provider is DeclarativeProvider declared ? declared.Package.Manifest.Icon : i.ContentType switch { "sable.secret" => "secret", "sable.login" => "login", "sable.shortcut" => "shortcut", _ => "note" },
                 ModuleAction = provider is DeclarativeProvider, RdpAction = provider is DeclarativeProvider { Package.Manifest.Handler: "rdp" },
+                TypeAction = provider is DeclarativeProvider { Package.Manifest.Handler: "type" },
                 LoginVisibility = i.ContentType == "sable.login" ? Visibility.Visible : Visibility.Collapsed
             };
         }).ToList();
@@ -194,10 +200,12 @@ public partial class MainWindow
     {
         if (busy || !vault.IsUnlocked || e.OriginalSource is not Button b || b.DataContext is not RowModel row) return;
         var action = b.Tag as string;
+        if (action is "copy" or "entry-action" && row.Available && content.Find(row.Item.ContentType) is DeclarativeProvider { Package.Manifest.Handler: "type" } typeProvider)
+        { StartTypeClipboard(typeProvider.Package, row.Item); e.Handled = true; return; }
         if (action is not "edit" and not "confirm-delete") armedDelete = null;
         switch (action)
         {
-            case "entry-action": if (row.Available) { if (content.Find(row.Item.ContentType) is DeclarativeProvider module) { if (module.Package.Manifest.Handler == "putty") RunPutty(row.Item); else if (module.Package.Manifest.Handler == "rdp") RunRdp(row.Item); else ShowModuleDetails(row.Item); } else ReviewEntryAction(row.Item); } break;
+            case "entry-action": if (row.Available) { if (content.Find(row.Item.ContentType) is DeclarativeProvider module) { if (module.Package.Manifest.Handler == "putty") RunPutty(row.Item); else if (module.Package.Manifest.Handler == "rdp") RunRdp(row.Item); else if (module.Package.Manifest.Handler == "type") StartTypeClipboard(module.Package, row.Item); else ShowModuleDetails(row.Item); } else ReviewEntryAction(row.Item); } break;
             case "edit":
                 if (row.DeleteReady) ArmDelete(row);
                 else if (row.Available) ShowEditor(row.Item);
@@ -211,7 +219,7 @@ public partial class MainWindow
                 if (row.Item.ContentType == "sable.login" && pendingLogin == row.Item.Id) { await CopyEntry(row.Item, "Password", b); break; }
                 if (row.Item.ClickBehavior == "copy") { await CopyEntry(row.Item, row.Item.ContentType == "sable.login" ? "Username" : content.Find(row.Item.ContentType) is DeclarativeProvider { Package.Manifest.Handler: "rdp" or "putty" } ? "Password" : content.Find(row.Item.ContentType)?.CopyActions.FirstOrDefault() ?? "Copy", b); break; }
                 if (row.Item.ClickBehavior is "run" or "run-copy" && !row.ModuleAction) { ReviewEntryAction(row.Item); break; }
-                if (content.Find(row.Item.ContentType) is DeclarativeProvider selectedModule) { if (selectedModule.Package.Manifest.Handler == "rdp") RunRdp(row.Item); else if (selectedModule.Package.Manifest.Handler == "putty") RunPutty(row.Item); else ShowModuleDetails(row.Item); }
+                if (content.Find(row.Item.ContentType) is DeclarativeProvider selectedModule) { if (selectedModule.Package.Manifest.Handler == "rdp") RunRdp(row.Item); else if (selectedModule.Package.Manifest.Handler == "putty") RunPutty(row.Item); else if (selectedModule.Package.Manifest.Handler == "type") StartTypeClipboard(selectedModule.Package, row.Item); else ShowModuleDetails(row.Item); }
                 else if (row.Item.ContentType == "sable.shortcut") ReviewEntryAction(row.Item);
                 else if (row.Item.ContentType == "sable.login") await CopyEntry(row.Item, pendingLogin == row.Item.Id ? "Password" : "Username", b);
                 else if (content.Find(row.Item.ContentType)?.CopyActions.Count > 1) ShowContentActions(row.Item);
@@ -292,7 +300,7 @@ public partial class MainWindow
         if ((row.ModuleAction || row.Item.Advanced?.Action?.Enabled == true) && !row.RdpAction)
         {
             var run = new MenuItem { Header = row.ActionLabel, IsEnabled = row.Available };
-            run.Click += (_, _) => { if (content.Find(row.Item.ContentType) is DeclarativeProvider module) { if (module.Package.Manifest.Handler == "putty") RunPutty(row.Item); else if (module.Package.Manifest.Handler == "rdp") RunRdp(row.Item); else ShowModuleDetails(row.Item); } else ReviewEntryAction(row.Item); }; menu.Items.Add(run); menu.Items.Add(new Separator());
+            run.Click += (_, _) => { if (content.Find(row.Item.ContentType) is DeclarativeProvider module) { if (module.Package.Manifest.Handler == "putty") RunPutty(row.Item); else if (module.Package.Manifest.Handler == "rdp") RunRdp(row.Item); else if (module.Package.Manifest.Handler == "type") StartTypeClipboard(module.Package, row.Item); else ShowModuleDetails(row.Item); } else ReviewEntryAction(row.Item); }; menu.Items.Add(run); menu.Items.Add(new Separator());
         }
         var edit = new MenuItem { Header = "Edit", IsEnabled = row.Available }; edit.Click += (_, _) => ShowEditor(row.Item); menu.Items.Add(edit);
         var duplicate = new MenuItem { Header = "Duplicate", IsEnabled = row.Available }; duplicate.Click += (_, _) => DuplicateEntry(row.Item); menu.Items.Add(duplicate);
@@ -354,7 +362,7 @@ public partial class MainWindow
             var iconLabel = new StackPanel(); var symbol = FolderIcons.Create(pair.Key); symbol.HorizontalAlignment = HorizontalAlignment.Center; iconLabel.Children.Add(symbol);
             iconLabel.Children.Add(new TextBlock { Text = pair.Value, FontSize = 10, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 7, 0, 0) });
             var choice = Button(pair.Value, () => { selected = pair.Key; foreach (var item in choices) item.Value.Background = item.Key == selected ? (Brush)FindResource("HoverSurface") : Brushes.Transparent; });
-            choice.Content = iconLabel; choice.Padding = new Thickness(5, 10, 5, 8); choice.Margin = new Thickness(1); choice.HorizontalContentAlignment = HorizontalAlignment.Center;
+            choice.Content = iconLabel; choice.Padding = new Thickness(5, 10, 5, 8); choice.Margin = new Thickness(1); choice.HorizontalContentAlignment = HorizontalAlignment.Center; choice.ToolTip = pair.Value;
             choice.Background = pair.Key == selected ? (Brush)FindResource("HoverSurface") : Brushes.Transparent;
             System.Windows.Automation.AutomationProperties.SetName(choice, pair.Value + " icon"); choices.Add(pair.Key, choice); options.Children.Add(choice);
         }

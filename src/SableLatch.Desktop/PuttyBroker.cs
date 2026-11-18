@@ -14,7 +14,7 @@ namespace SableLatch.Desktop;
 // Only trusted host code owns these handles. ZIP modules cannot call Win32 or supply launch arguments.
 internal sealed class CredentialPipe : IDisposable
 {
-    public string Name { get; } = "Sable-" + Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+    public string Name { get; } = PuttyProfile.NewCredentialPipeName();
     private readonly NamedPipeServerStream stream;
     public CredentialPipe()
     {

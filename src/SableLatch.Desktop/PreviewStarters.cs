@@ -101,6 +101,28 @@ public partial class MainWindow
             var shortcut = vault.Document.Items.Last(); ShowEditor(shortcut);
             Check(pageSubmit!.Opacity == 1 && shortcut.Advanced!.Action!.CopyOnRun && actionApprovals.Contains(shortcut.Id, shortcut.Advanced.Action), "Saved shortcut copy mode matches its tested and approved action without an edit loop");
             ShowEditor(vault.Document.Items.Last()); await Render("05-shortcut");
+            ShowList(); ShowEditor(selectedType: "sable.shortcut"); Input("Name").Text = "Copy after Run";
+            Select("Action").SelectedItem = "Run"; Input("Action target or script").Text = "notepad";
+            Select("When I click the entry").SelectedItem = "Run and copy";
+            var copyValue = Descendants<PasswordBox>(Body).Single();
+            Check(copyValue.IsVisible && captureEditorDraft!().ScriptValues.ContainsKey("value1"), "Run and copy exposes its required value immediately outside PowerShell");
+            await Task.Delay(200); UpdateLayout();
+            Click(Btn("Test action")); var beforeSave = vault.Document.Items.Count;
+            Click(pageSubmit!); Click(pageSubmit!); Click(pageSubmit!);
+            Check(vault.Document.Items.Count == beforeSave && Descendants<TextBlock>(Body).Any(t => t.Text == "Enter the value to copy in $value1."), "Missing copy value stays unsaved and shows its own field hint rather than marking Name");
+            await Render("15-copy-value-validation");
+            var copyViewer = FindParent<ScrollViewer>(copyValue)!;
+            Check(copyValue.TranslatePoint(new(), copyViewer).Y >= 0 && copyValue.TranslatePoint(new(), copyViewer).Y < copyViewer.ActualHeight, "Missing copy value is scrolled into the visible form");
+            copyValue.Password = "fictional-copy-value"; Click(pageSubmit!);
+            var copiedShortcut = vault.Document.Items.Last();
+            Check(copiedShortcut.Label == "Copy after Run" && copiedShortcut.ScriptValues["value1"] == "fictional-copy-value", "Filling copy value allows a tested ordinary Run shortcut to save");
+            var copiedModel = entryList!.Items.Cast<RowModel>().Single(r => r.Item.Id == copiedShortcut.Id);
+            Check(copiedModel.Symbol != "\uE768", "Shortcut identity icon differs from its play action");
+            var dimensions = ActualWidth;
+            var feedback = ShowRunFeedback(copiedShortcut.Id); UpdateLayout();
+            Check(copiedModel.CopyVisibility == Visibility.Visible && copiedModel.ActionVisibility == Visibility.Collapsed && ActualWidth == dimensions, "Successful launch feedback replaces the play icon in place without changing geometry");
+            await feedback;
+            Check(!copiedModel.Started && copiedModel.ActionVisibility == Visibility.Visible, "Run feedback restores its action without changing clipboard state");
             foreach (var archive in new[] { "putty.zip", "rdp.zip" }) modules.Install(ModulePackages.Read(ModuleTrust.Resource(archive), ModuleTrust.Verify)); ReloadModules();
             ShowList(); ShowEntryStarters(); await Render("06-with-connections"); Click(Btn("Connection"));
             Check(Btn("SSH · PuTTY").IsVisible && Btn("Remote Desktop").IsVisible, "Installed connection handlers populate their own section");
@@ -108,6 +130,7 @@ public partial class MainWindow
             foreach (var name in new[] { "SSH · PuTTY", "Remote Desktop" })
             {
                 Click(Btn(name));
+                Check(Select("When I click the entry").Items.Cast<string>().SequenceEqual(new[] { "Copy password", "Run", "Run and copy password" }), name + " makes password copying explicit");
                 Check(!Input("Port").IsVisible && Btn("More options").IsVisible && !Descendants<Button>(Body).Any(b => b.Content as string == "Options"), name + " has one collapsed More options section below credentials");
                 Input("Name").Text = "Lab server"; Input("Host").Text = "server.example.test"; Input("Username").Text = "admin"; Descendants<PasswordBox>(Body).Single().Password = "fictional-connection-password";
                 await Render(name.StartsWith("SSH") ? "08-ssh" : "09-rdp"); Click(Btn("More options")); Check(Input("Port").IsVisible, name + " expands its existing connection controls");

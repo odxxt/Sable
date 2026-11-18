@@ -27,11 +27,11 @@ If the remote has advanced, integrate and verify its changes before pushing. Use
 
 ## Build and publish an app download
 
-1. Set the executable version and release notes consistently. The current source identifies as **0.9.1 Preview**. Review README, user/security/architecture/module guides and verification evidence for the same behavior.
+1. Set the executable version and release notes consistently. The current source identifies as **0.9.7 Preview**. Review README, user/security/architecture/module guides and verification evidence for the same behavior.
 2. On Windows with .NET 10 SDK, run `.\build.ps1 -Portable`. This runs core and native module checks and publishes to `artifacts/Sable-portable`. Record environment-dependent failures accurately; do not substitute historical passing counts for the current build.
 3. Exercise the relevant Debug UI fixture with fictional data in a **fresh disposable directory**, never a real vault. For current starter/window-mode checks use `--preview --preview-starters --data-dir <fresh-directory>`. Test hooks are excluded from Release. Record manual Windows/DPI/remote-session gaps in VERIFICATION.md.
 4. Build the portable ZIP with the **entire** self-contained publish output, licenses/notices, current documentation and public module artifacts. Verify it launches without an external .NET installation. Do not distribute just `Sable.exe` or a framework-dependent build.
-5. Prepare a source ZIP from the exact committed tree, excluding Git metadata, bin/obj, data directories and private material. Name assets consistently: `Sable-v<version>-win-x64.zip`, `Sable-v<version>-source.zip`, `SHA256SUMS-v<version>.txt`. For 0.9.1, substitute `0.9.1` throughout.
+5. Prepare a source ZIP from the exact committed tree, excluding Git metadata, bin/obj, data directories and private material. Name assets consistently: `Sable-v<version>-win-x64.zip`, `Sable-v<version>-source.zip`, `SHA256SUMS-v<version>.txt`. For this release, substitute `0.9.7` throughout.
 6. Compute SHA-256 checksums for both ZIPs and inspect their entries for missing files and unwanted private data. Ensure source, executable metadata, release tag and documentation describe the same build.
 7. Create a version tag on that source commit, push main and that tag without force, and create a GitHub **prerelease** with those three assets and concise change/upgrade notes. Verify the uploaded assets and checksums. Never silently replace a published version with different bytes; use a new version for a new release.
 

@@ -10,7 +10,7 @@ internal static class ModuleTrust
     public const string CatalogUrl = "https://raw.githubusercontent.com/odxxt/Sable/main/modules/catalog.json";
     public static byte[] Resource(string name)
     {
-        using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("SableLatch.Modules." + name) ?? throw new InvalidDataException("Module resource unavailable.");
+        using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Sable.Modules." + name) ?? Assembly.GetExecutingAssembly().GetManifestResourceStream("SableLatch.Modules." + name) ?? throw new InvalidDataException("Module resource unavailable.");
         using var bytes = new MemoryStream(); stream.CopyTo(bytes); return bytes.ToArray();
     }
     public static bool Verify(byte[] bytes, byte[] signature)

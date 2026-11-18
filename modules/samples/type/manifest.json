@@ -1,0 +1,13 @@
+{
+  "apiVersion": 1,
+  "id": "sable.type",
+  "version": "1.0.0",
+  "name": "Type clipboard",
+  "author": "Sable",
+  "description": "Type clipboard text into a destination you choose",
+  "icon": "keyboard",
+  "handler": "type",
+  "category": "extras",
+  "fields": [],
+  "actions": []
+}

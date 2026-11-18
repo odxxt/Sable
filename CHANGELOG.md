@@ -1,5 +1,51 @@
 # Changelog
 
+## 0.9.7 preview — Approved entry icons and clear window modes
+
+- Extend the Shortcut arrowhead beyond the rounded box and separate the frame from the head, preserving the shared native stroke and optical footprint.
+- Replace Tray mode's download-like arrow with a static window-and-minus symbol. Keep the upright pin and normal-window symbols unchanged.
+- Ship the approved key, login, Shortcut, SSH, Remote Desktop, Type, Run and Run and copy artwork with native hover motion. Starter and welcome identities match; folders, search, settings, close and window-mode icons remain static.
+- Preserve optical sizing and the 1.25px stroke. Retarget interrupted hover from its current pose, respect Windows reduced motion, and remove clocks/handlers when hidden or unloaded. No browser runtime, polling loop or idle icon animation is added.
+
+## 0.9.6 preview — Clear window modes and quieter grid actions
+
+- Replace rotated pin states with distinct static Tray, Always on top and Normal window symbols in the same fixed toolbar slot.
+- Add 15 static folder icons (20 total), including Servers, Network, Cloud, Code, Database, Terminal, Documents, Downloads, Media, Mail, Finance, Tools, Devices, Web and Archive.
+- Show entry identity at the left of grid tiles. Remove a duplicate Run button where the main click already launches; keep a secondary action for entries whose main click copies. Show copy/launch feedback in the fixed left icon area.
+- Replace the Shortcut lightning bolt with a curved arrow leaving a rounded box in the starter, rows and grid. Normalize the visible entry shapes and use a shared 1.25px native stroke. The broader animated entry set remains a separate review, and folders/toolbars receive no icon animation.
+- Align diagnostic Run/X targets inside an 8px card inset. Keep the first dismissal choice on one aligned row within the unchanged card. Save that explanation as seen on the first X click; later clicks dismiss immediately. The global switch remains in Settings.
+- Limit clipboard suggestions and analysis to All items. Copying while inside a folder stays quiet; returning to All items examines only the current clipboard.
+- Hand clicked diagnostic terminals foreground permission and make a bounded native activation request for classic Console Host or Windows Terminal. Stop requesting focus if the user switches applications; do not make the terminal topmost or add a background watcher.
+
+## 0.9.5 preview — Quiet suggestions and native window behavior
+
+- Offer DNS lookup only for dotted domains/URLs, such as `alodat.me`; ordinary single words such as `book` no longer create a DNS suggestion.
+- Add a small dismissal control to each diagnostic card. Its fixed-size inline confirmation offers Only this copy or Don't show again; the latter saves the existing global off preference. New clipboard copies can produce suggestions again after a one-copy dismissal. Minimized windows do not analyze the clipboard.
+- Give kept-open taskbar windows native minimize/restore capability while keeping panel dimensions fixed. Tray/hotkey opening also restores minimized panels.
+- Dock to the bottom right of the current monitor when double-clicking Sable. Preserve saved positions on secondary monitors and clamp disconnected/offscreen positions to an available work area.
+- Keep the proposed Kubai-based monochrome icon study separate from the application pending user review; this build retains the existing icons.
+
+## 0.9.4 preview — Built-in network checks and remote-control typing
+
+- Replace entry-dependent clipboard matching with built-in Ping/Test-NetConnection suggestions. Extract IPs from prose and inline or unambiguous labelled ports; reject leading-zero/zero/out-of-range ports. Retain whole-host DNS/IPv6 support.
+- Bound detection to 512 characters and skip larger clipboard items entirely. Use a linear scanner rather than a regex engine, cap three targets, keep no clipboard history and retain the existing disable/sensitive-copy protections.
+- Add Automatic typing using virtual-key plus scan-code events, proper modifier/AltGr information and Unicode only where needed. Migrate old Unicode defaults without changing timing; retain explicit current Unicode preferences. Keep Escape, focus-change and session-lock cancellation.
+- Move Type prompts to the bottom right of the monitor containing the pointer. Verify exact typed text in isolated Chrome and native key-event delivery; live Teams forwarding requires a user-session retest.
+
+## 0.9.3 preview — Type clipboard and Extras
+
+- Add an optional signed Type clipboard module and on-demand tray action, including locked tray use. Preserve internal Enter/Tab, strip trailing navigation keys, never append Enter, and explain sensitive clipboard typing on first use.
+- Add crosshair targeting, Escape cancellation during selection/delay/typing, foreground-window change cancellation and session-lock cancellation. Read only bounded clipboard text; do not store text, history or vault values in module/global settings.
+- Add Unicode and destination-layout keyboard modes, 500 ms / 25 ms defaults, multiline confirmation and encrypted per-entry overrides of global non-secret preferences.
+- Group installed tools under Extras, support optional manifest categories, and fit all four root categories without scrolling. Preserve existing module schema fingerprints and secret boundaries.
+- Use a thin vector lightning bolt for Shortcut identity, keeping Run visually distinct. Keep existing 0.9.2 fixes.
+
+## 0.9.2 preview — Restore PuTTY and clarify action feedback
+
+- Share the generated credential-pipe name with PuTTY argument validation; accept the current Sable prefix and retained legacy prefix, and reject malformed names. Preserve process verification and password transport protections.
+- Give shortcuts a distinct identity icon while keeping the right-side Run triangle. Briefly show a muted green check after successful launch acceptance; this does not claim a script completed or a remote login succeeded.
+- Expose the required `$value1` input when an ordinary shortcut uses Copy/Run and copy. Highlight that input for an empty value instead of the name. Connection copy choices explicitly refer to the password.
+
 ## 0.9.1 preview — Clear entry templates and native interaction polish
 
 - Add three window modes to the pin cycle: Tray, Always on top and Normal window. Both kept-open modes retain the panel; Normal window respects ordinary stacking and timed locking. Use one fixed-size pin with distinct orientations.

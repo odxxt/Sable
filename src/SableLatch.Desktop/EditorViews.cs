@@ -26,6 +26,7 @@ public partial class MainWindow
         if (existing is null) KeepEditorDraft();
         editorIsNew = existing is null;
         refreshEntryDetails = null; refreshScriptFields = null; refreshScriptLabels = null;
+        ensureCopyValue = null; validateCopyValue = null;
         editorIsDuplicate = existing is not null && !vault.Document!.Items.Any(i => i.Id == existing.Id);
         var types = content.All.Where(p => !vault.Document!.Settings.DisabledModules.Contains(p.Descriptor.Id)).ToList();
         if (types.Count == 0) { ShowError("Enable at least one content module in Settings."); return; }
@@ -36,9 +37,9 @@ public partial class MainWindow
         if (vault.Document!.Settings.DisabledModules.Contains(type)) { ShowError("Enable this entry type in Settings first."); return; }
         if (provider is null || existing is not null && !ModuleAvailable(existing)) { ShowError("This entry's editor is not installed or its schema is incompatible. Its data is preserved."); return; }
         if (type == "sable.shortcut") advancedEditor = true;
-        if (provider is DeclarativeProvider { Package.Manifest.Handler: "rdp" or "putty" }) advancedEditor = false;
+        if (provider is DeclarativeProvider { Package.Manifest.Handler: "rdp" or "putty" or "type" }) advancedEditor = false;
         var title = provider.Descriptor.Id is "sable.secret" or "sable.login" ? "Secret or login" : TemplateName(provider);
-        var stack = Form(existing is null ? title : editorIsDuplicate ? "Duplicate entry" : "Edit entry", "", "editor", parent: existing is null ? IsConnection(provider) ? ShowConnectionStarters : ShowEntryStarters : ShowList, accessory: existing is null ? EntryChoices(provider, existing) : null, compact: true);
+        var stack = Form(existing is null ? title : editorIsDuplicate ? "Duplicate entry" : "Edit entry", "", "editor", parent: existing is null ? provider is DeclarativeProvider extra && extra.Package.Manifest.EffectiveCategory == "extras" ? ShowExtraStarters : IsConnection(provider) ? ShowConnectionStarters : ShowEntryStarters : ShowList, accessory: existing is null ? EntryChoices(provider, existing) : null, compact: true);
         if (!extensions.Editors.TryGetValue(type, out var editor)) { stack.Children.Add(Text("This content type needs its editor extension.")); return; }
         var details = new StackPanel();
         var applyDetails = BuildEntryDetails(details, provider, existing ?? editorDrafts.GetValueOrDefault(type));
@@ -47,7 +48,7 @@ public partial class MainWindow
             applyDetails(item);
             if (IsShortcut(provider) && item.ClickBehavior != "auto" && item.Advanced?.Action is { } savedAction) savedAction.CopyOnRun = item.ClickBehavior == "run-copy";
             if (item.ClickBehavior is "run" or "run-copy" && !IsShortcut(provider) && item.Advanced?.Action is not { Enabled: true }) { ShowError("Add an action to use Run, or choose Copy."); return; }
-            if (item.ClickBehavior is "copy" or "run-copy" && type == "sable.shortcut" && !item.ScriptValues.ContainsKey("value1")) { ShowError("Add $value1 under Script fields to use copying."); return; }
+            if (validateCopyValue?.Invoke() == false) return;
             EntryMetadata.MarkSaved(item, vault.Document!.Items.FirstOrDefault(i => i.Id == item.Id), DateTimeOffset.UtcNow);
             if (Change(d => { var index = d.Items.FindIndex(i => i.Id == item.Id); if (index < 0) { d.Items.Add(item); d.Settings.FirstEntryTourPending = false; } else d.Items[index] = item; }))
             {
@@ -204,6 +205,7 @@ public partial class MainWindow
             scriptHost.Visibility = action is { Enabled: true, Kind: "powershell" } || provider is ShortcutProvider && action is { Enabled: true, Kind.Length: > 0 } && editorClickChoice is "copy" or "run-copy" ? Visibility.Visible : Visibility.Collapsed;
             var toggle = LogicalDescendants(scriptHost).OfType<Button>().First();
             toggle.Content = action?.Kind == "powershell" ? "Script fields · optional" : "Copy value";
+            ensureCopyValue?.Invoke();
         };
         if (editorIsNew) advancedState.Tested = editorTestedAction;
         VaultItem Capture()

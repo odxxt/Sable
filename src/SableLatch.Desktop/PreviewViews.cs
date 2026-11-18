@@ -27,6 +27,10 @@ public partial class MainWindow
     public async void ShowPreview()
     {
 #if DEBUG
+        if (Environment.GetCommandLineArgs().Contains("--preview-polish")) { await PreviewPolish(); return; }
+        if (Environment.GetCommandLineArgs().Contains("--preview-navigation")) { await PreviewNavigation(); return; }
+        if (Environment.GetCommandLineArgs().Contains("--preview-network-typing")) { await PreviewNetworkTyping(); return; }
+        if (Environment.GetCommandLineArgs().Contains("--preview-type")) { await PreviewType(); return; }
         if (Environment.GetCommandLineArgs().Contains("--preview-starters")) { await PreviewStarters(); return; }
         if (Environment.GetCommandLineArgs().Contains("--preview-refine")) { await PreviewRefine(); return; }
         if (Environment.GetCommandLineArgs().Contains("--preview-v91")) { await PreviewV91(); return; }

@@ -1,5 +1,58 @@
 # Verification
 
+## Current 0.9.7 preview — Approved native entry icons and release checks
+
+- **371 core checks** and **31 native module/credential checks** passed for this release. The native suite verifies signed packages/catalog, exact pipe reader, unexpected-client rejection, cancellation, buffer clearing, real installed PuTTY consumption with fictional credentials/loopback and the CurrentUser DPAPI RDP lifecycle. This does not test a successful live server login.
+- **49 native UI/motion checks** passed, including all eight approved vector identities, mid-motion rendering, smooth hover reversal, stable held poses with released clocks, restoration to rest, hidden/recycled entry reset and owner detachment on view removal. Non-entry icons remain static. Static mode/folder/grid/dismissal checks are included; the unrelated console-focus probe is skipped by this visual-only fixture.
+- **62 starter/window-mode checks**, **20 native Type checks** and **16 network/browser checks** passed for this release. Type targets disposable local fields; browser verification uses an isolated profile and fictional local content. No live Teams forwarding, elevated destination or successful remote-server login is claimed.
+- The separate browser review verifies equal sizing, entry-only motion, idle settling and narrow layouts. The approved artwork is now rendered natively in Sable; no web engine is shipped. Header and folder icons have no entry motion, and Windows animation preferences are respected.
+- Debug compilation, self-contained Release publishing, standalone startup and exact-commit source/portable archive verification are checked for the published build. Additional Windows versions, mixed-DPI setups, real Teams forwarding, elevated targets and live server authentication retain the manual limits described below.
+
+## Previous 0.9.6 preview — Entry identity, quiet suggestions and terminal focus
+
+- **371 core checks** passed, including compatibility/defaults and serialization for the encrypted one-time dismissal explanation. **62 starter/window-mode regressions** passed with normalized native entry vectors and distinct mode silhouettes.
+- **40 focused native polish checks** cover grid identity and launch feedback, omission of duplicate Run controls, preservation of hybrid actions, aligned Run/X targets and fixed-size dismissal choices. They verify explanation persistence and direct later dismissal, root-only suggestions, current-clipboard analysis on return, stale-click rejection from a folder, all 20 static folder options and fixed mode slots.
+- The fixture launches a real, short-lived local PowerShell console containing only fictional output and a short delay. It verifies foreground handoff following a real click; it makes no network request and uses no real vault or clipboard. Console focus checks run in the normal desktop session because restricted execution can change console hosting. The handoff waits until the launched console is identified before deciding whether user input has moved elsewhere.
+- Native navigation regression includes **17 required checks** plus an optional **18th secondary-monitor check**, which passed. Debug and self-contained Release builds are checked separately. The icon comparison strip was reviewed alongside the grid and inline-dismissal screenshots.
+- The revised 31-icon review contains eight animated entry/action proposals, 20 static folder symbols and three static mode symbols. Its browser checks cover equal canvas size, consistent strokes, entry-only play/return behavior and narrow layouts. Only the requested static entry identity normalization and new Shortcut silhouette are in Sable; the broader motion set is still preview-only.
+- Windows Terminal configurations that suppress application titles, additional Windows builds and user focus changes during startup remain compatibility limits. No Windows focus policy, password transport, execution-policy setting or permanent topmost flag is bypassed. Previous credential/Type checks retain their stated scope.
+
+## Previous 0.9.5 preview — Inline dismissal and monitor/taskbar behavior
+
+- **369 core checks** cover single-word DNS rejection, dotted domains and primary/secondary/negative-coordinate/disconnected-monitor placement alongside existing regressions.
+- **16 required native navigation checks** verify fixed-size inline dismissal without another dialog, per-copy dismissal, a fresh clipboard sequence, persistent global disable and matching settings state. They also verify native minimize capability, minimize/restore commands, tray restore and fixed dimensions. An optional **17th check passed on an actual secondary monitor** when a second display was available; the later run had one display and completed the 16 required checks.
+- **62 starter/window-mode UI regression checks** cover existing editor, module, session and interaction behavior. Debug compilation and self-contained Release publishing succeed without warnings/errors. The portable archive contains the matching runtime and source documentation.
+- Windows shell taskbar hit testing, mixed-DPI transitions and other Windows builds remain manual compatibility checks. Native minimize/restore commands and style flags were exercised against the real WPF window; this fixture does not automate Explorer's taskbar.
+- The proposed Kubai-based outline icon gallery is a separate interactive review. No new icon runtime, background animation or web dependency is included in the application.
+- The refreshed network/browser regression fixture passed **16 checks** with the new suggestion-card structure. Browser launches use a disposable profile and fictional local text; diagnostic launches are intercepted.
+- The combined core/module helper completes all 369 core checks; its default parallel module-build invocation remains environment-blocked. Unchanged SSH/RDP credential transports retain the prior completed native checks below rather than claiming a fresh run here.
+
+## Previous 0.9.4 preview — Built-in network checks and keyboard delivery
+
+- **358 core checks**, **62 starter/window-mode UI checks**, **20 Type checks** and **16 network/browser checks** passed. Debug compilation and self-contained Windows x64 Release publishing succeeded without warnings/errors.
+- Core coverage includes all requested prose/inline/separate IP-port examples, canonical port range/notation, rejection of malformed IPs, ambiguous separate ports, repeated/multiple targets, oversized text and obsolete/default-Unicode option migration. The final extraction path is a bounded linear scanner. An initial regex experiment missed a cold-start match and was replaced; no regex engine remains in clipboard extraction.
+- The new network fixture verifies suggestions with zero entries, normalized fixed command construction with launches intercepted, no clipboard remainder in scripts, no oversized/disabled suggestions and refusal of a stale click after locking. No real ping, DNS or port probe runs in this fixture.
+- Native Type checks verify both old preference migration and explicit current Unicode selection, actual crosshair targeting, keyboard/Unicode output and Escape/focus cancellation. A separate isolated Chrome profile loaded only a local fictional page and received exact punctuation using keyboard events with nonzero VK/scan codes and no Unicode packet events for the test string. Native hooks observed the same event fields a remote-control client can inspect. This is not a live Teams forwarding test.
+- Type prompt placement was checked after render at the right side of the host display. Chrome/Type focus checks use real clicks into disposable fields rather than assuming Windows permits programmatic foreground activation. Earlier harness attempts stopped at compile/focus assumptions; final runs completed. No user's clipboard, saved browser profile, remote credentials or Teams account was used.
+- Real Teams remote-control forwarding, elevated targets, additional keyboard layouts, mixed-monitor DPI and Windows 10 remain manual compatibility checks. Earlier native credential-transport tests below retain their stated scope; those transports are unchanged in this update.
+
+## Previous 0.9.3 preview — Type and Extras
+
+- **326 core checks**, the **62-check starter/window-mode regression fixture**, **18 focused Type checks**, and **31 native module checks** passed. Debug build and self-contained Release publishing have zero warnings/errors. The native suite includes real PuTTY pipe consumption and the CurrentUser DPAPI RDP lifecycle with fictional credentials/loopback.
+- The Type fixture verified the signed package, conditional categories, four-category no-scroll layout, defaults, per-entry overrides, preservation of locked tray availability and public preference reload. Native input was exercised outside the sandbox against disposable local WPF text fields using fictional text, not the user's clipboard.
+- Real mouse-hook selection, Unicode including emoji and literal punctuation, internal Enter/Tab with no trailing Enter, destination-layout keyboard input, Escape during delay and active typing, and foreground-window cancellation passed. No real VM console, remote session, elevated target, Windows 10 host or secure desktop was used; compatibility there remains manual.
+- Sandbox execution could not set system cursors; the same native fixture passed outside it. An earlier harness run queried a control before layout; final assertions wait for layout. No security restriction was removed to make these checks pass.
+- Type hooks exist only during the explicit operation. Global preferences contain no clipboard or vault text, and the source/package scan excludes data and signing keys. Module package/catalog signatures use the existing public trust key.
+
+## Previous 0.9.2 preview — PuTTY and action fixes
+
+- **308 core checks**, **62 focused native UI checks** and **31 Windows module/credential checks** passed. Debug compilation and self-contained x64 Release publishing succeeded without warnings/errors.
+- The shared pipe-name generator is exercised through PuTTY argument validation, including malformed-name rejection. Native tests run outside the sandbox verified the exact launched reader, unexpected-client rejection, cancellation, buffer clearing, installed signed PuTTY and real PuTTY pipe consumption. These use fictional credentials and loopback, not a successful remote-server authentication.
+- Native module checks also passed the actual CurrentUser DPAPI round trip and RDP launch-file lifecycle. Earlier environment-blocked records below describe their own executions; they are not the latest result.
+- UI checks cover ordinary Run with a missing copy value, correct field-specific hint/focus/scrolling, successful save after filling it, distinct shortcut identity, stable green launch feedback and explicit password-copy labels for both connection editors. The validation screenshot was reviewed after layout/focus settled.
+- The screenshot's generic PuTTY failure came from the branded pipe prefix differing from the old argument validator. Name generation and validation now agree without weakening process/SID checks. No real user vault or remote credentials were used. Live authentication, varied DPI and capture compatibility remain manual checks.
+
+
 ## Current 0.9.1 preview — window modes and spacing
 
 - **305 core checks** and **53 focused native interface checks** pass. Core checks use a controlled monotonic clock to verify all three mode transitions, exact normal-window expiry, overdue expiry after leaving Always on top, no timer reset on cycling, temporary login topmost rules and system-lock precedence in every mode.

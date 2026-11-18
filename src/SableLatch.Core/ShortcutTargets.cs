@@ -57,7 +57,7 @@ public static class ShortcutTargets
 }
 public sealed class ShortcutProvider : IContentProvider
 {
-    public ContentDescriptor Descriptor => new("sable.shortcut", 1, "Shortcut", "\uE768", false);
+    public ContentDescriptor Descriptor => new("sable.shortcut", 1, "Shortcut", "\uE945", false);
     public IReadOnlyList<string> CopyActions => [];
     public CopyValue Copy(VaultItem item, string action) => item.ScriptValues.TryGetValue("value1", out var value)
         ? new("text/plain", System.Text.Encoding.UTF8.GetBytes(value), true, false)

@@ -1,6 +1,6 @@
 # Modules for Sable
 
-Connection placement is automatic: installed, enabled packages with `handler: "putty"` or `handler: "rdp"` appear under **New entry → Connection**. Field modules remain their own starters, with the manifest description used as their help text. No module installer appears in entry creation; use Settings → Plugins & modules. This is host-owned categorization, not a new permission or executable plugin hook. Unsupported handlers still fail validation.
+Connection placement is automatic: installed, enabled packages with `handler: "putty"` or `handler: "rdp"` appear under **New entry → Connection**. Other installed modules appear under Extras by default. Optional `category: "connection"` or `category: "extras"` groups a supported handler; category alone never adds a host capability. The root fits three or four categories without scrolling. No module installer appears in entry creation; use Settings → Plugins & modules. This is host-owned categorization, not a new permission or executable plugin hook. Unsupported handlers still fail validation.
 
 Modules add entry types and actions while keeping Sable small. Open **Settings → Plugins & modules**: use **Add a connection** for the included offline SSH · PuTTY and Remote Desktop packages, **Install from ZIP…** for a local package, or **Online catalog → Check GitHub catalog** for the signed online list. Installed modules show a check and version and open their settings instead of offering installation again. No background catalog check runs.
 
@@ -15,7 +15,7 @@ Modules add entry types and actions while keeping Sable small. Open **Settings �
    ```
 
 4. Install the ZIP in Sable and review its permission summary.
-5. Choose **+ → New entry**, then your module's described starter. Enter a name and its values, then save. Only connection handlers are grouped under Connection.
+5. Choose **+ → New entry**, then **Extras** and your module's described starter (or its declared category). Enter a name and its values, then save. Only connection handlers are grouped under Connection.
 
 You do not need Visual Studio, a compiler, a developer account or a signing certificate to make a community module. The sample ZIP in `packages/example.quick-note.zip` is ready to try. Community modules show **Not reviewed by Sable**.
 
@@ -55,7 +55,7 @@ Limits: 256 KiB ZIP and expanded total, 64 KiB per member, 16 fields, 6 actions 
 }
 ```
 
-IDs have two or more dot-separated lowercase segments. The `sablelatch.*` namespace is reserved for verified official packages. Version is a numeric version such as `1.0.0`. Icons: `note`, `terminal`, `mail`, `lock`. Field kinds: `text`, `multiline`, `secret`.
+IDs have two or more dot-separated lowercase segments. The `sable.*` namespace is reserved for verified official packages; earlier reserved IDs remain compatible. Version is a numeric version such as `1.0.0`. Icons: `note`, `terminal`, `mail`, `lock`, `desktop`, `keyboard`. Field kinds: `text`, `multiline`, `secret`.
 
 `copy` is a host operation. It can target only a declared **non-secret** field. A module defining any secret field produces sensitive entries, so the host's secret clipboard clearing/history policy also applies to its permitted copy operations. The package never receives an entry object, field values or encryption keys. The first copy asks for approval; **Don't ask again** is scoped to that entry, action and module manifest. The Plugins page can reset remembered approvals.
 
@@ -84,6 +84,12 @@ A temporary **non-secret** PuTTY session is created under the current user's PuT
 Locking cancels pending password delivery; the pending child process is stopped if delivery fails. Established SSH sessions stay open after Sable locks. The 15-second delivery timeout does not limit how long the SSH session may remain open.
 
 **Not in this release:** SSH private-key storage/authentication, existing PuTTY saved sessions, jump hosts/proxies, tunnels, remote commands, rich-text composition, image/file attachments or arbitrary executable module code. These need separate host capabilities and tests. HTML clipboard preservation is now part of the built-in Secret type (including sensitive clipboard handling). The RDP host capability is also available; see [RDP implementation](../docs/RDP-DESIGN.md).
+
+## Type clipboard 1.0
+
+Install from **Add an extra**, the included offline catalog, a signed ZIP or the online catalog once the updated repository is published. The new package uses ID `sable.type`, `handler: "type"`, `icon: "keyboard"` and `category: "extras"`. It requires host 0.9.3+. Earlier hosts reject unsupported handlers.
+
+The host owns target selection, clipboard reading, bounded input and cancellation; a package supplies no executable code and cannot define replacement fields/actions. Global non-secret settings live in `type-host.json` to support locked tray use; entry overrides remain encrypted. See [the Type guide](../docs/TYPE-CLIPBOARD.md) and [sample](samples/type/README.md).
 
 ## Updates, removal and recovery
 

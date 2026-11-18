@@ -11,4 +11,4 @@ try {
         if(Test-Path -LiteralPath $file) { [void][IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip,$file,$name) }
     }
 } finally { $zip.Dispose() }
-Write-Host "Created $Destination. Install it from SableLatch Settings > Plugins & modules."
+Write-Host "Created $Destination. Install it from Sable Settings > Plugins & modules."

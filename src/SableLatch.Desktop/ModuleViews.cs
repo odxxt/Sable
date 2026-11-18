@@ -19,8 +19,9 @@ public partial class MainWindow
         foreach (var package in installedModules)
         {
             var provider = new DeclarativeProvider(package); content.Register(provider);
-            extensions.RegisterEditor(new FieldEditorFactory(provider.Descriptor.Id, (item, save, _) => package.Manifest.Handler switch { "putty" => BuildPuttyFields(provider, item, save), "rdp" => BuildRdpFields(provider, item, save), _ => BuildFields(provider, item, save) }));
+            extensions.RegisterEditor(new FieldEditorFactory(provider.Descriptor.Id, (item, save, _) => package.Manifest.Handler switch { "putty" => BuildPuttyFields(provider, item, save), "rdp" => BuildRdpFields(provider, item, save), "type" => BuildTypeFields(provider, item, save), _ => BuildFields(provider, item, save) }));
         }
+        SyncTypeAvailability();
     }
     private bool ModuleAvailable(VaultItem item) => content.Find(item.ContentType) is not DeclarativeProvider provider || item.ModuleSchema == provider.Package.Manifest.SchemaFingerprint();
     private void ShowMoreTypes() => ShowEntryStarters();
@@ -34,7 +35,7 @@ public partial class MainWindow
             var body = new Grid(); body.ColumnDefinitions.Add(new()); body.ColumnDefinitions.Add(new() { Width = GridLength.Auto });
             var text = new StackPanel();
             text.Children.Add(new TextBlock { Text = package.Manifest.Handler switch { "putty" => "SSH · PuTTY", "rdp" => "Remote Desktop", _ => package.Manifest.Name }, FontSize = 13, FontWeight = FontWeights.Medium });
-            text.Children.Add(new TextBlock { Text = installed ? "Installed · " + package.Manifest.Version : package.Manifest.Handler == "putty" ? "Connect to SSH servers" : "Open saved RDP connections", FontSize = 11, Opacity = .6, Margin = new Thickness(0, 4, 8, 0), TextWrapping = TextWrapping.Wrap });
+            text.Children.Add(new TextBlock { Text = installed ? "Installed · " + package.Manifest.Version : package.Manifest.Description, FontSize = 11, Opacity = .6, Margin = new Thickness(0, 4, 8, 0), TextWrapping = TextWrapping.Wrap });
             body.Children.Add(text);
             var status = new TextBlock { Text = installed ? "✓   ›" : "+ Add", FontSize = 11, Opacity = .7, VerticalAlignment = VerticalAlignment.Center }; Grid.SetColumn(status, 1); body.Children.Add(status);
             var row = Button(package.Manifest.Name, () => { if (installed) ShowModuleSettings(package); else ReviewModule(package); });
@@ -52,6 +53,8 @@ public partial class MainWindow
             var caption = Text("Add a connection", 11, true); caption.Margin = new Thickness(0, 14, 0, 6); stack.Children.Add(caption);
             foreach (var package in available) ModuleRow(package, false);
         }
+        var typePackage = ModulePackages.Read(ModuleTrust.Resource("type.zip"), ModuleTrust.Verify);
+        if (!installedModules.Any(p => p.Manifest.Id == typePackage.Manifest.Id)) { stack.Children.Add(Text("Add an extra", 11, true)); ModuleRow(typePackage, false); }
         var sources = new System.Windows.Controls.Primitives.UniformGrid { Columns = 2, Margin = new Thickness(0, 10, 0, 8) };
         sources.Children.Add(Button("Install from ZIP…", PickModule)); sources.Children.Add(Button("Online catalog  ↗", ShowModuleCatalog)); stack.Children.Add(sources);
         var defaults = new StackPanel(); defaults.Children.Add(Text("Choose which standard templates appear in New entry.", 11, true));
@@ -92,7 +95,7 @@ public partial class MainWindow
         stack.Children.Add(Text(package.Manifest.Author + " · " + package.Manifest.Version, 11, true));
         stack.Children.Add(Text(package.Manifest.Handler switch { "rdp" => "Adds Remote Desktop entries using the Windows app.", "putty" => "Adds SSH entries. PuTTY must also be installed on this PC.", _ => package.Manifest.Description }, 12));
         stack.Children.Add(Text(package.Official ? "Verified Sable module" : "Not reviewed by Sable. Install only packages whose purpose you understand.", 12, !package.Official));
-        stack.Children.Add(Text(package.Manifest.Handler is "rdp" or "putty" ? "Sable handles saved passwords. The module cannot read them or other entries." : "Uses only its own fields. Cannot read other entries.", 11, true));
+        stack.Children.Add(Text(package.Manifest.Handler == "type" ? "Adds clipboard typing and a tray action, usable while locked. Sable handles text only during an explicit operation; the module cannot read vault entries." : package.Manifest.Handler is "rdp" or "putty" ? "Sable handles saved passwords. The module cannot read them or other entries." : "Uses only its own fields. Cannot read other entries.", 11, true));
         var reviewedPage = Body.Content; var startEpoch = epoch;
         PageAction(Button(current is null ? "Install" : "Update", () =>
         {
@@ -112,7 +115,7 @@ public partial class MainWindow
         if (!vault.IsUnlocked) return;
         var stack = Form("Module catalog", "", "settings", parent: ShowModules);
         stack.Children.Add(Text("Official modules", 12, true));
-        foreach (var resource in new[] { "putty.zip", "rdp.zip" })
+        foreach (var resource in new[] { "putty.zip", "rdp.zip", "type.zip" })
         {
             var included = ModulePackages.Read(ModuleTrust.Resource(resource), ModuleTrust.Verify);
             var installed = installedModules.FirstOrDefault(p => p.Manifest.Id == included.Manifest.Id);
@@ -164,6 +167,7 @@ public partial class MainWindow
     private void ShowModuleSettings(ModulePackage package)
     {
         if (!vault.IsUnlocked) return;
+        if (package.Manifest.Handler == "type") { ShowTypeModuleSettings(package); return; }
         var stack = Form(package.Manifest.Name, "", "settings", parent: ShowModules);
         stack.Children.Add(Text(package.Manifest.Version + (package.Official ? " · Verified Sable module" : " · Community module"), 11, true));
         var enabled = Check(stack, "Enabled", !vault.Document!.Settings.DisabledModules.Contains(package.Manifest.ContentType));

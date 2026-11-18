@@ -62,6 +62,7 @@ public partial class MainWindow
         foreach (var option in new[] { administrator, variables }) { option.Checked += (_, _) => changed(); option.Unchecked += (_, _) => changed(); }
         terminal.Checked += (_, _) => changed(); terminal.Unchecked += (_, _) => changed();
         var suggest = Check(details, "Suggest for matching clipboard", existing?.Action?.SuggestFromClipboard ?? false);
+        suggest.Visibility = Visibility.Collapsed; // Retained metadata; suggestions are now a built-in capability.
         var copyOnRun = existing?.Action?.CopyOnRun == true;
         var canCopy = contentType is "sable.text" or "sable.secret" or "sable.login";
         if (canCopy)
@@ -111,7 +112,7 @@ public partial class MainWindow
         {
             var id = names[(string)kind.SelectedItem]; details.Visibility = id.Length == 0 ? Visibility.Collapsed : Visibility.Visible; var script = id is "cmd" or "powershell"; var diagnostic = ShortcutTargets.IsDiagnostic(id);
             if (clear) { target.Clear(); arguments.Clear(); directory.Clear(); terminal.IsChecked = script || diagnostic; directoryHost.Visibility = Visibility.Collapsed; }
-            suggest.Visibility = diagnostic && contentType == "sable.shortcut" ? Visibility.Visible : Visibility.Collapsed;
+            suggest.Visibility = Visibility.Collapsed;
             terminal.Visibility = script || diagnostic ? Visibility.Visible : Visibility.Collapsed;
             administrator.Visibility = script || id is "application" or "run" ? Visibility.Visible : Visibility.Collapsed;
             variables.Visibility = id == "powershell" ? Visibility.Visible : Visibility.Collapsed;

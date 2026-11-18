@@ -103,11 +103,12 @@ public partial class MainWindow
                     if (epoch != startEpoch || !vault.IsUnlocked) return;
                     if (remember) moduleApprovals.Remember(digest);
                     Audit(AuditEvent.EntryActionStarted); ShowList(); SetStatus("PuTTY opened");
+                    _ = ShowRunFeedback(latest.Id);
                     if (latest.ClickBehavior == "run-copy") await CopyEntry(latest, "Password", new Button());
-                    else if (!session.KeepsPanelOpen) Hide();
+                    else if (!session.KeepsPanelOpen) { await Task.Delay(230); if (epoch == startEpoch && vault.IsUnlocked) Hide(); }
                 }
                 catch (OperationCanceledException) { if (epoch == startEpoch && vault.IsUnlocked) ShowError("The password handoff timed out or was cancelled. Try again."); }
-                catch (Exception ex) when (ex is IOException or InvalidOperationException or UnauthorizedAccessException or CryptographicException or System.ComponentModel.Win32Exception)
+                catch (Exception ex) when (ex is IOException or InvalidDataException or ArgumentException or InvalidOperationException or UnauthorizedAccessException or CryptographicException or System.ComponentModel.Win32Exception)
                 { if (epoch == startEpoch && vault.IsUnlocked) ShowError(ex is InvalidOperationException ? ex.Message : "PuTTY could not complete the protected password handoff."); }
                 finally { moduleConnecting = false; }
             }
@@ -122,6 +123,6 @@ public partial class MainWindow
             PageAction(AsyncButton("Connect", async () => { if (ReferenceEquals(reviewPage, Body.Content) && epoch == startEpoch) await Launch(remember.IsChecked == true); }));
             pageSubmit = null;
         }
-        catch (Exception ex) when (ex is IOException or InvalidOperationException or UnauthorizedAccessException or CryptographicException or System.ComponentModel.Win32Exception) { ShowError(ex.Message); }
+        catch (Exception ex) when (ex is IOException or InvalidDataException or ArgumentException or InvalidOperationException or UnauthorizedAccessException or CryptographicException or System.ComponentModel.Win32Exception) { ShowError(ex.Message); }
     }
 }

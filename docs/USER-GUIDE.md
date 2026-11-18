@@ -1,4 +1,4 @@
-# Sable user guide — 0.9.1 preview
+# Sable user guide — 0.9.7 preview
 
 Sable keeps secrets, logins, useful commands and server connections in a compact Windows tray app. Everything saved in the vault is encrypted, including shortcuts, descriptions and folder names. It needs no online account.
 
@@ -19,8 +19,9 @@ Open **+ → New entry**, then choose a described starter:
 | **Secret or login** | A saved value, or a username and password | Copy; a login copies username, then password |
 | **Shortcut** | An application, file, folder, Windows setting or command | Run |
 | **Connection** | Installed SSH or Remote Desktop modules | Launch |
+| **Extras** | Installed utility modules, starting with Type clipboard | Run the selected tool |
 
-Connection appears only when an enabled connection module is installed. Other field modules get their own starters. Module installation stays in Settings. [The entry-model guide](ENTRY-MODEL.md) includes a diagram and all click-behavior details.
+Connection appears only when an enabled connection module is installed. Other field modules are grouped under Extras by default; a manifest can choose a supported category. All available categories fit without scrolling. Module installation stays in Settings. [The entry-model guide](ENTRY-MODEL.md) includes a diagram and all click-behavior details.
 
 Without a username, the input says **Secret value**. Use **Add username** above it to reveal Username and change the value caption to Password. **Remove username** returns to a secret. Updated fields briefly fade in. Values survive toggling while editing; a removed username is not saved. **Change** preserves each starter's unfinished fields and shares the latest name until you leave the editor or lock.
 
@@ -42,6 +43,8 @@ Available actions are Application, File or folder, Windows & Control Panel, Run,
 
 **Starting folder · optional** controls relative paths: a script reading `report.txt` can start in `C:\Reports`. Leave it blank for the Windows user folder. Most actions do not need it.
 
+When using Copy or Run and copy on a shortcut, enter its required `$value1` under Copy value (or Script fields for PowerShell). A missing value is focused and highlighted directly. A green check briefly replaces Run when a launch is accepted; it confirms startup, not command completion.
+
 Press **Test action** before saving a new or changed enabled action. The separate Save button stays dimmed until its current configuration has launched successfully. Testing runs the action; it does not prove that a script is safe or completes successfully. Changed execution settings, including copy mode, require another test. Names/colors alone do not.
 
 Saved actions require first-use review on this Windows environment unless explicitly tested and approved locally. Imported actions need fresh approval; **Verify each time** optionally asks on every run. Commands are not sandboxed. Locking cancels pending launches, but does not stop established external programs.
@@ -54,9 +57,17 @@ Paste HTML-formatted content into an empty secret, or select its entire value be
 
 The masked editor shows **Formatting kept**. This is preservation, not a rich-text composer. Typing or partially replacing a value clears its old formatting; paste the whole source again to restore it. Login fields are plain text. Scripts, forms, remote images and embedded objects are removed; no external resources are fetched. Complex layouts and RTF-only sources are not preserved exactly.
 
+## Type clipboard
+
+Install **Type clipboard** from Settings → Plugins & modules → Add an extra. Create a reusable entry under **+ → New entry → Extras → Type clipboard**, or right-click the tray → **Type clipboard**. The tray action also works while the vault is locked. It always types the current clipboard, not a saved entry value.
+
+Sable hides, the cursor becomes a crosshair, and you click the destination. The default delay is 500 ms, followed by 25 ms between characters. Esc cancels remaining input. A different foreground window or a Windows/session lock cancels the operation. Already typed text remains. Internal line breaks/tabs are sent; trailing Enter/Tab characters are stripped and no extra Enter is added. Multiline confirmation is on by default.
+
+Module settings control global timing, input mode and multiline confirmation. Entries default to **Use module defaults**; turn it off for independent overrides. The tray uses global defaults. Automatic mode is now the default: it supplies virtual keys and scan codes for ordinary characters and uses Unicode for characters unavailable in the local destination layout. Unicode text and strict keyboard compatibility remain selectable. Existing default-Unicode preferences migrate once, keeping timing. Type prompts appear at the bottom right of the pointer's monitor. See [Type clipboard](TYPE-CLIPBOARD.md) for limitations and sensitive text handling.
+
 ## Open, pin and lock
 
-Open from the tray or use **Ctrl+Alt+Space**. A locked panel immediately focuses PIN/password input, including when already visible. Change the shortcut with the recorder in **Settings → App preferences**. Drag the header to move Sable; double-click its name to restore the default bottom-right position.
+Open from the tray or use **Ctrl+Alt+Space**. A locked panel immediately focuses PIN/password input, including when already visible. Change the shortcut with the recorder in **Settings → App preferences**. Drag the header to move Sable; double-click its name to dock at the bottom right of the monitor it is currently on, including a secondary display. Saved window positions on available secondary monitors are preserved.
 
 The pin cycles these modes in a fixed-size toolbar slot:
 
@@ -66,7 +77,7 @@ The pin cycles these modes in a fixed-size toolbar slot:
 | **Always on top** | Yes | Yes | Shown | Enforcement paused |
 | **Normal window** | Yes | No | Shown | Active |
 
-The pin is diagonal, upright and horizontal respectively. Normal window stays behind other applications, including during login copying. **Settings → App preferences → Taskbar & Alt+Tab** offers When kept open, Always and Never; explicit Always/Never overrides the table. Modes are session-local and start in Tray when the process starts.
+The mode button shows a **window with a minus sign** for Tray mode, an **upright pin** for Always on top, or a **window with a title bar** for Normal window. These static symbols share the same toolbar slot. Normal window stays behind other applications, including during login copying. Its taskbar button supports normal minimize/restore behavior; the tray and global shortcut also restore a minimized panel. Panel dimensions remain fixed. **Settings → App preferences → Taskbar & Alt+Tab** offers When kept open, Always and Never; explicit Always/Never overrides the table. Modes are session-local and start in Tray when the process starts.
 
 The default session limit is 60 minutes. Changing modes never resets its clock. Leaving Always on top immediately applies an overdue timeout. Windows lock/unlock, sleep/resume, sign-out and explicit Lock apply regardless of mode. **Lock when reopened** can require authentication whenever the panel is reopened, except in Always on top mode.
 
@@ -78,9 +89,15 @@ Close hides the panel. **Settings → Quit → Confirm quit** exits. Enter saves
 
 The **+** menu offers New entry and New folder. Choose rows or the two-column grid with the view button; root and each folder remember their own view. Search uses labels, not secret values. Folder chips fit their names up to a maximum width, show full names in tooltips and remain in one row. Wheel scrolling and drag-edge scrolling reach overflow.
 
+Grid tiles show their entry type on the left. If clicking the tile already runs it, there is no duplicate Run button. If clicking copies a value and the entry also has an action, the separate Run button remains. Copy/launch feedback briefly replaces the left icon without moving the text. The Shortcut symbol is a curved arrow leaving a rounded box; native entry icons use shared optical sizing and stroke weight.
+
+The approved entry icons move slightly on hover: the secret key turns, login profile lifts, Shortcut arrow advances, SSH/RDP prompts shift, Type key depresses and Run actions respond. Movements reverse from their current position and settle without an idle loop. Windows animation preferences are honored. Folder, search, settings, close and window-mode symbols stay static.
+
 Drag entries to reorder; an insertion line marks the destination. Drop onto a folder to move them or onto the parent breadcrumb to move up. A centered check fades over the folder's text, then the text returns without resizing the chip. Alt+Up/Down reorders a focused entry.
 
 Drag a folder to a sibling's edge to reorder, or its center to nest the whole subtree. The preview follows the pointer. Dropping onto the parent breadcrumb moves it up. Right-click → Move folder and Alt+Left/Right are alternatives. Self/descendant moves are rejected. Edit folder changes its name, parent and optional built-in icon.
+
+Under **Edit folder → Customize**, choose from 20 static symbols. Alongside Folder, Work, Home, Star and Private are Servers, Network, Cloud, Code, Database, Terminal, Documents, Downloads, Media, Mail, Finance, Tools, Devices, Web and Archive. Hover for the name. These icons do not animate.
 
 Entry right-click menus keep **Edit, Duplicate, Move to folder, Delete** in order, with available Run/Launch actions above them. Duplicate opens an unsaved independent draft; Back creates nothing. Copies receive new IDs/timestamps on Save and fresh action approvals.
 
@@ -106,7 +123,7 @@ PuTTY checks the server's host key. An expected fingerprint can be configured. L
 
 Install Remote Desktop, then create **+ → New entry → Connection → Remote Desktop**. Enter host, Windows username and password. **More options** includes domain, port and Start in full screen, enabled by default. Initial sizing, native resize/full-screen controls and normal bidirectional clipboard sharing belong to Windows mstsc and server policy.
 
-Click launches by default. **When I click the entry** can select Copy, Run or Run and copy; Launch / Launch & copy are also explicit menu actions. Copy uses the stored password. Launch & copy copies after local startup, not confirmed remote authentication. Both kept-open window modes leave Sable open.
+Click launches by default. **When I click the entry** can select Copy password, Run or Run and copy password; Launch / Launch & copy are also explicit menu actions. Copy uses the stored password. Launch & copy copies after local startup, not confirmed remote authentication. Both kept-open window modes leave Sable open.
 
 For each launch, Sable creates a temporary `.rdp` file with a DPAPI-encrypted password, opens system `mstsc.exe` and removes the file after startup, with retry/next-start cleanup. No permanent RDP file is kept in the vault, no Credential Manager entry is written, and no proxy is used. **Software running as your Windows user can capture and decrypt that file.** Cleanup cannot revoke a captured copy or guarantee secure deletion.
 
@@ -120,7 +137,11 @@ After three active saved entries, **Continue setup** offers backup preferences, 
 
 Secret copies clear after 30 seconds by default if Sable still owns that clipboard content. Delay and clearing can be changed. History/cloud-exclusion formats and supported capture exclusion are requested. Other software can read the clipboard; capture protection cannot block every recorder, privileged process or camera. Windows 10 support differs by build; [Security](../SECURITY.md#screen-capture) records the fallback and unverified capture paths.
 
-Existing opted-in Ping/Test port/DNS actions can suggest a configured shortcut from a matching clipboard address. Matching runs only while the unlocked list is visible, skips Sable-owned/protected copies, keeps no history and never runs automatically. No new diagnostic presets or arbitrary clipboard-to-script binding are offered. Disable matching in Copying if unwanted.
+Network suggestions are built in; no saved shortcut is required. Short clipboard text such as “the ip is 192.168.8.1” offers Ping; an inline `192.168.8.1:53` or “192.168.8.1 and port 53” offers Test port (Test-NetConnection). Ports must be 1–65535 without leading zeros. Separate ports are paired only with one unambiguous IP; unrelated numbers are ignored. Up to three targets are shown. DNS lookup requires a dotted domain/URL such as `alodat.me`; copying `book` creates no suggestion.
+
+Only clipboard items of 512 characters or fewer are inspected. Larger items are skipped entirely; there is no history, polling worker or regex engine in this scanner. Analysis happens only while the unlocked **All items** list is visible and not minimized, and skips Sable-owned/protected copies. Folders remain quiet, including when you copy new text there. Returning to All items examines the current clipboard without retaining a history.
+
+A click launches the fixed diagnostic with the normalized target and requests the foreground once; nothing runs automatically. The **first X click** offers **Only this copy** or **Don't show again**, inside that same card. Sable remembers showing this choice; later X clicks dismiss the current suggestion immediately. Only this copy hides it until the clipboard changes. Don't show again disables network suggestions immediately. Toggle **Suggest network checks from clipboard** in Clipboard & copying at any time. Existing saved diagnostic entries still work; arbitrary scripts never receive clipboard substitutions.
 
 Entry creation/edit dates are encrypted. **Advanced → Activity & audit → Save HTML report** exports a static readable report with labels, types, timestamps and Trash state, never payload values. Saving over a previous file refreshes it. Store that report privately. The separate device-protected journal retains at most 256 fixed-code events/128 KB, without a reporting server or background cache. It is operational history, not a tamper-proof forensic log; old unknown creation dates are not guessed.
 

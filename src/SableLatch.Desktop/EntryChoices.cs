@@ -21,7 +21,9 @@ public partial class MainWindow
         row.Height = 76; row.Padding = new Thickness(14, 12, 14, 12); row.Margin = new Thickness(0, 0, 0, 4); row.HorizontalContentAlignment = HorizontalAlignment.Stretch;
         var grid = new Grid(); grid.ColumnDefinitions.Add(new() { Width = new GridLength(32) }); grid.ColumnDefinitions.Add(new()); grid.ColumnDefinitions.Add(new() { Width = new GridLength(12) });
         var iconHost = new Grid { Width = 20, Height = 20, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center, IsHitTestVisible = false };
-        if (icon is "connection" or "rdp" or "ssh") iconHost.Children.Add(ConnectionIcon(icon));
+        if (icon == "shortcut") iconHost.Children.Add(ShortcutSymbol());
+        else if (icon is "connection" or "rdp" or "ssh") iconHost.Children.Add(ConnectionIcon(icon));
+        else if (icon == "\uE72E") iconHost.Children.Add(new EntryIdentity { Kind = "secret" });
         else iconHost.Children.Add(new TextBlock { Text = icon, FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 17, Opacity = .8, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center });
         grid.Children.Add(iconHost);
         var copy = new StackPanel(); Grid.SetColumn(copy, 1); grid.Children.Add(copy);
@@ -48,10 +50,11 @@ public partial class MainWindow
             stack.Children.Add(row);
             if (FirstEntryTour) row.Loaded += (_, _) => TourHint(row, "3 · Secret or login", "Start here to save a value you can copy later.");
         }
-        if (available.Any(p => p is ShortcutProvider)) stack.Children.Add(StarterRow("Shortcut", "Open an app or file, or run a command", "\uE768", () => ShowEditor(selectedType: "sable.shortcut")));
-        if (available.Any(IsConnection)) stack.Children.Add(StarterRow("Connection", "Connect to a server with a saved sign-in", "connection", ShowConnectionStarters));
-        foreach (var provider in available.OfType<DeclarativeProvider>().Where(p => !IsConnection(p)))
-            stack.Children.Add(StarterRow(provider.Descriptor.Name, provider.Package.Manifest.Description, provider.Descriptor.Symbol, () => ShowEditor(selectedType: provider.Descriptor.Id)));
+        if (available.Any(p => p is ShortcutProvider)) stack.Children.Add(StarterRow("Shortcut", "Open an app or file, or run a command", "shortcut", () => ShowEditor(selectedType: "sable.shortcut")));
+        if (available.OfType<DeclarativeProvider>().Any(p => p.Package.Manifest.EffectiveCategory == "connection")) stack.Children.Add(StarterRow("Connection", "Connect with a saved sign-in", "connection", ShowConnectionStarters));
+        if (available.OfType<DeclarativeProvider>().Any(p => p.Package.Manifest.EffectiveCategory == "extras")) stack.Children.Add(StarterRow("Extras", "Tools from installed modules", "\uE713", ShowExtraStarters));
+        var rows = stack.Children.OfType<Button>().ToList();
+        if (rows.Count == 4) foreach (var row in rows) { row.Height = 56; row.Padding = new Thickness(14, 8, 14, 8); }
         if (stack.Children.OfType<Button>().Any()) FocusStarter(stack);
         else stack.Children.Add(Text("Enable an entry type in Settings → Plugins & modules.", 12, true));
     }
@@ -61,8 +64,18 @@ public partial class MainWindow
         KeepEditorDraft();
         var stack = Form("Connection", "", "editor", parent: ShowEntryStarters, compact: true);
         stack.Children.Add(Text("Choose how to connect", 12, true));
-        foreach (var provider in AvailableStarters.Where(IsConnection))
-            stack.Children.Add(StarterRow(TemplateName(provider), provider is DeclarativeProvider { Package.Manifest.Handler: "putty" } ? "Open PuTTY with your saved SSH sign-in" : "Open Windows Remote Desktop with your saved sign-in", provider is DeclarativeProvider { Package.Manifest.Handler: "putty" } ? "ssh" : "rdp", () => ShowEditor(selectedType: provider.Descriptor.Id)));
+        foreach (var provider in AvailableStarters.OfType<DeclarativeProvider>().Where(p => p.Package.Manifest.EffectiveCategory == "connection"))
+            stack.Children.Add(StarterRow(TemplateName(provider), provider.Package.Manifest.Handler switch { "putty" => "Open PuTTY with your saved SSH sign-in", "rdp" => "Open Windows Remote Desktop with your saved sign-in", _ => provider.Package.Manifest.Description }, provider.Package.Manifest.Handler switch { "putty" => "ssh", "rdp" => "rdp", _ => provider.Descriptor.Symbol }, () => ShowEditor(selectedType: provider.Descriptor.Id)));
+        FocusStarter(stack);
+    }
+    private void ShowExtraStarters()
+    {
+        if (!vault.IsUnlocked) return;
+        KeepEditorDraft();
+        var stack = Form("Extras", "", "editor", parent: ShowEntryStarters, compact: true);
+        stack.Children.Add(Text("Choose a tool", 12, true));
+        foreach (var provider in AvailableStarters.OfType<DeclarativeProvider>().Where(p => p.Package.Manifest.EffectiveCategory == "extras"))
+            stack.Children.Add(StarterRow(provider.Descriptor.Name, provider.Package.Manifest.Description, provider.Descriptor.Symbol, () => ShowEditor(selectedType: provider.Descriptor.Id)));
         FocusStarter(stack);
     }
     private void FocusStarter(StackPanel stack)
@@ -76,21 +89,15 @@ public partial class MainWindow
         var row = new DockPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(6, 0, 0, 0) };
         if (existing is null)
         {
-            var change = Button("Change", IsConnection(provider) ? ShowConnectionStarters : ShowEntryStarters);
+            var change = Button("Change", provider is DeclarativeProvider extra && extra.Package.Manifest.EffectiveCategory == "extras" ? ShowExtraStarters : IsConnection(provider) ? ShowConnectionStarters : ShowEntryStarters);
             change.Content = new TextBlock { Text = "Change", FontSize = 11, Foreground = (Brush)FindResource("Muted") };
             change.FontSize = 11; change.Margin = new Thickness(0); change.Padding = new Thickness(8, 4, 8, 4); change.ToolTip = "Choose another starter. Your draft is kept until you leave the editor.";
             AutomationProperties.SetName(change, "Change starter"); DockPanel.SetDock(change, Dock.Right); row.Children.Add(change);
         }
         return row;
     }
-    private static FrameworkElement ConnectionIcon(string kind) => new System.Windows.Shapes.Path
-    {
-        Width = 18, Height = 18, Stretch = Stretch.Uniform, StrokeThickness = 1.35,
-        Stroke = new SolidColorBrush(Color.FromRgb(200, 200, 207)), StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round, StrokeLineJoin = PenLineJoin.Round,
-        Data = Geometry.Parse(kind == "ssh"
-            ? "M 2,3 L 18,3 18,17 2,17 Z M 5,7 L 8,10 5,13 M 10,13 L 14,13"
-            : "M 2,2 L 18,2 18,13 2,13 Z M 10,13 L 10,18 M 6,18 L 14,18")
-    };
+    private static FrameworkElement ShortcutSymbol() => new EntryIdentity { Kind = "shortcut", Width = 20, Height = 20 };
+    private static FrameworkElement ConnectionIcon(string kind) => new EntryIdentity { Kind = kind == "ssh" ? "terminal" : "desktop" };
     private static string TemplateName(IContentProvider provider) => provider.Descriptor.Id switch
     {
         "sable.secret" => "Secret", "sable.login" => "Login", "sable.shortcut" => "Shortcut",
