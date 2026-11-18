@@ -1,4 +1,4 @@
-# Sable architecture — 0.9.4 preview
+# Sable architecture — 0.9.7 preview
 
 The public app name is Sable. Existing `SableLatch` namespaces, cryptographic purposes, module IDs and Windows binding identifiers are compatibility details, not a second product. The current architecture is below; historical changes belong in [CHANGELOG.md](CHANGELOG.md).
 
@@ -54,6 +54,8 @@ Connection placement derives only from validated installed `putty`/`rdp` handler
 `Form` owns fixed navigation/footer and a scrolling content region in the fixed 342 × 411 panel. Enter routes to the registered primary button, except during native picker/button handling, shortcut recording or busy feedback. Shared gutters, centered back controls and padded icon slots avoid layout shifts. Brief opacity/press transitions honor Windows animation preferences and stop on unload. `SettingsDraft` implements one reminder before Back discards changes; locking bypasses prompts.
 
 `RowInteractions`, `GridEntries` and `TwoColumnPanel` share entry models, copy/run handlers and context menus. The grid virtualizes visible tiles plus a small buffer. Direct dragging displays insertion feedback; no reorder mode is required. The entry menu confirms deletion in place, then invokes the existing permanent/Trash policy.
+
+Both layouts use 56px visible cards on a 60px pitch. Entry identities render at 18px with a 12px text gap; Run renders at 16px within a 28 × 32px target inset 8px from the card edge. `EntryIdentity` supplies its 20px default through property metadata so templates can override it. Explicit layout changes use one 140ms opacity transition, remove its clock on completion/unload, and respect the Windows animation preference. No dimensions, background timers or additional processes are animated or introduced.
 
 `FolderOperations` validates destinations and rejects cycles. `FolderInteractions` accepts only the active local drag and commits on drop. Edges reorder siblings; centers nest. `FolderRail` uses natural-width capped chips with overflow scrolling, and `FolderDragPreview` follows the pointer. `FolderConfirmationAdorner` overlays a check while fading the mounted label, outside layout measurement. `FolderDeletion` requires two deliberate presses and removes the selected subtree including Trash only after confirmation. Independent backups are unaffected.
 

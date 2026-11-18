@@ -41,7 +41,7 @@ public partial class MainWindow
         check(vault.Document.Settings.Layout == "grid", "View button saves the two-column layout preference");
         var tiles = Descendants<ListBoxItem>(entryList!).Take(2).ToArray();
         check(tiles.Length == 2 && Math.Abs(tiles[0].TranslatePoint(new(), entryList).Y - tiles[1].TranslatePoint(new(), entryList).Y) < 1 && tiles[1].TranslatePoint(new(), entryList).X > tiles[0].TranslatePoint(new(), entryList).X, "Grid places exactly two entries side by side");
-        check(tiles.All(t => t.ActualHeight == 68), "Compact grid tiles use an equal 68-pixel slot");
+        check(tiles.All(t => t.ActualHeight == 60), "Compact grid tiles use an equal 60-pixel slot");
         check(!Descendants<Button>(entryList!).Any(b => b.Tag as string == "edit") && Descendants<Button>(tiles[0]).Any(b => b.Tag as string == "entry-action" && b.IsVisible), "Grid removes pencil controls and keeps the shortcut run action on the right");
         var tileRow = (RowModel)tiles[0].DataContext;
         check(BuildEntryContext(tileRow).Items.OfType<MenuItem>().Any(m => m.Header as string == "Edit"), "Editing remains available from the grid context menu");

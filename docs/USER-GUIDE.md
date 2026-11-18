@@ -93,6 +93,8 @@ Grid tiles show their entry type on the left. If clicking the tile already runs 
 
 The approved entry icons move slightly on hover: the secret key turns, login profile lifts, Shortcut arrow advances, SSH/RDP prompts shift, Type key depresses and Run actions respond. Movements reverse from their current position and settle without an idle loop. Windows animation preferences are honored. Folder, search, settings, close and window-mode symbols stay static.
 
+Rows and grid cards now share a 56px height and consistent space between the icon, text and Run action. The Run symbol is smaller while its click target remains comfortable. Changing views briefly fades the new arrangement into place without resizing the panel; Windows reduced motion skips the fade.
+
 Drag entries to reorder; an insertion line marks the destination. Drop onto a folder to move them or onto the parent breadcrumb to move up. A centered check fades over the folder's text, then the text returns without resizing the chip. Alt+Up/Down reorders a focused entry.
 
 Drag a folder to a sibling's edge to reorder, or its center to nest the whole subtree. The preview follows the pointer. Dropping onto the parent breadcrumb moves it up. Right-click → Move folder and Alt+Left/Right are alternatives. Self/descendant moves are rejected. Edit folder changes its name, parent and optional built-in icon.

@@ -30,6 +30,7 @@ Built-in clipboard suggestions offer Ping for an IP found in text and Test port 
 
 ## New in 0.9.7 preview
 
+- **More comfortable entry spacing:** smaller entry and Run icons, a shared text gutter, and more space around the Run action. Rows and grid cards share the same height; switching views uses a brief fade and keeps each folder's preference.
 - **Approved entry icons, now in the app:** a consistent key, login, Shortcut, SSH, Remote Desktop, Type, Run and Run and copy set. Small native hover movements respond smoothly; folders and toolbar icons stay static. Windows reduced motion is respected and there is no idle icon loop.
 - **Clear Shortcut identity:** the outward arrowhead now sits beyond the rounded box, with more separation around its edges.
 - **Recognizable Tray mode:** a static window with a minus sign replaces the download-like arrow. The pin and normal-window symbols stay unchanged.

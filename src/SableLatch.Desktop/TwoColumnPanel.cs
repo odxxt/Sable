@@ -5,7 +5,7 @@ namespace SableLatch.Desktop;
 // Fixed two-column tiles; realize only visible rows plus one row on each side.
 public sealed class TwoColumnPanel : VirtualizingPanel, IScrollInfo
 {
-    internal const double TileHeight = 68;
+    internal const double TileHeight = 60;
     private double offset, width, height, extent;
     public bool CanHorizontallyScroll { get; set; }
     public bool CanVerticallyScroll { get; set; } = true;

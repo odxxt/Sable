@@ -28,6 +28,7 @@ public partial class MainWindow
                 d.Items.Add(new() { ContentType = "sable.login", Label = "Lab login", Payload = JsonSerializer.SerializeToElement(new { username = "demo", password = "fictional-password" }), Order = 3 });
             });
             session.Mode = PanelMode.Window; UpdatePanelTopmost(); ApplyTaskbarVisibility(); UpdatePinButton(); ShowList(); UpdateLayout();
+            await PreviewEntrySpacing(Check, Render);
             var rows = entryList!.Items.Cast<RowModel>().ToArray();
             var shortcut = rows.Single(r => r.Item.Label == "Open notes"); var hybrid = rows.Single(r => r.Item.Label == "Server token");
             var shortcutTile = (ListBoxItem)entryList.ItemContainerGenerator.ContainerFromItem(shortcut);

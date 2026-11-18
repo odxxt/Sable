@@ -46,9 +46,15 @@ public sealed class EntryIdentity : FrameworkElement
         Geometry? Normalize(Geometry? original) { if (original is null) return null; var shape = original.Clone(); shape.Transform = new MatrixTransform(matrix); shape.Freeze(); return shape; }
         return new(Normalize(back), Normalize(moving), dx * x, dy * y, angle, matrix.Transform(new Point(15.5, 12.5)));
     }
+    static EntryIdentity()
+    {
+        // Template dimensions must override the default, including smaller Run icons.
+        WidthProperty.OverrideMetadata(typeof(EntryIdentity), new FrameworkPropertyMetadata(20d));
+        HeightProperty.OverrideMetadata(typeof(EntryIdentity), new FrameworkPropertyMetadata(20d));
+    }
     public EntryIdentity()
     {
-        Width = Height = 20; IsHitTestVisible = false;
+        IsHitTestVisible = false;
         Loaded += (_, _) => { Connect(); Move(owner?.IsMouseOver == true); };
         Unloaded += (_, _) => { Disconnect(); Reset(); };
         IsVisibleChanged += (_, _) => { if (!IsVisible) Reset(); else Move(owner?.IsMouseOver == true); };

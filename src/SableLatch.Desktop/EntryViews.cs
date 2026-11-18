@@ -54,17 +54,17 @@ public partial class MainWindow
     private string CurrentEntryLayout => folder is Guid id ? vault.Document!.Folders.FirstOrDefault(f => f.Id == id)?.Layout ?? "rows" : vault.Document!.Settings.Layout;
     private static readonly string RowTemplate = """
     <DataTemplate xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:SableLatch.Desktop;assembly=Sable">
-      <Border x:Name="Row" Background="{Binding EntryBackground}" CornerRadius="10" Height="56">
+      <Border x:Name="Row" Background="{Binding EntryBackground}" CornerRadius="10" Height="56" Margin="0,0,0,4">
         <Grid><Grid Visibility="{Binding ContentVisibility}"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
           <Border x:Name="HoverShade" Grid.ColumnSpan="3" Background="#12FFFFFF" CornerRadius="9" Opacity="0" IsHitTestVisible="False"/>
-          <Button Tag="copy" Style="{DynamicResource EntryButton}" HorizontalContentAlignment="Stretch" Padding="9,7" IsEnabled="{Binding Available}" ToolTip="{Binding HoverDetails}">
-            <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="27"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-              <local:EntryIdentity Kind="{Binding IconKind}" Interactive="True" Width="20" Height="20" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+          <Button Tag="copy" Style="{DynamicResource EntryButton}" HorizontalContentAlignment="Stretch" Padding="12,7,4,7" IsEnabled="{Binding Available}" ToolTip="{Binding HoverDetails}">
+            <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="30"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+              <local:EntryIdentity Kind="{Binding IconKind}" Interactive="True" Width="18" Height="18" HorizontalAlignment="Left" VerticalAlignment="Center"/>
               <StackPanel Grid.Column="1"><TextBlock Text="{Binding Title}" FontSize="13" FontWeight="Medium" TextTrimming="CharacterEllipsis"/><TextBlock Text="{Binding Subtitle}" Visibility="{Binding SubtitleVisibility}" FontSize="10" Foreground="#FFA3A3AA" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"/><StackPanel Orientation="Horizontal" Margin="0,4,0,0" Visibility="{Binding LoginVisibility}"><TextBlock Tag="Username" Text="username" FontSize="10" Opacity="{Binding UsernameOpacity}"/><TextBlock Text="  ·  " FontSize="10" Opacity=".35"/><TextBlock Tag="Password" Text="password" FontSize="10" Opacity="{Binding PasswordOpacity}"/></StackPanel></StackPanel>
             </Grid>
           </Button>
-          <Grid Grid.Column="2" Width="28" Margin="0,0,4,0" VerticalAlignment="Center">
-            <Button Tag="entry-action" Visibility="{Binding ActionVisibility}" Opacity=".7" Style="{DynamicResource EntryRunButton}" ToolTip="{Binding ActionLabel}" AutomationProperties.Name="{Binding ActionLabel}"><local:EntryIdentity Kind="{Binding ActionIconKind}" Interactive="True" Width="20" Height="20"/></Button>
+          <Grid Grid.Column="2" Width="28" Margin="0,0,8,0" VerticalAlignment="Center">
+            <Button Tag="entry-action" Height="32" Visibility="{Binding ActionVisibility}" Opacity=".7" Style="{DynamicResource EntryRunButton}" ToolTip="{Binding ActionLabel}" AutomationProperties.Name="{Binding ActionLabel}"><local:EntryIdentity Kind="{Binding ActionIconKind}" Interactive="True" Width="16" Height="16"/></Button>
             <TextBlock Tag="copy-feedback" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="#FF99C3A4" Visibility="{Binding CopyVisibility}" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"/>
           </Grid>
         </Grid>
@@ -84,6 +84,24 @@ public partial class MainWindow
       <DataTemplate.Triggers><Trigger SourceName="Row" Property="IsMouseOver" Value="True"><Trigger.EnterActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="HoverShade" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.12"/></Storyboard></BeginStoryboard></Trigger.EnterActions><Trigger.ExitActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetName="HoverShade" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.18"/></Storyboard></BeginStoryboard></Trigger.ExitActions></Trigger><Trigger SourceName="Row" Property="IsKeyboardFocusWithin" Value="True"><Setter TargetName="HoverShade" Property="Opacity" Value=".45"/></Trigger></DataTemplate.Triggers>
     </DataTemplate>
     """;
+    private void SwitchEntryLayout()
+    {
+        if (!Change(d => { var next = CurrentEntryLayout == "grid" ? "rows" : "grid"; if (folder is Guid id) d.Folders.Single(f => f.Id == id).Layout = next; else d.Settings.Layout = next; })) return;
+        if (entryList is { } previous)
+        {
+            previous.BeginAnimation(OpacityProperty, null);
+            previous.Opacity = 1;
+        }
+        ShowList();
+        if (entryList is not { } view || !SystemParameters.ClientAreaAnimation) return;
+        view.Opacity = .65;
+        RoutedEventHandler? stop = null;
+        void Clear() { if (stop is not null) view.Unloaded -= stop; view.BeginAnimation(OpacityProperty, null); view.Opacity = 1; }
+        stop = (_, _) => Clear(); view.Unloaded += stop;
+        var fade = new DoubleAnimation(.65, 1, TimeSpan.FromMilliseconds(140)) { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }, FillBehavior = FillBehavior.Stop };
+        fade.Completed += (_, _) => Clear();
+        view.BeginAnimation(OpacityProperty, fade);
+    }
     private void ShowList()
     {
         if (!vault.IsUnlocked) { ShowUnlock(); return; }
@@ -114,7 +132,7 @@ public partial class MainWindow
         var create = Button("＋", () => createMenu.IsOpen = true); create.ToolTip = "Create entry or folder";
         System.Windows.Automation.AutomationProperties.SetName(create, "Create entry or folder");
         createMenu.PlacementTarget = create; create.ContextMenu = createMenu;
-        var layout = Button("", () => { if (Change(d => { var next = CurrentEntryLayout == "grid" ? "rows" : "grid"; if (folder is Guid id) d.Folders.Single(f => f.Id == id).Layout = next; else d.Settings.Layout = next; })) ShowList(); });
+        var layout = Button("", SwitchEntryLayout);
         layout.Style = (Style)FindResource("HeaderButton"); layout.Content = new System.Windows.Shapes.Path { Width = 14, Height = 14, Stretch = Stretch.Uniform, Stroke = (Brush)FindResource("Muted"), StrokeThickness = 1.2, StrokeLineJoin = PenLineJoin.Round, Data = Geometry.Parse(CurrentEntryLayout == "grid" ? "M 1,2 L 13,2 M 1,7 L 13,7 M 1,12 L 13,12" : "M 1,1 L 6,1 6,6 1,6 Z M 9,1 L 14,1 14,6 9,6 Z M 1,9 L 6,9 6,14 1,14 Z M 9,9 L 14,9 14,14 9,14 Z") };
         layout.VerticalAlignment = VerticalAlignment.Center; layout.HorizontalAlignment = HorizontalAlignment.Right; layout.ToolTip = CurrentEntryLayout == "grid" ? "Switch to rows" : "Switch to grid"; System.Windows.Automation.AutomationProperties.SetName(layout, "Toggle entry layout"); DockPanel.SetDock(layout, Dock.Right); navRow.Children.Add(layout);
         create.HorizontalAlignment = HorizontalAlignment.Right; DockPanel.SetDock(create, Dock.Right); navRow.Children.Insert(0, create);

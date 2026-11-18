@@ -2,6 +2,9 @@
 
 ## 0.9.7 preview — Approved entry icons and clear window modes
 
+- Same-version spacing refresh: use 18px entry identities, 16px Run icons, a 12px icon-to-text gap and an 8px outer action inset. Keep the action target at 28 × 32px.
+- Match rows and grid cards at 56px high with a 60px vertical pitch. Update virtualized grid scrolling and apply a finite 140ms view-switch fade, honoring Windows animation preferences and stopping on completion/unload. Folder view preferences remain independent.
+- Let template dimensions override the icon's 20px default so smaller entry and Run icons render at their intended size.
 - Extend the Shortcut arrowhead beyond the rounded box and separate the frame from the head, preserving the shared native stroke and optical footprint.
 - Replace Tray mode's download-like arrow with a static window-and-minus symbol. Keep the upright pin and normal-window symbols unchanged.
 - Ship the approved key, login, Shortcut, SSH, Remote Desktop, Type, Run and Run and copy artwork with native hover motion. Starter and welcome identities match; folders, search, settings, close and window-mode icons remain static.

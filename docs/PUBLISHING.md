@@ -37,6 +37,8 @@ If the remote has advanced, integrate and verify its changes before pushing. Use
 
 Keep earlier releases available for rollback. Current platform packaging is standalone Windows x64; installer and ARM64 packages are not shipped. A source-only update can precede a release, but README must not imply that unuploaded assets are already downloadable.
 
+The maintainer explicitly requested the 0.9.7 spacing refresh under the same version. Its release notes disclose the replacement, and its source commit and SHA-256 checksums identify the refreshed build. Existing 0.9.7 users must download the ZIP again. This exception does not change the normal policy of assigning a new version to future releases.
+
 ## Make modules appear in the app
 
 Settings → Plugins & modules offers **Add a connection** for bundled offline SSH/RDP packages, **Install from ZIP…** and **Online catalog**. The app fetches the signed catalog only after **Check GitHub catalog**:
