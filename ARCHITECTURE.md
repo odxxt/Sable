@@ -97,6 +97,10 @@ Formatted secrets keep sanitized HTML beside plain text. AngleSharp parses data 
 
 Internal content/editor/presenter/clipboard/layout/toolbar interfaces support trusted composition. They are not the public ZIP API or a sandbox. See [Extensions](EXTENSIONS.md) and [module authoring](modules/README.md).
 
+The development build fetches a signed catalog and hash-verified module ZIPs from GitHub when requested. Release builds embed the publisher public key. Older builds use the legacy catalog so they only see compatible packages.
+
+Network Profile is an official-only host capability. It stores the adapter GUID and independently selected IPv4 and DNS settings in the encrypted vault. When run, Sable validates the profile, reviews it unless locally approved, then starts Windows PowerShell once with administrator approval. The fixed host script resolves the adapter GUID to its current index and invokes the system network configuration utility with validated IPv4 arguments. Neither module ZIP data nor entry text can supply executable code. DNS and static addressing are separate writes and a later stage can fail after an earlier one succeeds.
+
 ## Setup, audit and scaling
 
 `TypeClipboardText` bounds/validates text, removes trailing navigation keys and normalizes CRLF to one input unit. `TypeClipboardRunner` sends one scalar/key at a time with cancellable delays and destination checks. `NativeTyping` owns operation-scoped mouse/keyboard/foreground hooks, cursor restoration and Unicode/layout-based SendInput; disposal removes every hook. It neither opens the vault nor logs text. `TypeClipboardReader` reads bounded CF_UNICODETEXT. The optional signed `type` manifest appears under Extras and in the tray. Global non-secret `type-host.json` preferences permit locked tray use; entry overrides remain encrypted. UI dialogs explain first use/multiline navigation without previewing clipboard content. Foreground checks reduce accidental delivery but are not an atomic secure input channel. See [Type](docs/TYPE-CLIPBOARD.md).

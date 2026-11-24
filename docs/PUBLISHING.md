@@ -41,9 +41,9 @@ The maintainer explicitly requested the 0.9.7 spacing refresh under the same ver
 
 ## Make modules appear in the app
 
-Settings → Plugins & modules offers **Add a connection** for bundled offline SSH/RDP packages, **Install from ZIP…** and **Online catalog**. The app fetches the signed catalog only after **Check GitHub catalog**:
+**Settings → Plugins & modules → GitHub catalog** fetches the signed catalog on demand. **Install from ZIP…** supports previously downloaded packages. Keep module ZIPs out of the standalone app download. The signed packages stay in the source repository for download:
 
-[Official catalog](https://raw.githubusercontent.com/odxxt/Sable/main/modules/catalog.json)
+[Official catalog](https://raw.githubusercontent.com/odxxt/Sable/main/modules/catalog-v2.json)
 
 Each entry specifies an allowed repository ZIP URL and SHA-256. The catalog payload and each official manifest are independently ECDSA-signed against the embedded publisher key. The ZIP hash must also match. Editing signed bytes without re-signing invalidates the catalog/package.
 
@@ -54,7 +54,7 @@ For a new official module:
 1. Implement/test any required host capability in an app version first; API 1 ZIPs cannot supply arbitrary code or invent a new protocol handler.
 2. Define a supported manifest. Preserve its schema or use a new ID for an incompatible change.
 3. Sign the exact manifest with `modules/Sign-Official.ps1`, then pack with `modules/Pack-Module.ps1`.
-4. Update the catalog payload with name, description, allowed URL and ZIP SHA-256. Sign the exact payload bytes and place base64 payload/signature in `catalog.json`.
+4. Update the catalog payload with name, description, allowed URL and ZIP SHA-256. Sign the exact payload bytes and place base64 payload/signature in `catalog-v2.json`. Keep `catalog.json` compatible with older releases that cannot read newer host capabilities.
 5. Verify signatures, archives and downloads; commit only public artifacts and push. The next explicit catalog check sees the change. No separate server is needed.
 
 Installed enabled `putty`/`rdp` modules automatically appear under **New entry → Connection**; field modules get individual starters. UI/docs-only host changes do not require re-signing unchanged packages. Editing the source sample README does not modify an already packed ZIP; repacking is a separate package update because it changes its archive hash.

@@ -19,7 +19,7 @@ Open **+ → New entry**, then choose a described starter:
 | **Secret or login** | A saved value, or a username and password | Copy; a login copies username, then password |
 | **Shortcut** | An application, file, folder, Windows setting or command | Run |
 | **Connection** | Installed SSH or Remote Desktop modules | Launch |
-| **Extras** | Installed utility modules, starting with Type clipboard | Run the selected tool |
+| **Extras** | Installed utility modules such as Type clipboard and Network Profile | Run the selected tool |
 
 Connection appears only when an enabled connection module is installed. Other field modules are grouped under Extras by default; a manifest can choose a supported category. All available categories fit without scrolling. Module installation stays in Settings. [The entry-model guide](ENTRY-MODEL.md) includes a diagram and all click-behavior details.
 
@@ -59,7 +59,7 @@ The masked editor shows **Formatting kept**. This is preservation, not a rich-te
 
 ## Type clipboard
 
-Install **Type clipboard** from Settings → Plugins & modules → Add an extra. Create a reusable entry under **+ → New entry → Extras → Type clipboard**, or right-click the tray → **Type clipboard**. The tray action also works while the vault is locked. It always types the current clipboard, not a saved entry value.
+Install **Type clipboard** from Settings → Plugins & modules → GitHub catalog in the development build. Create a reusable entry under **+ → New entry → Extras → Type clipboard**, or right-click the tray → **Type clipboard**. The tray action also works while the vault is locked. It always types the current clipboard, not a saved entry value.
 
 Sable hides, the cursor becomes a crosshair, and you click the destination. The default delay is 500 ms, followed by 25 ms between characters. Esc cancels remaining input. A different foreground window or a Windows/session lock cancels the operation. Already typed text remains. Internal line breaks/tabs are sent; trailing Enter/Tab characters are stripped and no extra Enter is added. Multiline confirmation is on by default.
 
@@ -109,7 +109,16 @@ Entry right-click menus keep **Edit, Duplicate, Move to folder, Delete** in orde
 
 ## Modules and connections
 
-Open **Settings → Plugins & modules**. Installed modules show a check and their version; click one for its settings. **Add a connection** offers SSH · PuTTY and Remote Desktop if not installed. These included packages install offline. Use **Install from ZIP…** for another package, or **Online catalog → Check GitHub catalog** for the signed catalog. There are no automatic catalog checks. **Default entry types** controls the built-in choices.
+In the development build, open **Settings → Plugins & modules → GitHub catalog**, select a module and review it before installing. Sable verifies the GitHub catalog signature and the selected ZIP before installation. **Install from ZIP…** accepts packages you already downloaded. Installed modules show their version and open their settings. Sable contacts GitHub when you open the catalog or select a download. **Default entry types** controls the built-in choices.
+
+### Network Profile (development build)
+
+Install **Network Profile** from the GitHub catalog, then choose **+ → New entry → Extras → Network Profile**. Give the entry a name and select a Windows network adapter.
+
+- **IPv4 address** accepts **Keep current**, **Automatic (DHCP)** or **Manual**. Manual takes an IP address and a subnet mask such as `255.255.255.0` or `/24`. It replaces the adapter's IPv4 addresses and default gateway. Leaving the gateway blank sets no default gateway on that adapter.
+- **IPv4 DNS servers** has the same three choices. Manual takes a primary server and an optional secondary server. For a DNS-only profile, leave the IPv4 address on **Keep current**.
+
+Click the entry, check the adapter and settings, and choose **Apply changes**. Clear **Review changes before applying** in the editor to skip Sable's review for that saved configuration on this PC. Windows authorization is still required. After a transfer or on a different PC, an entry without local approval shows the review and may need an adapter selected again. The module changes IPv4 only. Applying a profile can interrupt network connections, and a later step can fail after an earlier one has taken effect.
 
 ZIP modules are restricted definitions, not executable plugins. They cannot read secret values or run arbitrary background code. Uninstalling/disabling leaves entries encrypted and unavailable until a compatible module is restored. See [the module guide](../modules/README.md) for samples, signatures and supported capabilities.
 

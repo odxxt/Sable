@@ -14,6 +14,8 @@ A compact Windows tray companion for the things you use every day: secrets, logi
 
 *Screenshots use fictional demonstration data. This documentation describes the 0.9.7 preview source; check the version on the release page when downloading.*
 
+The unreleased source adds **Network Profile** under Extras and downloads official modules on demand from GitHub. See the [changelog](CHANGELOG.md) for the current development changes.
+
 ## A small app, useful every day
 
 - **Start with what you need.** Choose **Secret or login**, **Shortcut**, or **Connection** when a connection module is installed. Brief descriptions and tooltips explain each choice. Add a username only when you need one.

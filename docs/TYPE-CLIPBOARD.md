@@ -1,6 +1,6 @@
 # Type clipboard — Sable 0.9.4 preview
 
-Install the optional **Type clipboard** module in Settings → Plugins & modules → Add an extra. It is included offline and available as a signed ZIP. Nothing is enabled automatically. Create entries via **New entry → Extras → Type clipboard** or use the new tray-menu action, even while locked.
+Install the optional **Type clipboard** module in **Settings → Plugins & modules → GitHub catalog** or install its signed ZIP. Create entries via **New entry → Extras → Type clipboard** or use the tray-menu action, even while locked.
 
 ## Use
 

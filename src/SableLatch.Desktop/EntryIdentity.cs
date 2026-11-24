@@ -32,6 +32,7 @@ public sealed class EntryIdentity : FrameworkElement
         ["terminal"] = Art(Box(4.5, 3.5, 22, 18), Path("M9 9L13 12.5L9 16M17 16H22"), 18, 15, dx: 1.8),
         ["desktop"] = Art(Group(Box(4.5, 4, 22, 14), Path("M15.5 18V22M10.5 22H20.5")), Path("M10 9L14 12L10 15M17 12H22"), 18, 17, dx: 1.4, dy: -.8),
         ["keyboard"] = Art(Group(Box(4.5, 5.5, 22, 14), Path("M9 10H9.1M13 10H13.1M17 10H17.1M21 10H21.1")), Path("M9 15H22"), 18, 13.5, dy: 1.6),
+        ["network"] = Art(Path("M7 3V9M7 15V21M14 3V13M14 19V21M21 3V7M21 13V21"), Path("M4 9H10V15H4Z M11 13H17V19H11Z M18 7H24V13H18Z"), 17, 17, dy: -.7),
         ["run"] = Art(null, Path("M9 2.5L25 12.5L9 22.5Z"), 15, 17.5, dx: 1.9),
         ["run-copy"] = Art(Path("M6.5 5L20.5 13.5L6.5 22Z"), Path("M20 3H26V9M17 6H23V12H17Z"), 18, 17.5, dx: 1.6, dy: -1.4),
         ["lock"] = Art(Path("M4 9H16V19H4Z M6 9V6C6 0 14 0 14 6V9 M10 12V16"), null, 13, 17.5),

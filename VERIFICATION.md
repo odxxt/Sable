@@ -1,5 +1,10 @@
 # Verification
 
+## Unreleased Network Profile and GitHub module downloads
+
+- The Windows fixture verifies the signed extra module, field validation, selective changes, review and cancellation, device-specific review opt-out, missing adapters, and preserving entries on uninstall. The broker checks run the actual generated script in Windows PowerShell with the network command stubbed and verify static IPv4, DHCP, DNS-only, secondary DNS failure and missing-adapter behavior.
+- Real administrator approval and changes on a physical adapter still require a manual test. The automated checks leave the machine's network configuration alone.
+
 ## Current 0.9.7 preview — Approved icons and spacing refresh
 
 - **371 core checks** and **31 native module/credential checks** passed for the initial 0.9.7 build. The native suite verifies signed packages/catalog, exact pipe reader, unexpected-client rejection, cancellation, buffer clearing, real installed PuTTY consumption with fictional credentials/loopback and the CurrentUser DPAPI RDP lifecycle. This does not test a successful live server login. Those components and packages are unchanged by the spacing refresh; these counts are retained evidence, not new runs.

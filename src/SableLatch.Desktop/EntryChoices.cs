@@ -23,6 +23,7 @@ public partial class MainWindow
         var iconHost = new Grid { Width = 20, Height = 20, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center, IsHitTestVisible = false };
         if (icon == "shortcut") iconHost.Children.Add(ShortcutSymbol());
         else if (icon is "connection" or "rdp" or "ssh") iconHost.Children.Add(ConnectionIcon(icon));
+        else if (icon is "network" or "keyboard") iconHost.Children.Add(new EntryIdentity { Kind = icon });
         else if (icon == "\uE72E") iconHost.Children.Add(new EntryIdentity { Kind = "secret" });
         else iconHost.Children.Add(new TextBlock { Text = icon, FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 17, Opacity = .8, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center });
         grid.Children.Add(iconHost);
@@ -75,7 +76,9 @@ public partial class MainWindow
         var stack = Form("Extras", "", "editor", parent: ShowEntryStarters, compact: true);
         stack.Children.Add(Text("Choose a tool", 12, true));
         foreach (var provider in AvailableStarters.OfType<DeclarativeProvider>().Where(p => p.Package.Manifest.EffectiveCategory == "extras"))
-            stack.Children.Add(StarterRow(provider.Descriptor.Name, provider.Package.Manifest.Description, provider.Descriptor.Symbol, () => ShowEditor(selectedType: provider.Descriptor.Id)));
+            stack.Children.Add(StarterRow(provider.Descriptor.Name, provider.Package.Manifest.Description,
+                provider.Package.Manifest.Icon is "network" or "keyboard" ? provider.Package.Manifest.Icon : provider.Descriptor.Symbol,
+                () => ShowEditor(selectedType: provider.Descriptor.Id)));
         FocusStarter(stack);
     }
     private void FocusStarter(StackPanel stack)

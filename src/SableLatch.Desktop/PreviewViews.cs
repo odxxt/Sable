@@ -30,6 +30,7 @@ public partial class MainWindow
         if (Environment.GetCommandLineArgs().Contains("--preview-polish")) { await PreviewPolish(); return; }
         if (Environment.GetCommandLineArgs().Contains("--preview-navigation")) { await PreviewNavigation(); return; }
         if (Environment.GetCommandLineArgs().Contains("--preview-network-typing")) { await PreviewNetworkTyping(); return; }
+        if (Environment.GetCommandLineArgs().Contains("--preview-network-profile")) { await PreviewNetworkProfile(); return; }
         if (Environment.GetCommandLineArgs().Contains("--preview-type")) { await PreviewType(); return; }
         if (Environment.GetCommandLineArgs().Contains("--preview-starters")) { await PreviewStarters(); return; }
         if (Environment.GetCommandLineArgs().Contains("--preview-refine")) { await PreviewRefine(); return; }
@@ -786,9 +787,9 @@ public partial class MainWindow
             ReviewModule(officialModule); UpdateLayout();
             CheckView(Descendants<TextBlock>(Body).Any(t => t.Text == "✓  Already installed") && !Descendants<Button>(Body).Any(b => b.Content as string == "Install"), "Already installed module does not offer duplicate installation");
             ShowModuleCatalog(); await Render("68-module-installed");
-            CheckView(Descendants<Button>(Body).Any(b => b.Content as string == "PuTTY SSH  ✓"), "Local catalog marks PuTTY installed");
+            CheckView(Descendants<Button>(Body).Any(b => b.Content as string == "PuTTY SSH  ✓"), "Catalog marks PuTTY installed");
             ShowModules(); UpdateLayout();
-            CheckView(Descendants<Button>(Body).Any(b => b.Content as string == "PuTTY SSH  ✓"), "Plugin manager marks PuTTY installed");
+            CheckView(Descendants<Button>(Body).Any(b => System.Windows.Automation.AutomationProperties.GetName(b) == "PuTTY SSH installed"), "Plugin manager marks PuTTY installed");
             ShowEditor(selectedType: officialModule.Manifest.ContentType); UpdateLayout();
             TextBox ModuleInput(string name) => Descendants<TextBox>(Body).Single(b => System.Windows.Automation.AutomationProperties.GetName(b) == name);
             ModuleInput("Name").Text = "Test server"; ModuleInput("Host").Text = "127.0.0.1"; ModuleInput("Username").Text = "fixture";

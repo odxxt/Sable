@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Download official modules from **Settings → Plugins & modules → GitHub catalog**. Release builds omit module ZIPs. Existing installations and local ZIP imports continue to work.
+- Add **Network Profile** under Extras. Save an adapter's static or automatic IPv4 settings, DNS settings, or both. Review the change before applying by default. Windows administrator approval applies even when the Sable review is skipped.
+
 ## 0.9.7 preview — Approved entry icons and clear window modes
 
 - Same-version spacing refresh: use 18px entry identities, 16px Run icons, a 12px icon-to-text gap and an 8px outer action inset. Keep the action target at 28 × 32px.

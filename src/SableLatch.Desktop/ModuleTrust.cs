@@ -7,7 +7,7 @@ namespace SableLatch.Desktop;
 
 internal static class ModuleTrust
 {
-    public const string CatalogUrl = "https://raw.githubusercontent.com/odxxt/Sable/main/modules/catalog.json";
+    public const string CatalogUrl = "https://raw.githubusercontent.com/odxxt/Sable/main/modules/catalog-v2.json";
     public static byte[] Resource(string name)
     {
         using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Sable.Modules." + name) ?? Assembly.GetExecutingAssembly().GetManifestResourceStream("SableLatch.Modules." + name) ?? throw new InvalidDataException("Module resource unavailable.");
@@ -23,6 +23,24 @@ internal static class ModuleTrust
         address = address.Replace("https://raw.githubusercontent.com/odxxt/SableLatch/", "https://raw.githubusercontent.com/odxxt/Sable/", StringComparison.Ordinal);
         if (!Uri.TryCreate(address, UriKind.Absolute, out var uri) || uri.Scheme != "https" || uri.Host != "raw.githubusercontent.com" || !uri.AbsolutePath.StartsWith("/odxxt/Sable/", StringComparison.Ordinal) || uri.UserInfo.Length > 0 || uri.Query.Length > 0 || uri.Fragment.Length > 0)
             throw new InvalidDataException("The catalog can download only from the official Sable GitHub repository.");
+#if DEBUG
+        if (App.PreviewMode)
+        {
+            token.ThrowIfCancellationRequested();
+            var resource = uri.AbsolutePath switch
+            {
+                "/odxxt/Sable/main/modules/catalog-v2.json" => "catalog-v2.json",
+                "/odxxt/Sable/main/modules/packages/sablelatch.putty.zip" => "putty.zip",
+                "/odxxt/Sable/main/modules/packages/sablelatch.rdp.zip" => "rdp.zip",
+                "/odxxt/Sable/main/modules/packages/sable.type.zip" => "type.zip",
+                "/odxxt/Sable/main/modules/packages/sable.network-profile.zip" => "network-profile.zip",
+                _ => throw new InvalidDataException("Preview module fixture is unavailable.")
+            };
+            var fixture = Resource(resource);
+            if (fixture.Length > limit) throw new InvalidDataException("Download exceeds its size limit.");
+            return fixture;
+        }
+#endif
         using var client = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false }) { Timeout = TimeSpan.FromSeconds(15) };
         using var response = await client.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, token);
         response.EnsureSuccessStatusCode();

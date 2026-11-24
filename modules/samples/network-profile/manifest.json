@@ -1,0 +1,13 @@
+{
+  "apiVersion": 1,
+  "id": "sable.network-profile",
+  "version": "1.0.0",
+  "name": "Network Profile",
+  "author": "Sable",
+  "description": "Switch IPv4 and DNS settings on a Windows adapter",
+  "icon": "network",
+  "handler": "network-profile",
+  "category": "extras",
+  "fields": [],
+  "actions": []
+}

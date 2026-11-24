@@ -11,7 +11,7 @@ internal static class RdpChecks
 {
     public static async Task Run(Action<bool, string> check, Action<string> blocked)
     {
-        var package = ModulePackages.Read(ModuleTrust.Resource("rdp.zip"), ModuleTrust.Verify);
+        var package = ModulePackages.Read(File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "modules", "sablelatch.rdp.zip")), ModuleTrust.Verify);
         check(package.Official && package.Manifest.Handler == "rdp", "Bundled RDP module retains its valid publisher signature");
         var directory = Path.Combine(Path.GetTempPath(), "sable-native-rdp-test-" + Guid.NewGuid().ToString("N"));
         var profile = new RdpProfile("fixture.example", "DOMAIN\\fixture");

@@ -14,7 +14,7 @@ public sealed class RowModel : System.ComponentModel.INotifyPropertyChanged
     public string CompactSubtitle => !Available ? Subtitle : Shortcut ? Subtitle.Replace("Shortcut · ", "", StringComparison.Ordinal) : Item.IsSensitive ? "Secret" : Subtitle;
     public required string Symbol { get; init; }
     public string IconKind { get; init; } = "note";
-    public string HoverDetails => Title + "\n" + (TypeAction ? "Choose where to type clipboard text · Esc cancels" : Item.ClickBehavior == "run-copy" ? "Click to run and copy" : Item.ClickBehavior == "run" || Item.ClickBehavior == "auto" && Shortcut ? "Click to run" : Item.ContentType == "sable.login" ? "Copy username, then password" : "Click to copy") + (Item.Description.Length == 0 ? "" : "\n\n" + Item.Description);
+    public string HoverDetails => Title + "\n" + (NetworkAction ? "Apply saved network settings" : TypeAction ? "Choose where to type clipboard text · Esc cancels" : Item.ClickBehavior == "run-copy" ? "Click to run and copy" : Item.ClickBehavior == "run" || Item.ClickBehavior == "auto" && Shortcut ? "Click to run" : Item.ContentType == "sable.login" ? "Copy username, then password" : "Click to copy") + (Item.Description.Length == 0 ? "" : "\n\n" + Item.Description);
     public bool DeleteReady { get; set; }
     public bool DeleteArmed { get; set; }
     public bool Copied { get; set; }
@@ -39,11 +39,12 @@ public sealed class RowModel : System.ComponentModel.INotifyPropertyChanged
     public Visibility ActionVisibility => !Copied && !Started && !DeleteArmed && Available && (ModuleAction || Item.Advanced?.Action?.Enabled == true) ? Visibility.Visible : Visibility.Collapsed;
     public bool RdpAction { get; init; }
     public bool TypeAction { get; init; }
+    public bool NetworkAction { get; init; }
     private bool CopiesOnAction => Item.ClickBehavior == "run-copy" || Item.Advanced?.Action?.CopyOnRun == true || Item.ClickBehavior == "auto" && RdpAction && Item.Field("copyOnLaunch") == "true";
-    public string ActionLabel => TypeAction ? "Type clipboard" : RdpAction ? (CopiesOnAction ? "Launch & copy password" : "Launch") : ModuleAction && Shortcut && CopiesOnAction ? "Run & copy password" : CopiesOnAction ? "Run & copy" : "Run";
+    public string ActionLabel => NetworkAction ? "Apply network profile" : TypeAction ? "Type clipboard" : RdpAction ? (CopiesOnAction ? "Launch & copy password" : "Launch") : ModuleAction && Shortcut && CopiesOnAction ? "Run & copy password" : CopiesOnAction ? "Run & copy" : "Run";
     public Visibility ActionCopyVisibility => CopiesOnAction ? Visibility.Visible : Visibility.Collapsed;
     public string ActionIconKind => CopiesOnAction ? "run-copy" : "run";
-    private bool MainClickRuns => TypeAction || Item.ClickBehavior is "run" or "run-copy" || Item.ClickBehavior != "copy" && Shortcut;
+    private bool MainClickRuns => TypeAction || NetworkAction || Item.ClickBehavior is "run" or "run-copy" || Item.ClickBehavior != "copy" && Shortcut;
     public Visibility GridSecondaryVisibility => !MainClickRuns && Available && (ModuleAction || Item.Advanced?.Action?.Enabled == true) ? Visibility.Visible : Visibility.Collapsed;
     public Visibility GridIconVisibility => Copied || Started ? Visibility.Hidden : Visibility.Visible;
 }
@@ -205,11 +206,12 @@ public partial class MainWindow
             {
                 Item = i, Title = string.IsNullOrWhiteSpace(i.Label) ? i.IsSensitive ? "Secret" : i.Field("text").Split('\n')[0] : i.Label,
                 Shortcut = IsShortcut(provider),
-                Subtitle = provider is DeclarativeProvider { Package.Manifest.Handler: "type" } && available ? "Type clipboard" : !available ? "Module unavailable" : IsShortcut(provider) ? "Shortcut · " + (provider is ShortcutProvider ? ActionKindName(i.Advanced?.Action?.Kind) : provider!.Descriptor.Name) : i.IsSensitive ? "Secret · ••••••••" : string.IsNullOrWhiteSpace(i.Label) ? "Text" : i.Field("text").Replace('\n', ' '),
+                Subtitle = !available ? "Module unavailable" : provider is DeclarativeProvider { Package.Manifest.Handler: "type" or "network-profile" } extra ? extra.Descriptor.Name : IsShortcut(provider) ? "Shortcut · " + (provider is ShortcutProvider ? ActionKindName(i.Advanced?.Action?.Kind) : provider!.Descriptor.Name) : i.IsSensitive ? "Secret · ••••••••" : string.IsNullOrWhiteSpace(i.Label) ? "Text" : i.Field("text").Replace('\n', ' '),
                 Symbol = provider?.Descriptor.Symbol ?? "\uE74C", DeleteArmed = armedDelete == i.Id, Available = available, PendingPassword = pendingLogin == i.Id,
                 IconKind = provider is DeclarativeProvider declared ? declared.Package.Manifest.Icon : i.ContentType switch { "sable.secret" => "secret", "sable.login" => "login", "sable.shortcut" => "shortcut", _ => "note" },
                 ModuleAction = provider is DeclarativeProvider, RdpAction = provider is DeclarativeProvider { Package.Manifest.Handler: "rdp" },
                 TypeAction = provider is DeclarativeProvider { Package.Manifest.Handler: "type" },
+                NetworkAction = provider is DeclarativeProvider { Package.Manifest.Handler: "network-profile" },
                 LoginVisibility = i.ContentType == "sable.login" ? Visibility.Visible : Visibility.Collapsed
             };
         }).ToList();
@@ -218,6 +220,12 @@ public partial class MainWindow
     {
         if (busy || !vault.IsUnlocked || e.OriginalSource is not Button b || b.DataContext is not RowModel row) return;
         var action = b.Tag as string;
+        if (action is "copy" or "entry-action" && row.Available && row.NetworkAction)
+        {
+            e.Handled = true;
+            await RunNetworkProfile(row.Item);
+            return;
+        }
         if (action is "copy" or "entry-action" && row.Available && content.Find(row.Item.ContentType) is DeclarativeProvider { Package.Manifest.Handler: "type" } typeProvider)
         { StartTypeClipboard(typeProvider.Package, row.Item); e.Handled = true; return; }
         if (action is not "edit" and not "confirm-delete") armedDelete = null;
@@ -318,7 +326,19 @@ public partial class MainWindow
         if ((row.ModuleAction || row.Item.Advanced?.Action?.Enabled == true) && !row.RdpAction)
         {
             var run = new MenuItem { Header = row.ActionLabel, IsEnabled = row.Available };
-            run.Click += (_, _) => { if (content.Find(row.Item.ContentType) is DeclarativeProvider module) { if (module.Package.Manifest.Handler == "putty") RunPutty(row.Item); else if (module.Package.Manifest.Handler == "rdp") RunRdp(row.Item); else if (module.Package.Manifest.Handler == "type") StartTypeClipboard(module.Package, row.Item); else ShowModuleDetails(row.Item); } else ReviewEntryAction(row.Item); }; menu.Items.Add(run); menu.Items.Add(new Separator());
+            run.Click += async (_, _) =>
+            {
+                if (row.NetworkAction) await RunNetworkProfile(row.Item);
+                else if (content.Find(row.Item.ContentType) is DeclarativeProvider module)
+                {
+                    if (module.Package.Manifest.Handler == "putty") RunPutty(row.Item);
+                    else if (module.Package.Manifest.Handler == "rdp") RunRdp(row.Item);
+                    else if (module.Package.Manifest.Handler == "type") StartTypeClipboard(module.Package, row.Item);
+                    else ShowModuleDetails(row.Item);
+                }
+                else ReviewEntryAction(row.Item);
+            };
+            menu.Items.Add(run); menu.Items.Add(new Separator());
         }
         var edit = new MenuItem { Header = "Edit", IsEnabled = row.Available }; edit.Click += (_, _) => ShowEditor(row.Item); menu.Items.Add(edit);
         var duplicate = new MenuItem { Header = "Duplicate", IsEnabled = row.Available }; duplicate.Click += (_, _) => DuplicateEntry(row.Item); menu.Items.Add(duplicate);

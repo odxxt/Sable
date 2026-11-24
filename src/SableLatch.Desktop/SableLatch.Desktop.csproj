@@ -15,9 +15,13 @@
   <ItemGroup><Resource Include="Assets\SableLatch.ico" /></ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="..\..\modules\publisher.pub" LogicalName="SableLatch.Modules.publisher.pub" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <EmbeddedResource Include="..\..\modules\catalog-v2.json" LogicalName="Sable.Modules.catalog-v2.json" />
     <EmbeddedResource Include="..\..\modules\packages\sablelatch.putty.zip" LogicalName="SableLatch.Modules.putty.zip" />
     <EmbeddedResource Include="..\..\modules\packages\sablelatch.rdp.zip" LogicalName="SableLatch.Modules.rdp.zip" />
     <EmbeddedResource Include="..\..\modules\packages\sable.type.zip" LogicalName="Sable.Modules.type.zip" />
+    <EmbeddedResource Include="..\..\modules\packages\sable.network-profile.zip" LogicalName="Sable.Modules.network-profile.zip" />
   </ItemGroup>
   <ItemGroup><Content Include="Themes\*.json" CopyToOutputDirectory="PreserveNewest"/><Content Include="Languages\*.json" CopyToOutputDirectory="PreserveNewest"/></ItemGroup>
   <ItemGroup><PackageReference Include="AngleSharp" Version="1.7.3" /></ItemGroup>

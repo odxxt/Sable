@@ -2,7 +2,7 @@
 
 Connection placement is automatic: installed, enabled packages with `handler: "putty"` or `handler: "rdp"` appear under **New entry → Connection**. Other installed modules appear under Extras by default. Optional `category: "connection"` or `category: "extras"` groups a supported handler; category alone never adds a host capability. The root fits three or four categories without scrolling. No module installer appears in entry creation; use Settings → Plugins & modules. This is host-owned categorization, not a new permission or executable plugin hook. Unsupported handlers still fail validation.
 
-Modules add entry types and actions while keeping Sable small. Open **Settings → Plugins & modules**: use **Add a connection** for the included offline SSH · PuTTY and Remote Desktop packages, **Install from ZIP…** for a local package, or **Online catalog → Check GitHub catalog** for the signed online list. Installed modules show a check and version and open their settings instead of offering installation again. No background catalog check runs.
+Modules add entry types and actions while keeping Sable small. Open **Settings → Plugins & modules → GitHub catalog** to download verified official packages, or use **Install from ZIP…** for a package you already have. Installed modules show a check and version and open their settings. Sable checks the catalog when you open it.
 
 ## Start with a sample
 
@@ -87,7 +87,7 @@ Locking cancels pending password delivery; the pending child process is stopped 
 
 ## Type clipboard 1.0
 
-Install from **Add an extra**, the included offline catalog, a signed ZIP or the online catalog once the updated repository is published. The new package uses ID `sable.type`, `handler: "type"`, `icon: "keyboard"` and `category: "extras"`. It requires host 0.9.3+. Earlier hosts reject unsupported handlers.
+Install from the GitHub catalog or a signed ZIP. The package uses ID `sable.type`, `handler: "type"`, `icon: "keyboard"` and `category: "extras"`. It requires host 0.9.3+. Earlier hosts reject unsupported handlers.
 
 The host owns target selection, clipboard reading, bounded input and cancellation; a package supplies no executable code and cannot define replacement fields/actions. Global non-secret settings live in `type-host.json` to support locked tray use; entry overrides remain encrypted. See [the Type guide](../docs/TYPE-CLIPBOARD.md) and [sample](samples/type/README.md).
 
@@ -103,7 +103,7 @@ Module settings use the vault's encrypted extension settings. Package manifests 
 
 The shipped publisher public key is `publisher.pub`. Official manifests and `catalog.json` are verified against it. The catalog envelope holds base64 `payload` and `signature`; its signed payload is a JSON array of name, description, URL and ZIP SHA-256. Downloads are restricted to HTTPS under the official `raw.githubusercontent.com/odxxt/Sable/` repository path, with no redirects. Packages must also have a verified official manifest signature. No automatic background catalog checks or updates occur.
 
-The signed PuTTY catalog is published and was verified online on 24 September 2026. See [Publishing](../docs/PUBLISHING.md) for updates. The bundled module and local ZIP installation also work offline.
+See [Publishing](../docs/PUBLISHING.md) for catalog updates. Install from ZIP works offline after you download the package.
 
 Official signing material must remain outside the repository and release archives. Back up the publisher private key and keep its unlock password separately. Losing the key requires an explicit trust-key transition in a future app version. A valid signature verifies publisher identity and package integrity; it is not an independent security audit.
 
@@ -111,6 +111,10 @@ Official signing material must remain outside the repository and release archive
 
 `handler: "rdp"` and `icon: "desktop"` request the host-owned RDP editor and launcher. Fields and actions must be empty, just like the protected PuTTY capability: ZIP authors cannot add credential extraction, arbitrary arguments, shell commands or executable files. See `samples/rdp/manifest.json`. A community example must use its own namespace rather than `sablelatch.*` and omit the official signature.
 
-Install Remote Desktop from **Add a connection**, then choose **New entry → Connection → Remote Desktop**. Host 0.9.1 launches on the default row click. **When I click the entry** supports Copy, Run and Run and copy; the menu also offers explicit Launch / Launch & copy. **More options** groups domain, port and initial full-screen preference. The first-use review is remembered only on this Windows environment; destination, account, client, launch mode, host resource policy or package changes require a new review. Disabling/uninstalling preserves encrypted entries. Windows verifies the server certificate and offers its normal warning/choice when verification fails, subject to policy. See the [user guide](../docs/USER-GUIDE.md#remote-desktop) for setup and limitations.
+Install Remote Desktop from the GitHub catalog, then choose **New entry → Connection → Remote Desktop**. Host 0.9.1 launches on the default row click. **When I click the entry** supports Copy, Run and Run and copy; the menu also offers explicit Launch / Launch & copy. **More options** groups domain, port and initial full-screen preference. The first-use review is remembered only on this Windows environment; destination, account, client, launch mode, host resource policy or package changes require a new review. Disabling/uninstalling preserves encrypted entries. Windows verifies the server certificate and offers its normal warning/choice when verification fails, subject to policy. See the [user guide](../docs/USER-GUIDE.md#remote-desktop) for setup and limitations.
 
-The catalog at `main/modules/catalog.json` includes the signed PuTTY and RDP packages. Check GitHub catalog retrieves those packages on demand; bundled catalog installation also works offline. Native display defaults and remote clipboard support are implemented by the host without changing the signed module schema. The package supports host 0.8.0+, whose original embedded RDP window differs from the current native mstsc path.
+Native display defaults and remote clipboard support are implemented by the host without changing the signed module schema. The package supports host 0.8.0+, whose original embedded RDP window differs from the current native mstsc path.
+
+## Network Profile 1.0
+
+The signed `sable.network-profile` ZIP enables **New entry → Extras → Network Profile** in the development build. The `network-profile` handler requires the official signature and reserved ID. Its manifest supplies neither fields nor actions. Sable owns the editor, validation, review, and administrator operation. See the [user guide](../docs/USER-GUIDE.md#network-profile-development-build).

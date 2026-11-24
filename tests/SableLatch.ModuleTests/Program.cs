@@ -64,11 +64,22 @@ using (var deadline = new CancellationTokenSource(100))
     try { await pipe.Deliver(expected, canary.ToArray(), deadline.Token); } catch (OperationCanceledException) { cancelled = true; }
     await Stop(expected); Check(cancelled, "Lock/timeout cancellation interrupts pending pipe connection");
 }
-var package = ModulePackages.Read(ModuleTrust.Resource("putty.zip"), ModuleTrust.Verify);
+var fixtures = Path.Combine(AppContext.BaseDirectory, "modules");
+var package = ModulePackages.Read(File.ReadAllBytes(Path.Combine(fixtures, "sablelatch.putty.zip")), ModuleTrust.Verify);
 await RdpChecks.Run(Check, message => { checks.Add("BLOCKED: " + message); Console.WriteLine(checks[^1]); });
-Check(package.Official && package.Manifest.Handler == "putty", "Bundled PuTTY module passes actual publisher signature verification");
-var source = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../modules/catalog.json"));
-if (File.Exists(source)) Check(ModuleTrust.ReadCatalog(File.ReadAllBytes(source)).Count == 3, "Official GitHub catalog signature validates all three modules");
+Check(package.Official && package.Manifest.Handler == "putty", "PuTTY module passes actual publisher signature verification");
+var catalog = ModuleTrust.ReadCatalog(File.ReadAllBytes(Path.Combine(fixtures, "catalog-v2.json")));
+Check(catalog.Any(e => e.Name == "Network Profile"), "Signed GitHub catalog contains Network Profile");
+foreach (var entry in catalog)
+{
+    var zip = File.ReadAllBytes(Path.Combine(fixtures, Path.GetFileName(new Uri(entry.Url).AbsolutePath)));
+    Check(Convert.ToHexString(SHA256.HashData(zip)).Equals(entry.Sha256, StringComparison.OrdinalIgnoreCase)
+        && ModulePackages.Read(zip, ModuleTrust.Verify).Official, "Catalog hash and publisher signature match " + entry.Name);
+}
+#if !DEBUG
+Check(!typeof(ModuleTrust).Assembly.GetManifestResourceNames().Any(n => n.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)),
+    "Release app embeds no module ZIPs");
+#endif
 var installed = PuttyBroker.Detect();
 if (installed.Length > 0)
 {

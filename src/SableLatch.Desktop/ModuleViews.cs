@@ -19,7 +19,14 @@ public partial class MainWindow
         foreach (var package in installedModules)
         {
             var provider = new DeclarativeProvider(package); content.Register(provider);
-            extensions.RegisterEditor(new FieldEditorFactory(provider.Descriptor.Id, (item, save, _) => package.Manifest.Handler switch { "putty" => BuildPuttyFields(provider, item, save), "rdp" => BuildRdpFields(provider, item, save), "type" => BuildTypeFields(provider, item, save), _ => BuildFields(provider, item, save) }));
+            extensions.RegisterEditor(new FieldEditorFactory(provider.Descriptor.Id, (item, save, _) => package.Manifest.Handler switch
+            {
+                "putty" => BuildPuttyFields(provider, item, save),
+                "rdp" => BuildRdpFields(provider, item, save),
+                "type" => BuildTypeFields(provider, item, save),
+                "network-profile" => BuildNetworkProfileFields(provider, item, save),
+                _ => BuildFields(provider, item, save)
+            }));
         }
         SyncTypeAvailability();
     }
@@ -30,33 +37,25 @@ public partial class MainWindow
         if (!vault.IsUnlocked) return;
         var stack = Form("Plugins & modules", "", "settings", parent: ShowSettings);
         if (rejectedModules > 0) stack.Children.Add(Text("An invalid module was blocked.", 11, true));
-        void ModuleRow(ModulePackage package, bool installed)
+        void ModuleRow(ModulePackage package)
         {
             var body = new Grid(); body.ColumnDefinitions.Add(new()); body.ColumnDefinitions.Add(new() { Width = GridLength.Auto });
             var text = new StackPanel();
             text.Children.Add(new TextBlock { Text = package.Manifest.Handler switch { "putty" => "SSH · PuTTY", "rdp" => "Remote Desktop", _ => package.Manifest.Name }, FontSize = 13, FontWeight = FontWeights.Medium });
-            text.Children.Add(new TextBlock { Text = installed ? "Installed · " + package.Manifest.Version : package.Manifest.Description, FontSize = 11, Opacity = .6, Margin = new Thickness(0, 4, 8, 0), TextWrapping = TextWrapping.Wrap });
+            text.Children.Add(new TextBlock { Text = "Installed · " + package.Manifest.Version, FontSize = 11, Opacity = .6, Margin = new Thickness(0, 4, 8, 0), TextWrapping = TextWrapping.Wrap });
             body.Children.Add(text);
-            var status = new TextBlock { Text = installed ? "✓   ›" : "+ Add", FontSize = 11, Opacity = .7, VerticalAlignment = VerticalAlignment.Center }; Grid.SetColumn(status, 1); body.Children.Add(status);
-            var row = Button(package.Manifest.Name, () => { if (installed) ShowModuleSettings(package); else ReviewModule(package); });
+            var status = new TextBlock { Text = "✓   ›", FontSize = 11, Opacity = .7, VerticalAlignment = VerticalAlignment.Center }; Grid.SetColumn(status, 1); body.Children.Add(status);
+            var row = Button(package.Manifest.Name, () => ShowModuleSettings(package));
             row.Content = body; row.HorizontalContentAlignment = HorizontalAlignment.Stretch; row.Padding = new Thickness(10, 12, 10, 12); row.Margin = new Thickness(0, 3, 0, 3); row.Background = (Brush)FindResource("ControlSurface");
-            System.Windows.Automation.AutomationProperties.SetName(row, package.Manifest.Name + (installed ? " installed" : " add")); stack.Children.Add(row);
+            System.Windows.Automation.AutomationProperties.SetName(row, package.Manifest.Name + " installed"); stack.Children.Add(row);
         }
         if (installedModules.Count > 0)
         {
             stack.Children.Add(Text("Installed", 11, true));
-            foreach (var module in installedModules) ModuleRow(module, true);
+            foreach (var module in installedModules) ModuleRow(module);
         }
-        var available = new[] { "putty.zip", "rdp.zip" }.Select(r => ModulePackages.Read(ModuleTrust.Resource(r), ModuleTrust.Verify)).Where(p => !installedModules.Any(i => i.Manifest.Id == p.Manifest.Id)).ToArray();
-        if (available.Length > 0)
-        {
-            var caption = Text("Add a connection", 11, true); caption.Margin = new Thickness(0, 14, 0, 6); stack.Children.Add(caption);
-            foreach (var package in available) ModuleRow(package, false);
-        }
-        var typePackage = ModulePackages.Read(ModuleTrust.Resource("type.zip"), ModuleTrust.Verify);
-        if (!installedModules.Any(p => p.Manifest.Id == typePackage.Manifest.Id)) { stack.Children.Add(Text("Add an extra", 11, true)); ModuleRow(typePackage, false); }
         var sources = new System.Windows.Controls.Primitives.UniformGrid { Columns = 2, Margin = new Thickness(0, 10, 0, 8) };
-        sources.Children.Add(Button("Install from ZIP…", PickModule)); sources.Children.Add(Button("Online catalog  ↗", ShowModuleCatalog)); stack.Children.Add(sources);
+        sources.Children.Add(Button("GitHub catalog", ShowModuleCatalog)); sources.Children.Add(Button("Install from ZIP…", PickModule)); stack.Children.Add(sources);
         var defaults = new StackPanel(); defaults.Children.Add(Text("Choose which standard templates appear in New entry.", 11, true));
         var choices = content.All.Where(p => p is not DeclarativeProvider).ToDictionary(p => p.Descriptor.Id, p => Check(defaults, TemplateName(p), !vault.Document!.Settings.DisabledModules.Contains(p.Descriptor.Id)));
         defaults.Children.Add(Button("Save entry types", () =>
@@ -76,7 +75,7 @@ public partial class MainWindow
             if (new FileInfo(dialog.FileName).Length > ModulePackages.MaxBytes) throw new InvalidDataException("Module ZIPs must be under 256 KB.");
             ReviewModule(ModulePackages.Read(File.ReadAllBytes(dialog.FileName), ModuleTrust.Verify));
         }
-        catch (Exception ex) when (ex is IOException or JsonException or ArgumentException or CryptographicException or NullReferenceException) { ShowError("This module is invalid, unsupported or has an unverifiable signature."); }
+        catch (Exception ex) when (ex is IOException or InvalidDataException or JsonException or ArgumentException or CryptographicException or NullReferenceException) { ShowError("This module is invalid, unsupported or has an unverifiable signature."); }
     }
     private void ReviewModule(ModulePackage package)
     {
@@ -95,7 +94,14 @@ public partial class MainWindow
         stack.Children.Add(Text(package.Manifest.Author + " · " + package.Manifest.Version, 11, true));
         stack.Children.Add(Text(package.Manifest.Handler switch { "rdp" => "Adds Remote Desktop entries using the Windows app.", "putty" => "Adds SSH entries. PuTTY must also be installed on this PC.", _ => package.Manifest.Description }, 12));
         stack.Children.Add(Text(package.Official ? "Verified Sable module" : "Not reviewed by Sable. Install only packages whose purpose you understand.", 12, !package.Official));
-        stack.Children.Add(Text(package.Manifest.Handler == "type" ? "Adds clipboard typing and a tray action, usable while locked. Sable handles text only during an explicit operation; the module cannot read vault entries." : package.Manifest.Handler is "rdp" or "putty" ? "Sable handles saved passwords. The module cannot read them or other entries." : "Uses only its own fields. Cannot read other entries.", 11, true));
+        var permission = package.Manifest.Handler switch
+        {
+            "type" => "Adds clipboard typing and a tray action, usable while locked. Sable handles text only during an explicit operation; the module cannot read vault entries.",
+            "rdp" or "putty" => "Sable handles saved passwords. The module cannot read them or other entries.",
+            "network-profile" => "Applies saved IPv4 or DNS settings only when you run an entry and Windows grants administrator approval.",
+            _ => "Uses only its own fields. Cannot read other entries."
+        };
+        stack.Children.Add(Text(permission, 11, true));
         var reviewedPage = Body.Content; var startEpoch = epoch;
         PageAction(Button(current is null ? "Install" : "Update", () =>
         {
@@ -106,63 +112,75 @@ public partial class MainWindow
                 if (old.Any(i => i.ModuleSchema != package.Manifest.SchemaFingerprint())) throw new InvalidDataException("This package does not match the preserved entries' schema.");
                 modules.Install(package); ReloadModules(); Audit(AuditEvent.ModuleInstalled); ShowModules(); SetStatus("Module installed");
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException) { ShowError(ex.Message); }
+            catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or JsonException) { ShowError(ex.Message); }
         }, true));
         pageSubmit = null;
     }
-    private void ShowModuleCatalog()
+    private async void ShowModuleCatalog()
     {
         if (!vault.IsUnlocked) return;
-        var stack = Form("Module catalog", "", "settings", parent: ShowModules);
-        stack.Children.Add(Text("Official modules", 12, true));
-        foreach (var resource in new[] { "putty.zip", "rdp.zip", "type.zip" })
+        var stack = Form("GitHub catalog", "", "settings", parent: ShowModules);
+        var status = Text("Loading official modules…", 12, true);
+        stack.Children.Add(status);
+        var page = Body.Content;
+        var startEpoch = epoch;
+        var token = sessionCancellation.Token;
+        bool IsCurrent() => startEpoch == epoch && vault.IsUnlocked && ReferenceEquals(page, Body.Content);
+        try
         {
-            var included = ModulePackages.Read(ModuleTrust.Resource(resource), ModuleTrust.Verify);
-            var installed = installedModules.FirstOrDefault(p => p.Manifest.Id == included.Manifest.Id);
-            stack.Children.Add(Button(included.Manifest.Name + (installed is null ? "  ›" : "  ✓"), () => ReviewModule(included)));
-            if (installed is not null) stack.Children.Add(Text("Already installed · " + installed.Manifest.Version, 11, true));
-        }
-        stack.Children.Add(Text("Included with this app. Installs without a download.", 11, true));
-        var page = Body.Content; var startEpoch = epoch;
-        stack.Children.Add(AsyncButton("Check GitHub catalog", async () =>
-        {
-            try
+            var bytes = await ModuleTrust.Download(ModuleTrust.CatalogUrl, 64 * 1024, token);
+            if (!IsCurrent()) return;
+            var catalog = ModuleTrust.ReadCatalog(bytes);
+            stack.Children.Remove(status);
+            var installedByHash = installedModules.ToLookup(
+                p => Convert.ToHexString(SHA256.HashData(p.Archive)), StringComparer.OrdinalIgnoreCase);
+            foreach (var entry in catalog)
             {
-                var bytes = await ModuleTrust.Download(ModuleTrust.CatalogUrl, 64 * 1024, sessionCancellation.Token);
-                if (startEpoch != epoch || !ReferenceEquals(page, Body.Content)) return;
-                var catalog = ModuleTrust.ReadCatalog(bytes);
-                var list = Form("GitHub catalog", "", "settings", parent: ShowModuleCatalog);
-                var installedByHash = installedModules.ToLookup(p => Convert.ToHexString(SHA256.HashData(p.Archive)), StringComparer.OrdinalIgnoreCase);
-                foreach (var entry in catalog)
+                var installed = installedByHash[entry.Sha256].FirstOrDefault();
+                if (installed is not null)
                 {
-                    var installed = installedByHash[entry.Sha256].FirstOrDefault();
-                    if (installed is not null)
-                    {
-                        list.Children.Add(Button(entry.Name + "  ✓", () => ReviewModule(installed)));
-                        list.Children.Add(Text("Already installed · " + installed.Manifest.Version, 11, true));
-                        continue;
-                    }
-                    var catalogPage = Body.Content;
-                    list.Children.Add(AsyncButton(entry.Name + "  ↓", async () =>
-                    {
-                        try
-                        {
-                            var zip = await ModuleTrust.Download(entry.Url, ModulePackages.MaxBytes, sessionCancellation.Token);
-                            if (startEpoch != epoch || !ReferenceEquals(catalogPage, Body.Content)) return;
-                            if (!Convert.ToHexString(SHA256.HashData(zip)).Equals(entry.Sha256, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException();
-                            var package = ModulePackages.Read(zip, ModuleTrust.Verify);
-                            if (!package.Official) throw new InvalidDataException();
-                            ReviewModule(package);
-                        }
-                        catch (Exception ex) when (ex is System.Net.Http.HttpRequestException or IOException or JsonException or CryptographicException or ArgumentException or OperationCanceledException) { if (startEpoch == epoch && vault.IsUnlocked) ShowError("The module could not be downloaded and verified."); }
-                    }, false));
-                    list.Children.Add(Text(entry.Description, 11, true));
+                    stack.Children.Add(Button(entry.Name + "  ✓", () => ReviewModule(installed)));
+                    stack.Children.Add(Text("Already installed · " + installed.Manifest.Version, 11, true));
+                    continue;
                 }
+
+                var download = Button(entry.Name + "  ↓", () => { });
+                download.Click += async (_, _) =>
+                {
+                    if (!IsCurrent() || !download.IsEnabled) return;
+                    download.IsEnabled = false;
+                    try
+                    {
+                        var zip = await ModuleTrust.Download(entry.Url, ModulePackages.MaxBytes, token);
+                        if (!IsCurrent()) return;
+                        if (!Convert.ToHexString(SHA256.HashData(zip)).Equals(entry.Sha256, StringComparison.OrdinalIgnoreCase))
+                            throw new InvalidDataException("Catalog checksum mismatch.");
+                        var package = ModulePackages.Read(zip, ModuleTrust.Verify);
+                        if (!package.Official) throw new InvalidDataException("Module signature missing.");
+                        ReviewModule(package);
+                    }
+                    catch (Exception ex) when (IsModuleDownloadFailure(ex))
+                    {
+                        if (IsCurrent()) ShowError("The module could not be downloaded and verified. Try again.");
+                    }
+                    finally { download.IsEnabled = true; }
+                };
+                stack.Children.Add(download);
+                stack.Children.Add(Text(entry.Description, 11, true));
             }
-            catch (Exception ex) when (ex is System.Net.Http.HttpRequestException or IOException or JsonException or CryptographicException or FormatException or OperationCanceledException)
-            { if (startEpoch == epoch && vault.IsUnlocked && ReferenceEquals(page, Body.Content)) ShowError("The signed GitHub catalog is unavailable. You can still install the included modules or a local ZIP."); }
-        }, false));
+        }
+        catch (Exception ex) when (IsModuleDownloadFailure(ex))
+        {
+            if (!IsCurrent()) return;
+            status.Text = "The GitHub catalog is unavailable. Retry or install a ZIP you already downloaded.";
+            stack.Children.Add(Button("Retry", ShowModuleCatalog));
+            stack.Children.Add(Button("Install from ZIP…", PickModule));
+        }
     }
+
+    private static bool IsModuleDownloadFailure(Exception ex) =>
+        ex is System.Net.Http.HttpRequestException or IOException or InvalidDataException or JsonException or CryptographicException
+            or ArgumentException or FormatException or OperationCanceledException;
     private string ModuleSetting(ModulePackage package, string key) => vault.Document!.ExtensionSettings.TryGetValue(package.Manifest.Id, out var settings) && settings.ValueKind == JsonValueKind.Object && settings.TryGetProperty(key, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() ?? "" : "";
     private void ShowModuleSettings(ModulePackage package)
     {
