@@ -25,7 +25,14 @@ public partial class MainWindow
             vault.Mutate(d => { d.Settings.Startup = false; d.Settings.FirstEntryTourPending = false; }); session.Mode = PanelMode.Window;
             ShowList(); UpdatePanelTopmost(); ApplyTaskbarVisibility(); UpdatePinButton();
             Copy("book"); Check(suggestionHost!.Children.Count == 0, "Ordinary words do not create DNS suggestions");
-            Copy("alodat.me"); Check(Descendants<Button>(suggestionHost).Any(b => AutomationProperties.GetName(b) == "Suggested DNS lookup"), "Dotted domain creates a DNS suggestion");
+            Copy("https://alodat.me/example"); Check(Descendants<Button>(suggestionHost).Any(b => AutomationProperties.GetName(b) == "Suggested DNS lookup"), "A URL creates a DNS suggestion for its hostname");
+            var run = ButtonNamed("Suggested DNS lookup");
+            var dismiss = ButtonNamed("Dismiss network suggestion");
+            var runHit = (Border)run.Template.FindName("HitArea", run);
+            var dismissHit = (Border)dismiss.Template.FindName("HitArea", dismiss);
+            Check(runHit.Background == Brushes.Transparent && dismissHit.Background == Brushes.Transparent
+                && !EntryPress.GetEnabled(run) && !EntryPress.GetEnabled(dismiss),
+                "Clipboard actions use transparent hit areas and do not scale the suggestion");
             var card = (Border)suggestionHost.Children[0]; var size = card.RenderSize; var windows = Application.Current.Windows.Count;
             await Render("01-domain-suggestion"); Click(ButtonNamed("Dismiss network suggestion"));
             Check(card.RenderSize == size && Application.Current.Windows.Count == windows && ButtonNamed("Don't show again").IsVisible, "Dismiss choice stays inside the same fixed-size suggestion without a dialog");

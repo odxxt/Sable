@@ -23,9 +23,28 @@ public partial class MainWindow
             .Single(b => b.Content as string == label || AutomationProperties.GetName(b) == label);
         T Field<T>(string name) where T : Control =>
             LogicalDescendants(Body).OfType<T>().Single(c => AutomationProperties.GetName(c) == name);
+        Ipv4EntryField AddressField(string name) =>
+            LogicalDescendants(Body).OfType<Ipv4EntryField>().Single(c => AutomationProperties.GetName(c) == name);
+        TextBox Octet(string name, int part) => LogicalDescendants(AddressField(name)).OfType<TextBox>().ElementAt(part - 1);
+        void PasteAddress(string name, string value)
+        {
+            var data = new System.Windows.DataObject(DataFormats.UnicodeText, value);
+            var args = new DataObjectPastingEventArgs(data, false, DataFormats.UnicodeText) { RoutedEvent = System.Windows.DataObject.PastingEvent };
+            Octet(name, 1).RaiseEvent(args);
+            UpdateLayout();
+        }
         void Click(Button b)
         {
             b.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent, b));
+            UpdateLayout();
+        }
+        void AddChange(string name)
+        {
+            var add = FindButton("Add a change");
+            Click(add);
+            var item = add.ContextMenu!.Items.OfType<MenuItem>().Single(i => (string)i.Header == name);
+            Check(item.IsEnabled, "The Add a change menu offers " + name);
+            item.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent, item));
             UpdateLayout();
         }
         void Render(string name)
@@ -63,26 +82,60 @@ public partial class MainWindow
             Check(installedModules.Single().Fingerprint == package.Fingerprint, "Install registers the verified ZIP from the catalog");
             Click(FindButton("GitHub catalog"));
             Check(FindButton("Network Profile  ✓").IsEnabled, "The catalog marks the package as already installed");
+            modules.Remove(package);
+            ReloadModules();
+            ShowPluginManager();
+            var appZip = Path.Combine(output, "Sable-app-preview-win-x64.zip");
+            using (var oversized = File.Create(appZip)) oversized.SetLength(ModulePackages.MaxBytes + 1L);
+            ReviewModuleFile(appZip);
+            Check(installedModules.Count == 0 && formError?.Text.Contains("extract it and open Sable.exe", StringComparison.Ordinal) == true,
+                "Choosing the app ZIP gives extraction instructions without attempting to install it");
+            var moduleZip = Path.Combine(output, "sable.network-profile.zip");
+            File.WriteAllBytes(moduleZip, package.Archive);
+            ReviewModuleFile(moduleZip);
+            Check(installedModules.Count == 0 && FindButton("Install").IsEnabled, "The local module ZIP opens the install review");
+            Click(FindButton("Install"));
+            Check(installedModules.Single().Fingerprint == package.Fingerprint, "Installing the local ZIP registers Network Profile");
             ShowEntryStarters();
             Click(FindButton("Extras"));
-            Click(FindButton("Network Profile"));
-            Field<TextBox>("Name").Text = "Office DNS";
-            Field<ComboBox>("Network adapter").SelectedIndex = 0;
+            Click(FindButton("Network change"));
+            var nameField = Field<TextBox>("Entry name");
+            var adapterField = Field<ComboBox>("Network adapter");
+            nameField.Text = "Office DNS";
+            adapterField.SelectedIndex = 0;
+            UpdateLayout();
+            Check(Math.Abs(nameField.TranslatePoint(new Point(), Body).Y - adapterField.TranslatePoint(new Point(), Body).Y) < .1
+                && Math.Abs(nameField.ActualHeight - adapterField.ActualHeight) < .1,
+                "Entry name and adapter share the same top and height");
+            Check(!FindButton("Save entry").IsEnabled && vault.Document!.Items.Count == 0, "Saving without selecting a change is blocked");
+            AddChange("DNS");
+            Check(!AddressField("IP address").IsVisible && AddressField("DNS server").IsVisible, "A DNS-only entry exposes only its own settings");
+            PasteAddress("DNS server", "192.0.2.53");
+            Octet("DNS server", 4).Text = "300";
             Click(FindButton("Save entry"));
-            Check(vault.Document!.Items.Count == 0, "Saving without selecting a change is blocked");
-            Field<ComboBox>("IPv4 DNS servers").SelectedIndex = 2;
-            Field<TextBox>("Primary DNS").Text = "192.0.2.053";
-            Click(FindButton("Save entry"));
-            Check(vault.Document.Items.Count == 0, "Malformed IPv4 DNS values are rejected");
-            Field<TextBox>("Primary DNS").Text = "192.0.2.53";
-            Field<TextBox>("Secondary DNS (optional)").Text = "192.0.2.54";
+            Check(vault.Document!.Items.Count == 0 && AutomationProperties.GetHelpText(AddressField("DNS server")).Length > 0,
+                "Malformed DNS marks its own field and prevents a save");
+            PasteAddress("DNS server", "192.0.2.53");
+            Click(FindButton("Add Secondary DNS"));
+            PasteAddress("Secondary DNS", "192.0.2.54");
+            var secondary = AddressField("Secondary DNS");
+            var removeSecondary = FindButton("Remove Secondary DNS");
+            Check(removeSecondary.TranslatePoint(new Point(), secondary).X > secondary.ActualWidth / 2,
+                "Secondary DNS has a separate X on its right");
             await Task.Delay(200);
             Render("network-profile-editor");
+            Click(removeSecondary);
+            Check(!secondary.IsVisible && secondary.Value.Length == 0 && AddressField("DNS server").Value == "192.0.2.53",
+                "Removing Secondary DNS clears it and preserves the primary server");
+            Click(FindButton("Add Secondary DNS"));
+            Check(secondary.Value.Length == 0, "Reopening Secondary DNS starts blank");
+            Click(FindButton("Remove Secondary DNS"));
             Click(FindButton("Save entry"));
             var entry = vault.Document.Items.Single();
             var profile = NetworkProfile.Read(entry);
             Check(profile.AddressMode == NetworkSetting.Keep && profile.DnsMode == NetworkSetting.Manual
-                && profile.Review && applications.Count == 0, "Saving a DNS-only entry does not apply it or include an address change");
+                && profile.SecondaryDns is null && profile.Review && applications.Count == 0,
+                "Saving a DNS-only entry does not apply it or include a cleared value or address change");
 
             var row = (ListBoxItem)entryList!.ItemContainerGenerator.ContainerFromIndex(0);
             Click(Descendants<Button>(row).Single(b => b.Tag as string == "copy"));
@@ -95,23 +148,70 @@ public partial class MainWindow
             Check(applications.Count == 1 && applications[0] == profile, "Explicit Apply sends the selected DNS-only profile to the Windows broker");
 
             ShowEditor(entry);
-            Field<ComboBox>("IPv4 address").SelectedIndex = 2;
-            Field<ComboBox>("IPv4 DNS servers").SelectedIndex = 0;
-            Field<TextBox>("IP address").Text = "192.0.2.10";
-            Field<TextBox>("Subnet mask").Text = "255.0.255.0";
+            AddChange("IP address");
+            Check(AddressField("Subnet mask").Value == "255.255.255.0",
+                "Adding manual IPv4 starts with the default subnet mask");
+            var ipGroup = FindParent<Border>(FindButton("IP address settings"));
+            Check(ipGroup?.Background == FindResource("OptionGroupSurface") && ipGroup.BorderThickness.Left == 0,
+                "An expanded network group uses the shared options surface without a separate outline");
+            PasteAddress("IP address", "192.0.2.10");
+            PasteAddress("Subnet mask", "255.0.255.0");
             Click(FindButton("Save entry"));
-            Check(NetworkProfile.Read(vault.Document.Items.Single()).AddressMode == NetworkSetting.Keep,
-                "An invalid noncontiguous subnet mask leaves the stored profile intact");
-            Field<TextBox>("Subnet mask").Text = "255.255.255.0";
-            Field<TextBox>("Gateway (optional)").Text = "192.0.2.1";
+            Check(NetworkProfile.Read(vault.Document.Items.Single()).AddressMode == NetworkSetting.Keep
+                && AutomationProperties.GetHelpText(AddressField("Subnet mask")).Length > 0,
+                "A noncontiguous mask marks the mask field and leaves the stored entry intact");
+            PasteAddress("Subnet mask", "/24");
+            Check(AddressField("Subnet mask").Value == "255.255.255.0", "Pasting a prefix fills in the dotted subnet mask");
+            Click(FindButton("Add Default gateway"));
+            PasteAddress("Default gateway", "192.0.2.1");
+            var gateway = AddressField("Default gateway");
+            var removeGateway = FindButton("Remove Default gateway");
+            Check(removeGateway.TranslatePoint(new Point(), gateway).X > gateway.ActualWidth / 2,
+                "Default gateway has a separate X on its right");
+            Click(removeGateway);
+            Check(!gateway.IsVisible && gateway.Value.Length == 0 && AddressField("IP address").Value == "192.0.2.10",
+                "Removing Default gateway preserves the IP address");
+            var ipHeader = FindButton("IP address settings");
+            var dnsHeader = FindButton("DNS settings");
+            Click(dnsHeader);
+            Check(dnsHeader.TranslatePoint(new Point(), Body).Y > ipHeader.TranslatePoint(new Point(), Body).Y
+                && AddressField("DNS server").IsVisible && !AddressField("IP address").IsVisible
+                && AddressField("IP address").Value == "192.0.2.10" && AddressField("DNS server").Value == "192.0.2.53",
+                "DNS opens below the IP block and preserves both values");
+            Render("network-change-block-order");
+            Click(FindButton("Save entry"));
+            entry = vault.Document.Items.Single();
+            await RunNetworkProfile(entry);
+            UpdateLayout();
+            var ordered = Descendants<TextBlock>(Body).Where(t => t.Text is "IP address" or "Subnet mask" or "DNS").ToArray();
+            Check(ordered.Select(t => t.Text).SequenceEqual(["IP address", "Subnet mask", "DNS"])
+                && Descendants<TextBlock>(Body).Where(t => t.Text is "192.0.2.10" or "255.255.255.0" or "192.0.2.53").Count(t => t.FontSize >= 16) == 3,
+                "The combined review stacks IP, subnet and DNS with larger values");
+            Check(!Descendants<TextBlock>(Body).Any(t => t.Text is "Default gateway" or "Secondary DNS"),
+                "The review omits both removed optional values");
+            Check(Descendants<ScrollViewer>(Body).Single().ScrollableHeight == 0,
+                "The combined review without optional fields fits in the standard window");
+            Render("network-change-review");
+            Click(FindButton("Cancel"));
+
+            // Earlier versions also saved CIDR in the same field.
+            var fields = entry.Payload.EnumerateObject().ToDictionary(p => p.Name, p => p.Value.GetString()!);
+            fields["mask"] = "/25";
+            vault.Mutate(d => d.Items.Single().Payload = JsonSerializer.SerializeToElement(fields));
+            entry = vault.Document.Items.Single();
+            ShowEditor(entry);
+            UpdateLayout();
+            Check(AddressField("Subnet mask").Value == "255.255.255.128" && AddressField("DNS server").Value == "192.0.2.53",
+                "A saved subnet mask overrides the default when reopening an entry");
+            Click(FindButton("Remove DNS change"));
             var review = LogicalDescendants(Body).OfType<CheckBox>()
-                .Single(c => c.Content is TextBlock t && t.Text == "Review changes before applying");
+                .Single(c => c.Content is TextBlock t && t.Text == "Review before applying");
             review.IsChecked = false;
             Click(FindButton("Save entry"));
             entry = vault.Document.Items.Single();
             await RunNetworkProfile(entry);
             Check(applications.Count == 2 && applications[1] is
-                { AddressMode: NetworkSetting.Manual, PrefixLength: 24, DnsMode: NetworkSetting.Keep },
+                { AddressMode: NetworkSetting.Manual, PrefixLength: 25, DnsMode: NetworkSetting.Keep },
                 "Unchecking review in the editor applies locally by click, and static IPv4 leaves DNS alone");
             moduleApprovals.Clear();
             await RunNetworkProfile(entry);

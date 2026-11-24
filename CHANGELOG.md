@@ -1,9 +1,11 @@
 # Changelog
 
-## Unreleased
+## 9.8.0 preview
 
 - Download official modules from **Settings → Plugins & modules → GitHub catalog**. Release builds omit module ZIPs. Existing installations and local ZIP imports continue to work.
-- Add **Network Profile** under Extras. Save an adapter's static or automatic IPv4 settings, DNS settings, or both. Review the change before applying by default. Windows administrator approval applies even when the Sable review is skipped.
+- Add **Network change** under Extras through the Network Profile module. Add IPv4, DNS, or both to each entry. Dotted inputs support paste and validation, and optional gateway and secondary DNS fields can be cleared individually. Review shows the selected adapter and settings. Windows requires administrator approval.
+- Match the network editor’s sections to **Color & description**, align the name and adapter fields, and default new manual IPv4 changes to `255.255.255.0`.
+- Give clipboard suggestions a steady surface with quiet Run and Dismiss controls. Dismissal options stay in the same box.
 
 ## 0.9.7 preview — Approved entry icons and clear window modes
 

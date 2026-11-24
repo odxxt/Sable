@@ -1,180 +1,77 @@
 # Sable
 
-**Keep it close. Keep it private.**
+Sable keeps secrets, logins, shortcuts and server connections close at hand in a compact Windows tray app with a local encrypted vault.
 
-A compact Windows tray companion for the things you use every day: secrets, logins, commands, files and server connections. Copy a value, open an app or connect to a server from one small, local, encrypted vault.
-
-[**Download for Windows x64**](https://github.com/odxxt/Sable/releases) · [Getting started](docs/USER-GUIDE.md) · [Documentation](docs/README.md) · [Roadmap](#whats-next)
+[**Download Sable for Windows x64**](https://github.com/odxxt/Sable/releases/tag/v9.8.0) · [User guide](docs/USER-GUIDE.md) · [Documentation](docs/README.md)
 
 <p align="center">
-  <img src="docs/images/grid.png" width="310" alt="Sable with folders and a two-column grid of saved entries">
+  <img src="docs/images/grid.png" width="300" alt="Sable's two-column grid with folders and saved entries">
   &nbsp;
-  <img src="docs/images/template-picker.png" width="310" alt="Choose a starter: Secret or login, Shortcut, and installed Connections">
+  <img src="docs/images/network-change.png" width="300" alt="Sable reviewing a saved IP address, subnet mask and DNS change">
 </p>
 
-*Screenshots use fictional demonstration data. This documentation describes the 0.9.7 preview source; check the version on the release page when downloading.*
+## Latest updates
 
-The unreleased source adds **Network Profile** under Extras and downloads official modules on demand from GitHub. See the [changelog](CHANGELOG.md) for the current development changes.
+- **Network change entries.** Save an adapter’s IPv4 or DNS settings and apply them from a single entry. Add either change or both, edit the dotted address fields, and review the values before applying.
+- **Modules from GitHub.** Install signed official modules through **Settings → Plugins & modules → GitHub catalog**. You can also install a module ZIP you already downloaded.
+- **Quieter clipboard suggestions.** Ping, Test port and DNS lookup suggestions use steady cards with separate Run and Dismiss controls.
 
-## A small app, useful every day
+See the [changelog](CHANGELOG.md) for earlier releases.
 
-- **Start with what you need.** Choose **Secret or login**, **Shortcut**, or **Connection** when a connection module is installed. Brief descriptions and tooltips explain each choice. Add a username only when you need one.
-- **Copy without the extra steps.** Click a secret to copy. A login copies its username first, then its password. Multiline secrets and sanitized HTML clipboard formatting are supported. Add an optional Run or Run and copy action without changing the secret's main copy behavior.
-- **Launch your everyday tools.** Open applications, files, folders, Windows Settings or Control Panel; use Windows+R-style commands, PowerShell or CMD. Test an action before saving. Terminals stay open by default, with an option to close when finished.
-- **Connect with saved sign-ins.** Optional PuTTY SSH and native Windows Remote Desktop modules keep connection credentials encrypted at rest. Their different credential-handling boundaries are documented in the [module guide](modules/README.md) and [RDP design](docs/RDP-DESIGN.md).
-- **Organize without clutter.** Nested folders, direct drag-to-reorder or nest, duplication, search, compact colors and optional descriptions. Choose rows or a two-column grid independently for each folder. Overflowing folders stay in one scrollable row.
-- **Keep Sable where it suits you.** A fixed, movable dark panel, a configurable global shortcut, and three modes: Tray, Always on top and Normal window. Press the pin to cycle them; the toolbar keeps its size.
-- **Lock and recover.** A full password at startup, an optional 4–12 digit session PIN, five-attempt PIN protection, configurable timed locking and Windows-session locking. Recovery keys, encrypted import/export and optional two-credential backups help you move or recover your data. Backups start **off**.
-- **Protect everyday copies.** Secret copies clear after 30 seconds by default if still owned by Sable. Clipboard history/cloud exclusion and supported screen-capture protection are requested. These Windows features have [limits](SECURITY.md).
-- **Stay local.** No account, cloud service, telemetry, embedded browser or resident service. ZIP modules are declarative data, not executable plugins. External applications run only when invoked; an open RDP session has its own Windows process.
+## What you can do
 
-Built-in clipboard suggestions offer Ping for an IP found in text and Test port for an IP/port pair, including a clearly labelled separate port. No saved entry is needed. Matching is local, limited to 512 characters and never executes automatically; larger clipboard items are skipped entirely. Dotted domains such as `alodat.me` offer DNS lookup; single words do not. Suggestions appear only in All items. The first X click offers Only this copy or Don't show again inside the card; later X clicks dismiss immediately. Settings can enable or disable suggestions at any time.
+- Copy secret values, formatted text or login credentials. Sensitive copies clear after 30 seconds by default if Sable still owns the clipboard.
+- Launch apps, files and commands. Optional modules add **PuTTY SSH**, **Windows Remote Desktop**, **Type clipboard** and **Network change** entries.
+- Organize entries in nested folders with search, drag and drop, and row or grid views.
+- Unlock with a password and an optional session PIN. Use the recovery key, encrypted exports or optional backups to recover or move data.
 
-## New in 0.9.7 preview
+## Get started
 
-- **More comfortable entry spacing:** smaller entry and Run icons, a shared text gutter, and more space around the Run action. Rows and grid cards share the same height; switching views uses a brief fade and keeps each folder's preference.
-- **Approved entry icons, now in the app:** a consistent key, login, Shortcut, SSH, Remote Desktop, Type, Run and Run and copy set. Small native hover movements respond smoothly; folders and toolbar icons stay static. Windows reduced motion is respected and there is no idle icon loop.
-- **Clear Shortcut identity:** the outward arrowhead now sits beyond the rounded box, with more separation around its edges.
-- **Recognizable Tray mode:** a static window with a minus sign replaces the download-like arrow. The pin and normal-window symbols stay unchanged.
+Sable is available as a portable app for **Windows 10 and 11, x64**. The ZIP includes the .NET Desktop Runtime. An installer is planned.
 
-## Introduced in 0.9.6 preview
+1. Download **Sable-v9.8.0-win-x64.zip** from the [release page](https://github.com/odxxt/Sable/releases/tag/v9.8.0).
+2. Extract the entire ZIP to a writable folder and open **Sable.exe**.
+3. Create or restore your vault. Keep your recovery key somewhere private outside the vault.
+4. Open Sable from the tray or press **Ctrl+Alt+Space**, then choose **+ → New entry**.
 
-- **Clear window modes:** a tray, an upright pin and an ordinary window replace the three pin orientations.
-- **Cleaner grid entries:** entry icons sit on the left; launch-only entries no longer repeat a Run button. Copying entries with an action keep their separate Run control. Shortcut now uses a curved arrow leaving a rounded box.
-- **More folder choices:** 20 static icons, with options for servers, networks, development, documents and everyday tools.
-- **Quieter suggestions:** All items only, aligned card controls, a one-time dismissal explanation and immediate dismissal afterward. Diagnostic terminals request the foreground on launch without becoming always-on-top.
+When updating, quit Sable first and copy your full data folder beside the new executable. See the [upgrade guide](docs/USER-GUIDE.md#updating-or-moving) for details. Compare the ZIP’s SHA-256 with the checksum file on the release page if you want to verify your download.
 
-## Introduced in 0.9.5 preview
+## Security
 
-- **Quieter clipboard suggestions:** DNS requires a dotted domain, and each card can be dismissed once or disabled inline. Minimized panels do not inspect the clipboard.
-- **Native taskbar behavior:** normal kept-open windows support minimize and restore without becoming resizable. Opening from the tray or shortcut restores a minimized panel.
-- **Stay on your monitor:** double-click Sable to dock at the bottom right of its current display. Saved secondary-monitor positions are retained.
-
-## Introduced in 0.9.4 preview
-
-- **Built-in network suggestions:** extract IPs from short prose, recognize `192.168.8.1:53` or `192.168.8.1 and port 53`, and reject leading-zero/out-of-range ports. No diagnostic entry or module installation is needed. Only explicit clicks run a check.
-- **Bounded lightweight detection:** a linear scanner examines at most 512 characters, skips larger clipboard items before reading their contents, caps suggestions at three and avoids regex-engine/backtracking work. Secret/history-excluded copies are still skipped.
-- **Typing for remote-control clients:** Automatic mode supplies virtual keys and scan codes for layout-mappable text, with Unicode for other characters. Existing Unicode defaults migrate while keeping timing; explicit current Unicode selections remain supported. This follows the keyboard-event approach studied in [ClickPaste](https://github.com/Collective-Software/ClickPaste/blob/master/Native.cs).
-- **Right-side Type prompts:** first-use, multiline and error prompts open at the bottom right of the monitor containing the pointer.
-
-## Introduced in 0.9.3 preview
-
-- **Type clipboard:** install the optional signed module, then create a reusable tool under **New entry → Extras**, or use **Type clipboard** from the tray even while locked. Choose a field with a crosshair; Sable types the current clipboard after an adjustable delay. Esc stops remaining input; changing foreground windows cancels it too.
-- **Precise whitespace handling:** internal Enter and Tab keys are preserved; trailing Enter/Tab characters are removed and no submit key is appended. Multiline/tabbed text asks for confirmation by default. Sensitive clipboard text is allowed after a first-use explanation.
-- **Global and per-entry settings:** defaults of 500 ms before typing and 25 ms per character, Unicode and keyboard-compatibility modes, with optional overrides on each Type entry.
-- **Four clear starters:** Secret or login, Shortcut, installed Connection modules and installed Extras. Available categories fit without scrolling. Shortcut uses a thin lightning bolt, distinct from the Run triangle.
-
-See the [Type guide](docs/TYPE-CLIPBOARD.md) for usage and compatibility limits. The preceding 0.9.2 fixes restore PuTTY pipe-name validation, focus missing copy values correctly, clarify password-copy labels and add green launch feedback.
-
-## Introduced in 0.9.1 preview
-
-- A described starter chooser, combined secret/login form, preserved drafts when changing starters, and installed-only Connection choices.
-- Consistent padding, centered back controls, quieter Change labels, clearer connection icons and brief feedback when username fields change.
-- Three window modes. **Only Always on top suspends timed locking**; Normal window keeps the timer active, and switching modes never resets it. Windows locking applies in every mode.
-- Opt-in PowerShell variables (`$name`, `$value1` … `$value20`) through a restricted process-verified pipe, plus optional Windows UAC elevation.
-- A looping native welcome illustration, hidden recovery key with in-place copy feedback, **Save key**, and a guide through creating your first real secret. The settings checklist appears after three saved entries.
-- Name-sized draggable folder chips, per-folder views, in-menu entry deletion and deliberate two-step deletion of a folder and its contents.
-- A simpler module manager with Installed/Add states, offline connection packages and a separate ZIP installer.
-
-See the [entry-flow diagram](docs/ENTRY-MODEL.md), [interface notes](docs/UI-REFINEMENTS-0.9.1.md) and [full changelog](CHANGELOG.md).
-
-## Download and start
-
-**Standalone/portable only today. An installer edition is planned.**
-
-Target: **Windows 10/11, x64**. The portable ZIP includes the .NET Desktop Runtime; there is no separate .NET installation step. ARM64 and 32-bit packages are not provided. See [runtime OS support](https://github.com/dotnet/core/blob/main/release-notes/10.0/supported-os.md) and the [tested-platform limits](VERIFICATION.md).
-
-1. Download `Sable-v<version>-win-x64.zip` from [Releases](https://github.com/odxxt/Sable/releases). GitHub's automatic **Source code** archives are not the runnable app.
-2. Extract the **entire ZIP** to a writable folder and open **Sable.exe**. Keep the accompanying files together.
-3. Create a vault or restore an encrypted backup. Save the recovery key privately outside the vault. **Save key writes a readable file**; clicking the revealed key copies it.
-4. Open Sable from its tray icon or **Ctrl+Alt+Space**, then use **+ → New entry**. The first-entry guide can walk you through saving a secret.
-
-**Enter** saves or continues; **Shift+Enter** adds a line. Change startup behavior and the shortcut in Settings → App preferences. Close hides the panel; Settings → **Quit → Confirm quit** exits it.
-
-Each release includes `SHA256SUMS-v<version>.txt`. Compare its checksum with your downloaded ZIP, for example:
-
-```powershell
-# Replace <version> with the version you downloaded.
-Get-FileHash '.\Sable-v<version>-win-x64.zip' -Algorithm SHA256
-```
-
-### Updating
-
-Quit the old app, extract the new release separately, and copy your **entire data folder** beside the new executable. Fresh installs use `Sable-data`; keep an existing `SableLatch-data` name because Sable detects it automatically. Include attachments and retain the original as a rollback copy. Open on the same Windows account/computer, or use recovery when moving environments. Do not run two versions against one vault or alternate older builds on newer data. See [the upgrade guide](docs/USER-GUIDE.md#updating-or-moving).
-
-## Encryption, explained
-
-Sable uses established cryptographic primitives. These links describe the underlying algorithms; they are not a certification or audit of this application.
-
-| Component | How Sable uses it | Reference |
-| --- | --- | --- |
-| **AES-256-GCM** | Authenticated encryption for vault data, attachments and encrypted envelopes, with fresh 96-bit nonces, 128-bit authentication tags and purpose-bound associated data. | [NIST SP 800-38D](https://csrc.nist.gov/pubs/sp/800/38/d/final) |
-| **Argon2id** | Password-based key derivation: 64 MiB memory, 3 passes, 1 lane, a random 128-bit salt and a 256-bit output. | [RFC 9106](https://www.rfc-editor.org/rfc/rfc9106) |
-| **RSA-3072 / OAEP-SHA256** | Wraps each backup's fresh AES key. The private key is itself encrypted under the backup password. | [RFC 8017](https://www.rfc-editor.org/rfc/rfc8017) |
-| **ECDSA P-256 / SHA-256** | Verifies official module manifests and the GitHub catalog against the embedded publisher key. | [NIST FIPS 186-5](https://csrc.nist.gov/pubs/fips/186-5/final) |
-| **HMAC-SHA256** | Combines a process-only random secret with the PIN-derived key for quick-unlock sessions. The PIN is not a replacement for the vault password. | [RFC 2104](https://www.rfc-editor.org/rfc/rfc2104) |
-| **SHA-256** | Recovery-key typo checks, configuration fingerprints and clipboard ownership checks; not the password KDF. | [NIST FIPS 180-4](https://csrc.nist.gov/pubs/fips/180-4/upd1/final) |
-| **Windows DPAPI** | Protects normal access using the Windows user context and app-specific machine identity. This is Windows protection, not a standalone encryption algorithm or TPM guarantee. | [Microsoft CryptProtectData](https://learn.microsoft.com/en-us/windows/win32/api/dpapi/nf-dpapi-cryptprotectdata) |
-
-Recovery keys contain **256 cryptographically random bits**. Random salts prevent reusable rainbow tables; Argon2id makes guessing more costly. Offline files cannot enforce an attempt limit, so strong, unique passwords still matter.
-
-### Which credential opens which file?
-
-| Operation | What you need |
+| Component | Purpose |
 | --- | --- |
-| Normal vault access | App password on the registered Windows environment; optionally a PIN after the first password unlock in a running session. |
-| Recover a moved vault or forgotten app password | Master recovery key and the complete vault data folder. |
-| Restore a `.sablebackup` | That backup's password **and** its original recovery key. |
-| Import a `.sableexport` | Its export password. The vault recovery key does not recover a forgotten export password. |
+| [AES-256-GCM](https://csrc.nist.gov/pubs/sp/800/38/d/final) | Authenticated encryption for vaults, attachments and encrypted transfers |
+| [Argon2id](https://www.rfc-editor.org/rfc/rfc9106) | Password key derivation with a random salt |
+| [RSA-OAEP](https://www.rfc-editor.org/rfc/rfc8017) | Wraps encrypted backup keys |
+| [ECDSA P-256](https://csrc.nist.gov/pubs/fips/186-5/final) | Verifies official module and catalog signatures |
+| [HMAC-SHA256](https://www.rfc-editor.org/rfc/rfc2104) | Protects session PIN unlock alongside a process-only secret |
+| [SHA-256](https://csrc.nist.gov/pubs/fips/180-4/upd1/final) | Checksums and fingerprints |
+| [Windows DPAPI](https://learn.microsoft.com/en-us/windows/win32/api/dpapi/nf-dpapi-cryptprotectdata) | Protects local access with the Windows user context |
 
-This is a **preview**, not an independently audited password manager. Capture exclusion depends on the recording method; it cannot block every recorder or camera. Advanced actions run with your Windows account's permissions and are not sandboxed. See the [security design and limits](SECURITY.md) before storing important data.
+Sable is an unaudited preview. Read the [security design and limits](SECURITY.md) for recovery, clipboard, screen capture and external actions.
 
-## What's next
+## Build and contribute
 
-The direction is a small app with room to grow. Checked items are available now; unchecked items are planned without a promised release date:
+With the .NET 10 SDK on Windows, clone the repository and run:
 
-- [x] **Declarative ZIP modules:** installation, enable/disable controls, beginner samples, API 1 field/action contracts and the first PuTTY module.
-- [x] **Local Remote Desktop:** click to launch Windows Remote Desktop, with an optional Launch & copy preference. A temporary Windows-encrypted connection file is used; see the [security limits](docs/RDP-DESIGN.md).
-- [x] **Module trust and permissions:** signed official packages, community warnings and scoped host-operation consent.
-- [ ] **More module capabilities:** encrypted SSH-key authentication, additional RDP options, and a separately reviewed sandbox for executable extensions.
-- [ ] **More entry types:** image/screenshot and attachment providers that use the existing encrypted storage and clipboard contracts.
-- [ ] **A Windows installer:** alongside the portable version, with a straightforward upgrade path.
-- [ ] **Additional languages:** selectable translations with right-to-left and left-to-right layouts.
-- [ ] **Trusted release delivery:** signed builds and an update experience that preserves local vaults.
-- [ ] **Further hardening and performance work:** broader Windows/DPI testing, recovery testing across machines, independent security review and improvements for larger collections.
-
-The current app already separates content, storage, clipboard, editors, layouts and toolbar actions. External **declarative ZIP modules are available**. Arbitrary executable plugins and external layout/toolbar contributions remain disabled. The [extension guide](EXTENSIONS.md) and [screenshot-provider example](examples/ScreenshotProvider.cs) explain the foundation.
-
-## Build it yourself
-
-Install a **.NET 10 SDK on Windows**, then run:
-
-```powershell
-git clone https://github.com/odxxt/Sable.git
-cd Sable
+~~~powershell
 .\build.ps1 -Portable
-```
+~~~
 
-The script runs the core and Windows module checks, then publishes the self-contained app to `artifacts/Sable-portable`. Some native checks require a normal Windows user session. For development:
+The script builds the portable app and runs storage and module checks. See [verification](VERIFICATION.md), the [module author guide](modules/README.md), and the [architecture](ARCHITECTURE.md). For a bug report, include the app and Windows versions and reproduce it with fictional data. [Open an issue](https://github.com/odxxt/Sable/issues)
 
-```powershell
-dotnet run --project tests/SableLatch.Tests
-dotnet run --project src/SableLatch.Desktop
-```
-
-Verification covers storage/migration, editor/window behavior, native icon motion and cleanup, clipboard dismissal, grid actions and a real local diagnostic console without a network request. Current release checks include 371 core checks and 31 native module/credential checks. These checks do not imply live SSH/RDP, UAC, every DPI or every Windows build was tested. [VERIFICATION.md](VERIFICATION.md) records current coverage, historical results and remaining manual checks.
-
-## Explore and contribute
-
-Found a bug or have an idea? [Open an issue](https://github.com/odxxt/Sable/issues) with the app version, Windows version and reproduction steps. Use fictional data; never attach vaults, passwords or recovery keys.
-
-- [Documentation index](docs/README.md) — current guides and clearly separated historical notes.
-- [User guide](docs/USER-GUIDE.md) — setup, controls, settings, backup and recovery.
-- [Entry model](docs/ENTRY-MODEL.md) — starters, click behavior and PowerShell fields.
-- [Module author guide](modules/README.md) — ZIP samples, supported capabilities and catalog trust.
-- [Architecture](ARCHITECTURE.md), [Security](SECURITY.md) and [Extensions](EXTENSIONS.md) — implementation and boundaries.
-- [Publishing](docs/PUBLISHING.md) — source updates, portable releases and the signed catalog.
+Planned work includes a Windows installer, more module capabilities and entry types, and selectable languages.
 
 ## License
 
-Sable uses the **[MIT License](LICENSE)**. Third-party components retain their own terms; see [THIRD-PARTY.md](THIRD-PARTY.md).
+[MIT](LICENSE). See [third-party notices](THIRD-PARTY.md).
+
+## Token usage
+
+| Direction | Tokens |
+| --- | ---: |
+| Input, including cached tokens | 301,249,238 |
+| Output | 1,482,757 |
+| **Total** | **302,731,995** |
+
+Codex session snapshot recorded on 24 November 2026 during release preparation.

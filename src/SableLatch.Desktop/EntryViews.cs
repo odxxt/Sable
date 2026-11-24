@@ -41,7 +41,7 @@ public sealed class RowModel : System.ComponentModel.INotifyPropertyChanged
     public bool TypeAction { get; init; }
     public bool NetworkAction { get; init; }
     private bool CopiesOnAction => Item.ClickBehavior == "run-copy" || Item.Advanced?.Action?.CopyOnRun == true || Item.ClickBehavior == "auto" && RdpAction && Item.Field("copyOnLaunch") == "true";
-    public string ActionLabel => NetworkAction ? "Apply network profile" : TypeAction ? "Type clipboard" : RdpAction ? (CopiesOnAction ? "Launch & copy password" : "Launch") : ModuleAction && Shortcut && CopiesOnAction ? "Run & copy password" : CopiesOnAction ? "Run & copy" : "Run";
+    public string ActionLabel => NetworkAction ? "Apply network change" : TypeAction ? "Type clipboard" : RdpAction ? (CopiesOnAction ? "Launch & copy password" : "Launch") : ModuleAction && Shortcut && CopiesOnAction ? "Run & copy password" : CopiesOnAction ? "Run & copy" : "Run";
     public Visibility ActionCopyVisibility => CopiesOnAction ? Visibility.Visible : Visibility.Collapsed;
     public string ActionIconKind => CopiesOnAction ? "run-copy" : "run";
     private bool MainClickRuns => TypeAction || NetworkAction || Item.ClickBehavior is "run" or "run-copy" || Item.ClickBehavior != "copy" && Shortcut;
@@ -206,7 +206,7 @@ public partial class MainWindow
             {
                 Item = i, Title = string.IsNullOrWhiteSpace(i.Label) ? i.IsSensitive ? "Secret" : i.Field("text").Split('\n')[0] : i.Label,
                 Shortcut = IsShortcut(provider),
-                Subtitle = !available ? "Module unavailable" : provider is DeclarativeProvider { Package.Manifest.Handler: "type" or "network-profile" } extra ? extra.Descriptor.Name : IsShortcut(provider) ? "Shortcut · " + (provider is ShortcutProvider ? ActionKindName(i.Advanced?.Action?.Kind) : provider!.Descriptor.Name) : i.IsSensitive ? "Secret · ••••••••" : string.IsNullOrWhiteSpace(i.Label) ? "Text" : i.Field("text").Replace('\n', ' '),
+                Subtitle = !available ? "Module unavailable" : provider is DeclarativeProvider { Package.Manifest.Handler: "type" or "network-profile" } extra ? TemplateName(extra) : IsShortcut(provider) ? "Shortcut · " + (provider is ShortcutProvider ? ActionKindName(i.Advanced?.Action?.Kind) : provider!.Descriptor.Name) : i.IsSensitive ? "Secret · ••••••••" : string.IsNullOrWhiteSpace(i.Label) ? "Text" : i.Field("text").Replace('\n', ' '),
                 Symbol = provider?.Descriptor.Symbol ?? "\uE74C", DeleteArmed = armedDelete == i.Id, Available = available, PendingPassword = pendingLogin == i.Id,
                 IconKind = provider is DeclarativeProvider declared ? declared.Package.Manifest.Icon : i.ContentType switch { "sable.secret" => "secret", "sable.login" => "login", "sable.shortcut" => "shortcut", _ => "note" },
                 ModuleAction = provider is DeclarativeProvider, RdpAction = provider is DeclarativeProvider { Package.Manifest.Handler: "rdp" },

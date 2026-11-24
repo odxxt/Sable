@@ -1,6 +1,6 @@
 # Sable documentation
 
-These guides describe the **0.9.7 preview source**. A source push updates GitHub's code and documentation; downloadable app assets change only when a matching release is published.
+These guides describe the **9.8.0 preview**. Download the portable app from the [release page](https://github.com/odxxt/Sable/releases/tag/v9.8.0).
 
 ## Using Sable
 

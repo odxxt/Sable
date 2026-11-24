@@ -39,7 +39,10 @@ public partial class MainWindow
         if (type == "sable.shortcut") advancedEditor = true;
         if (provider is DeclarativeProvider { Package.Manifest.Handler: "rdp" or "putty" or "type" or "network-profile" }) advancedEditor = false;
         var title = provider.Descriptor.Id is "sable.secret" or "sable.login" ? "Secret or login" : TemplateName(provider);
-        var stack = Form(existing is null ? title : editorIsDuplicate ? "Duplicate entry" : "Edit entry", "", "editor", parent: existing is null ? provider is DeclarativeProvider extra && extra.Package.Manifest.EffectiveCategory == "extras" ? ShowExtraStarters : IsConnection(provider) ? ShowConnectionStarters : ShowEntryStarters : ShowList, accessory: existing is null ? EntryChoices(provider, existing) : null, compact: true);
+        var network = provider is DeclarativeProvider { Package.Manifest.Handler: "network-profile" };
+        var editorTitle = existing is null ? network ? "New network entry" : title
+            : editorIsDuplicate ? "Duplicate entry" : network ? "Edit network entry" : "Edit entry";
+        var stack = Form(editorTitle, "", "editor", parent: existing is null ? provider is DeclarativeProvider extra && extra.Package.Manifest.EffectiveCategory == "extras" ? ShowExtraStarters : IsConnection(provider) ? ShowConnectionStarters : ShowEntryStarters : ShowList, accessory: existing is null ? EntryChoices(provider, existing) : null, compact: true);
         if (!extensions.Editors.TryGetValue(type, out var editor)) { stack.Children.Add(Text("This content type needs its editor extension.")); return; }
         var details = new StackPanel();
         var applyDetails = BuildEntryDetails(details, provider, existing ?? editorDrafts.GetValueOrDefault(type));

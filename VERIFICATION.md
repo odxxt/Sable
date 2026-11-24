@@ -1,11 +1,13 @@
 # Verification
 
-## Unreleased Network Profile and GitHub module downloads
+## Current 9.8.0 preview
 
-- The Windows fixture verifies the signed extra module, field validation, selective changes, review and cancellation, device-specific review opt-out, missing adapters, and preserving entries on uninstall. The broker checks run the actual generated script in Windows PowerShell with the network command stubbed and verify static IPv4, DHCP, DNS-only, secondary DNS failure and missing-adapter behavior.
+- **371 core checks** and **36 native module checks** passed during release preparation. The module suite verifies catalog hashes and package signatures, confirms that the release app embeds no module ZIPs, and exercises the local credential handoff.
+- **185 native UI checks** passed on the final UI changes. They cover network entry creation and legacy masks, field validation and optional field removal, aligned controls, review and cancellation, the signed catalog and ZIP install, clipboard suggestions and dismissal, and starter and window behavior.
+- The network broker checks run the generated script in Windows PowerShell with the network command stubbed. They cover static IPv4, DHCP, DNS-only, secondary DNS failure and missing adapters.
 - Real administrator approval and changes on a physical adapter still require a manual test. The automated checks leave the machine's network configuration alone.
 
-## Current 0.9.7 preview — Approved icons and spacing refresh
+## Previous 0.9.7 preview — Approved icons and spacing refresh
 
 - **371 core checks** and **31 native module/credential checks** passed for the initial 0.9.7 build. The native suite verifies signed packages/catalog, exact pipe reader, unexpected-client rejection, cancellation, buffer clearing, real installed PuTTY consumption with fictional credentials/loopback and the CurrentUser DPAPI RDP lifecycle. This does not test a successful live server login. Those components and packages are unchanged by the spacing refresh; these counts are retained evidence, not new runs.
 - **66 native UI/motion checks** passed after the spacing refresh. Actual native measurements confirm 56px visible cards/60px pitch, 18px identities, a 12px text gap, 16px Run icons and retained 28 × 32px targets in both layouts. The fixture verifies fixed window dimensions, rapid view switching, released fade clocks, independent folder preferences and scrolling to the last virtualized grid row. It also repeats the eight approved vector identities, mid-motion rendering, smooth hover reversal, stable held poses, hidden/recycled entry reset and owner detachment. Static mode/folder/grid/dismissal checks are included; the unrelated console-focus probe is skipped by this visual-only fixture.

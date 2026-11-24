@@ -117,4 +117,4 @@ Native display defaults and remote clipboard support are implemented by the host
 
 ## Network Profile 1.0
 
-The signed `sable.network-profile` ZIP enables **New entry → Extras → Network Profile** in the development build. The `network-profile` handler requires the official signature and reserved ID. Its manifest supplies neither fields nor actions. Sable owns the editor, validation, review, and administrator operation. See the [user guide](../docs/USER-GUIDE.md#network-profile-development-build).
+The signed `sable.network-profile` ZIP enables **New entry → Extras → Network change** in Sable 9.8.0. The `network-profile` handler requires the official signature and reserved ID. Its manifest supplies neither fields nor actions. Sable owns the editor, validation, review, and administrator operation. See the [user guide](../docs/USER-GUIDE.md#network-change).

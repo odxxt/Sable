@@ -68,14 +68,53 @@ public partial class MainWindow
 
     private void PickModule()
     {
-        var dialog = new Microsoft.Win32.OpenFileDialog { Filter = "Sable module (*.zip)|*.zip", Title = "Install module", CheckFileExists = true };
-        if (dialog.ShowDialog(this) != true) return;
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Filter = "Sable module ZIP (*.zip)|*.zip",
+            Title = "Select a module ZIP",
+            CheckFileExists = true
+        };
+        var started = epoch;
+        modalDepth++;
         try
         {
-            if (new FileInfo(dialog.FileName).Length > ModulePackages.MaxBytes) throw new InvalidDataException("Module ZIPs must be under 256 KB.");
-            ReviewModule(ModulePackages.Read(File.ReadAllBytes(dialog.FileName), ModuleTrust.Verify));
+            if (dialog.ShowDialog(this) == true && started == epoch && vault.IsUnlocked)
+                ReviewModuleFile(dialog.FileName);
         }
-        catch (Exception ex) when (ex is IOException or InvalidDataException or JsonException or ArgumentException or CryptographicException or NullReferenceException) { ShowError("This module is invalid, unsupported or has an unverifiable signature."); }
+        catch (System.ComponentModel.Win32Exception)
+        {
+            if (started == epoch && vault.IsUnlocked)
+                ShowError("Windows couldn't open the file picker. You can install the module from the GitHub catalog.");
+        }
+        finally { modalDepth--; }
+    }
+
+    private void ReviewModuleFile(string path)
+    {
+        ModulePackage package;
+        try
+        {
+            using var file = File.OpenRead(path);
+            if (file.Length > ModulePackages.MaxBytes)
+            {
+                ShowError("Select a module ZIP under 256 KB. To use the Sable app ZIP, extract it and open Sable.exe.");
+                return;
+            }
+            var bytes = new byte[(int)file.Length];
+            file.ReadExactly(bytes);
+            package = ModulePackages.Read(bytes, ModuleTrust.Verify);
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
+        {
+            ShowError("Sable couldn't read this ZIP. Save it to a local folder and try again.");
+            return;
+        }
+        catch (Exception ex) when (ex is InvalidDataException or JsonException or ArgumentException or CryptographicException or NullReferenceException)
+        {
+            ShowError("Sable couldn't verify a compatible module in this ZIP. Try the GitHub catalog or download the module ZIP again.");
+            return;
+        }
+        ReviewModule(package);
     }
     private void ReviewModule(ModulePackage package)
     {

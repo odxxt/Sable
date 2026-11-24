@@ -1,4 +1,6 @@
 using System.Runtime.InteropServices;
+using System.Windows.Automation;
+using System.Windows.Data;
 
 namespace SableLatch.Desktop;
 
@@ -49,47 +51,136 @@ public partial class MainWindow
             foreach (var (diagnostic, slot) in ClipboardDiagnostics.Extract(text).Select((d, index) => (d, index)))
             {
                 if (dismissedSuggestionSlots.Contains(slot)) continue;
-                var target = diagnostic.Target; var startEpoch = epoch;
-                bool Active() => epoch == startEpoch && vault.IsUnlocked && IsVisible && WindowState != WindowState.Minimized && screen == "list" && folder is null && vault.Document!.Settings.ClipboardSuggestions && sequence == SuggestionSequence();
-                var b = Button("", async () =>
-                {
-                    if (!Active()) return;
-                    await LaunchEntryAction(new EntryAction { Kind = diagnostic.Kind, Target = target.Display, KeepTerminalOpen = true });
-                }); b.Style = (Style)FindResource("SuggestionButton");
-                b.Tag = "network-run";
-                b.Padding = new Thickness(4, 0, 4, 0); b.Margin = new Thickness(0); b.Background = Brushes.Transparent; b.HorizontalContentAlignment = HorizontalAlignment.Stretch;
-                b.ToolTip = "Run " + diagnostic.Label + " with " + target.Display + " from the clipboard";
-                var body = new Grid(); body.ColumnDefinitions.Add(new()); body.ColumnDefinitions.Add(new() { Width = new GridLength(28) });
-                var caption = new StackPanel(); body.Children.Add(caption);
-                caption.Children.Add(new TextBlock { Text = diagnostic.Label, FontSize = 11, Foreground = (Brush)FindResource("Muted"), TextTrimming = TextTrimming.CharacterEllipsis });
-                var address = new TextBlock { Text = target.Display, FontSize = 13, FontWeight = FontWeights.Medium, Margin = new Thickness(0, 2, 0, 0), TextTrimming = TextTrimming.CharacterEllipsis };
-                System.Windows.Documents.Typography.SetNumeralAlignment(address, FontNumeralAlignment.Tabular); caption.Children.Add(address);
-                var run = new System.Windows.Shapes.Path { Data = Geometry.Parse("M 3,2 L 13,8 3,14 Z"), Width = 16, Height = 16, Stroke = (Brush)FindResource("Accent"), StrokeThickness = 1.2, StrokeLineJoin = PenLineJoin.Round, VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center };
-                Grid.SetColumn(run, 1); body.Children.Add(run); b.Content = body;
-                System.Windows.Automation.AutomationProperties.SetName(b, "Suggested " + diagnostic.Label); System.Windows.Automation.AutomationProperties.SetHelpText(b, target.Display + " from clipboard");
-                var card = new Border { CornerRadius = new CornerRadius(10), Background = (Brush)FindResource("ControlSurface"), Margin = new Thickness(0, 4, 0, 4), Height = 52, Padding = new Thickness(8) };
-                var content = new Grid(); content.ColumnDefinitions.Add(new()); content.ColumnDefinitions.Add(new() { Width = new GridLength(32) }); card.Child = content; content.Children.Add(b);
-                var dismiss = Button("", () =>
-                {
-                    if (!Active()) return;
-                    if (vault.Document!.Settings.ClipboardDismissHintSeen) { dismissedSuggestionSlots.Add(slot); RefreshSuggestions(); return; }
-                    if (!Change(d => d.Settings.ClipboardDismissHintSeen = true)) return;
-                    content.Children.Clear(); content.ColumnDefinitions.Clear();
-                    content.ColumnDefinitions.Add(new() { Width = GridLength.Auto }); content.ColumnDefinitions.Add(new()); content.ColumnDefinitions.Add(new());
-                    content.Children.Add(new TextBlock { Text = "Hide this?", FontSize = 11, Foreground = (Brush)FindResource("Muted"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(4, 0, 8, 0) });
-                    var once = Button("Only this copy", () => { if (!Active()) return; dismissedSuggestionSlots.Add(slot); RefreshSuggestions(); });
-                    var never = Button("Don't show again", () => { if (!Active()) return; if (Change(d => d.Settings.ClipboardSuggestions = false)) suggestionHost.Children.Clear(); });
-                    var column = 1;
-                    foreach (var choice in new[] { once, never }) { choice.Height = 32; choice.MinHeight = 0; choice.FontSize = 11; choice.Padding = new Thickness(4, 0, 4, 0); choice.Margin = new Thickness(2, 0, 0, 0); choice.HorizontalContentAlignment = HorizontalAlignment.Center; Grid.SetColumn(choice, column++); content.Children.Add(choice); }
-                });
-                dismiss.Style = (Style)FindResource("IconButton"); dismiss.Width = 32; dismiss.Height = 32; dismiss.Padding = new Thickness(0); dismiss.Margin = new Thickness(0); dismiss.Opacity = .6; dismiss.ToolTip = "Dismiss suggestion";
-                dismiss.Content = new System.Windows.Shapes.Path { Data = Geometry.Parse("M 2,2 L 10,10 M 10,2 L 2,10"), Width = 12, Height = 12, Stroke = (Brush)FindResource("Muted"), StrokeThickness = 1.25, StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round, IsHitTestVisible = false };
-                System.Windows.Automation.AutomationProperties.SetName(dismiss, "Dismiss network suggestion"); Grid.SetColumn(dismiss, 1); content.Children.Add(dismiss);
-                suggestionHost.Children.Add(card);
+                suggestionHost.Children.Add(BuildSuggestionCard(suggestionHost, diagnostic, slot, sequence));
             }
         }
         catch (Exception ex) when (ex is ExternalException or InvalidOperationException) { /* Clipboard may belong to another process. Never retry in a loop. */ }
     }
+    private Border BuildSuggestionCard(StackPanel host, ClipboardDiagnostic diagnostic, int slot, uint sequence)
+    {
+        var target = diagnostic.Target.Display;
+        var startEpoch = epoch;
+        var layout = new Grid();
+        layout.ColumnDefinitions.Add(new());
+        layout.ColumnDefinitions.Add(new() { Width = new GridLength(30) });
+        var card = new Border
+        {
+            Child = layout, CornerRadius = new CornerRadius(10), Height = 52,
+            Margin = new Thickness(0, 4, 0, 4), Padding = new Thickness(10, 6, 8, 6)
+        };
+        card.SetResourceReference(Border.BackgroundProperty, "OptionGroupSurface");
+
+        bool Active() => epoch == startEpoch && vault.IsUnlocked && IsVisible && WindowState != WindowState.Minimized
+            && screen == "list" && folder is null && vault.Document!.Settings.ClipboardSuggestions && sequence == SuggestionSequence()
+            && ReferenceEquals(host, suggestionHost) && host.Children.Contains(card);
+
+        var launch = SuggestionAction("", async () =>
+        {
+            if (!Active()) return;
+            await LaunchEntryAction(new EntryAction { Kind = diagnostic.Kind, Target = target, KeepTerminalOpen = true });
+        });
+        launch.Tag = "network-run";
+        launch.Padding = new Thickness(0);
+        launch.HorizontalContentAlignment = HorizontalAlignment.Stretch;
+        launch.ToolTip = $"Run {diagnostic.Label} with {target} from the clipboard";
+        AutomationProperties.SetName(launch, "Suggested " + diagnostic.Label);
+        AutomationProperties.SetHelpText(launch, target + " from clipboard");
+
+        var body = new Grid();
+        body.ColumnDefinitions.Add(new());
+        body.ColumnDefinitions.Add(new() { Width = new GridLength(28) });
+        var caption = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(1, 0, 8, 0) };
+        caption.Children.Add(new TextBlock { Text = diagnostic.Label, FontSize = 11, Foreground = (Brush)FindResource("Muted"), TextTrimming = TextTrimming.CharacterEllipsis });
+        var address = new TextBlock
+        {
+            Text = target, FontSize = 13, FontWeight = FontWeights.Medium,
+            Margin = new Thickness(0, 2, 0, 0), TextTrimming = TextTrimming.CharacterEllipsis
+        };
+        System.Windows.Documents.Typography.SetNumeralAlignment(address, FontNumeralAlignment.Tabular);
+        caption.Children.Add(address);
+        body.Children.Add(caption);
+        var runIcon = SuggestionGlyph(launch, "M 3,2 L 13,8 3,14 Z", 16);
+        Grid.SetColumn(runIcon, 1);
+        body.Children.Add(runIcon);
+        launch.Content = body;
+        layout.Children.Add(launch);
+
+        var dismiss = SuggestionAction("", () => { });
+        dismiss.Click += (_, _) =>
+        {
+            if (!Active()) return;
+            if (vault.Document!.Settings.ClipboardDismissHintSeen) { DismissCopy(); return; }
+            if (!Change(d => d.Settings.ClipboardDismissHintSeen = true)) return;
+            ShowDismissChoices();
+        };
+        dismiss.Height = 32;
+        dismiss.Padding = new Thickness(0);
+        dismiss.VerticalAlignment = VerticalAlignment.Center;
+        dismiss.ToolTip = "Dismiss suggestion";
+        dismiss.Content = SuggestionGlyph(dismiss, "M 2,2 L 10,10 M 10,2 L 2,10", 12);
+        AutomationProperties.SetName(dismiss, "Dismiss network suggestion");
+        Grid.SetColumn(dismiss, 1);
+        layout.Children.Add(dismiss);
+        return card;
+
+        void DismissCopy()
+        {
+            if (!Active()) return;
+            dismissedSuggestionSlots.Add(slot);
+            RefreshSuggestions();
+        }
+
+        void ShowDismissChoices()
+        {
+            var choices = new DockPanel { LastChildFill = true };
+            var never = SuggestionAction("Don't show again", () =>
+            {
+                if (Active() && Change(d => d.Settings.ClipboardSuggestions = false)) host.Children.Clear();
+            });
+            var once = SuggestionAction("Only this copy", DismissCopy);
+            foreach (var choice in new[] { never, once })
+            {
+                choice.Height = 32;
+                choice.FontSize = 11;
+                choice.Padding = new Thickness(6, 0, 6, 0);
+                choice.VerticalAlignment = VerticalAlignment.Center;
+                DockPanel.SetDock(choice, Dock.Right);
+                choices.Children.Add(choice);
+            }
+            var prompt = new TextBlock
+            {
+                Text = "Hide this?", FontSize = 11, Foreground = (Brush)FindResource("Muted"),
+                VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(2, 0, 8, 0),
+                TextTrimming = TextTrimming.CharacterEllipsis
+            };
+            choices.Children.Add(prompt);
+            var keepKeyboardFocus = dismiss.IsKeyboardFocused;
+            card.Child = choices;
+            if (keepKeyboardFocus) once.Focus();
+        }
+    }
+
+    private Button SuggestionAction(string text, Action click)
+    {
+        var button = Button(text, click);
+        button.Style = (Style)FindResource("SuggestionButton");
+        button.HorizontalContentAlignment = HorizontalAlignment.Center;
+        button.Margin = new Thickness(0);
+        return button;
+    }
+
+    private static System.Windows.Shapes.Path SuggestionGlyph(Button button, string geometry, double size)
+    {
+        var path = new System.Windows.Shapes.Path
+        {
+            Data = Geometry.Parse(geometry), Width = size, Height = size, StrokeThickness = 1.2,
+            StrokeLineJoin = PenLineJoin.Round, StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round,
+            VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center, IsHitTestVisible = false
+        };
+        path.SetBinding(System.Windows.Shapes.Shape.StrokeProperty, new Binding(nameof(Control.Foreground)) { Source = button });
+        return path;
+    }
+
     [DllImport("user32.dll")] private static extern bool OpenClipboard(IntPtr owner);
     [DllImport("user32.dll")] private static extern bool CloseClipboard();
     [DllImport("user32.dll")] private static extern IntPtr GetClipboardData(uint format);

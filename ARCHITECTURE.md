@@ -1,4 +1,4 @@
-# Sable architecture — 0.9.7 preview
+# Sable architecture — 9.8.0 preview
 
 The public app name is Sable. Existing `SableLatch` namespaces, cryptographic purposes, module IDs and Windows binding identifiers are compatibility details, not a second product. The current architecture is below; historical changes belong in [CHANGELOG.md](CHANGELOG.md).
 
@@ -97,7 +97,7 @@ Formatted secrets keep sanitized HTML beside plain text. AngleSharp parses data 
 
 Internal content/editor/presenter/clipboard/layout/toolbar interfaces support trusted composition. They are not the public ZIP API or a sandbox. See [Extensions](EXTENSIONS.md) and [module authoring](modules/README.md).
 
-The development build fetches a signed catalog and hash-verified module ZIPs from GitHub when requested. Release builds embed the publisher public key. Older builds use the legacy catalog so they only see compatible packages.
+Sable fetches a signed catalog and hash-verified module ZIPs from GitHub when requested. Release builds embed the publisher public key. Older builds use the legacy catalog so they only see compatible packages.
 
 Network Profile is an official-only host capability. It stores the adapter GUID and independently selected IPv4 and DNS settings in the encrypted vault. When run, Sable validates the profile, reviews it unless locally approved, then starts Windows PowerShell once with administrator approval. The fixed host script resolves the adapter GUID to its current index and invokes the system network configuration utility with validated IPv4 arguments. Neither module ZIP data nor entry text can supply executable code. DNS and static addressing are separate writes and a later stage can fail after an earlier one succeeds.
 

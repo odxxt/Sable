@@ -7,7 +7,6 @@ namespace SableLatch.Desktop;
 
 public partial class MainWindow
 {
-    private static readonly string[] NetworkModes = ["Keep current", "Automatic (DHCP)", "Manual"];
     private bool applyingNetworkProfile;
 #if DEBUG
     private Func<NetworkAdapterChoice[]>? previewNetworkAdapters;
@@ -22,94 +21,6 @@ public partial class MainWindow
         return NetworkProfileBroker.ListAdapters();
     }
 
-    private FrameworkElement BuildNetworkProfileFields(DeclarativeProvider provider, VaultItem? existing, Action<VaultItem> save)
-    {
-        var stack = new StackPanel();
-        var name = Input(stack, "Name", existing?.Label ?? editorSharedLabel);
-        name.MaxLength = 300;
-        NetworkAdapterChoice[] adapters;
-        try { adapters = NetworkAdapters(); }
-        catch (NetworkInformationException) { adapters = []; }
-        Guid.TryParse(existing?.Field("adapter"), out var savedAdapter);
-        var adapterNames = adapters.Select(a => a.Name).ToArray();
-        var adapter = Select(stack, "Network adapter", adapterNames,
-            adapters.FirstOrDefault(a => a.Id == savedAdapter)?.Name ?? "");
-        if (adapters.Length == 0) stack.Children.Add(Text("No IPv4 adapters are available on this PC.", 11, true));
-        else if (savedAdapter != Guid.Empty && adapter.SelectedIndex < 0)
-            stack.Children.Add(Text("The saved adapter is missing. Choose one on this PC.", 11, true));
-
-        var addressMode = Select(stack, "IPv4 address", NetworkModes, ModeLabel(existing?.Field("addressMode")));
-        var addressFields = new StackPanel();
-        stack.Children.Add(addressFields);
-        var address = Input(addressFields, "IP address", existing?.Field("address") ?? "");
-        var mask = Input(addressFields, "Subnet mask", existing?.Field("mask") ?? "");
-        mask.ToolTip = "Dotted subnet mask or CIDR prefix, such as 255.255.255.0 or /24.";
-        var gateway = Input(addressFields, "Gateway (optional)", existing?.Field("gateway") ?? "");
-        gateway.ToolTip = "Leave blank to use no IPv4 default gateway on this adapter.";
-        var dnsMode = Select(stack, "IPv4 DNS servers", NetworkModes, ModeLabel(existing?.Field("dnsMode")));
-        var dnsFields = new StackPanel();
-        stack.Children.Add(dnsFields);
-        var primary = Input(dnsFields, "Primary DNS", existing?.Field("primaryDns") ?? "");
-        var secondary = Input(dnsFields, "Secondary DNS (optional)", existing?.Field("secondaryDns") ?? "");
-        foreach (var input in new[] { address, mask, gateway, primary, secondary }) input.MaxLength = 15;
-
-        void UpdateFields()
-        {
-            addressFields.Visibility = addressMode.SelectedIndex == 2 ? Visibility.Visible : Visibility.Collapsed;
-            dnsFields.Visibility = dnsMode.SelectedIndex == 2 ? Visibility.Visible : Visibility.Collapsed;
-        }
-        addressMode.SelectionChanged += (_, _) => UpdateFields();
-        dnsMode.SelectionChanged += (_, _) => UpdateFields();
-        UpdateFields();
-        var review = Check(stack, "Review changes before applying", existing?.Field("review") != "false");
-        review.ToolTip = "Windows administrator approval still applies when this review is turned off.";
-        var fields = new Dictionary<string, Control>
-        {
-            ["adapter"] = adapter, ["addressMode"] = addressMode, ["dnsMode"] = dnsMode, ["address"] = address,
-            ["mask"] = mask, ["gateway"] = gateway, ["primaryDns"] = primary, ["secondaryDns"] = secondary
-        };
-
-        VaultItem Capture()
-        {
-            var item = existing is null
-                ? new VaultItem { ContentType = provider.Descriptor.Id, FolderId = folder, Order = vault.Document!.Items.Count }
-                : Codec.Clone(existing);
-            item.Label = name.Text.Trim();
-            item.IsSensitive = false;
-            item.ModuleSchema = provider.Package.Manifest.SchemaFingerprint();
-            item.Payload = JsonSerializer.SerializeToElement(new Dictionary<string, string>
-            {
-                ["adapter"] = adapter.SelectedIndex >= 0 ? adapters[adapter.SelectedIndex].Id.ToString("D") : "",
-                ["addressMode"] = ModeValue(addressMode.SelectedIndex), ["dnsMode"] = ModeValue(dnsMode.SelectedIndex),
-                ["address"] = address.Text.Trim(), ["mask"] = mask.Text.Trim(), ["gateway"] = gateway.Text.Trim(),
-                ["primaryDns"] = primary.Text.Trim(), ["secondaryDns"] = secondary.Text.Trim(),
-                ["review"] = review.IsChecked == true ? "true" : "false"
-            });
-            return item;
-        }
-        captureEditorDraft = Capture;
-        PageAction(Button("Save entry", () =>
-        {
-            var item = Capture();
-            if (item.Label.Length == 0) { RejectInput(name, "Enter a name for this profile."); return; }
-            NetworkProfile profile;
-            try { profile = NetworkProfile.Read(item); }
-            catch (ArgumentException ex)
-            {
-                var field = ex.ParamName is { } key && fields.TryGetValue(key, out var target) ? target : adapter;
-                field.Focus(); field.BringIntoView(); RejectInput(field, ex.Message.Split('\r', '\n')[0]);
-                return;
-            }
-            save(item);
-            if (!profile.Review && screen == "list" && vault.IsUnlocked
-                && vault.Document!.Items.Any(i => i.Id == item.Id && i.Payload.GetRawText() == item.Payload.GetRawText()))
-                RememberNetworkReview(provider, item);
-        }, true));
-        return stack;
-    }
-
-    private static string ModeLabel(string? value) => NetworkModes[value == "manual" ? 2 : value == "automatic" ? 1 : 0];
-    private static string ModeValue(int selected) => selected switch { 2 => "manual", 1 => "automatic", _ => "keep" };
     private static string NetworkReviewKey(DeclarativeProvider provider, VaultItem item) =>
         Convert.ToHexString(SHA256.HashData(Codec.Encode(new
         {
@@ -166,24 +77,77 @@ public partial class MainWindow
             return;
         }
 
-        var stack = Form("Review network changes", "", "module-permission", parent: ShowList, compact: true);
-        stack.Children.Add(Text(adapter.Name, 15));
+        var stack = Form("Review changes", "", "module-permission", back: false, parent: ShowList, compact: true);
+        var identity = new Grid { Margin = new Thickness(0, 0, 0, 8) };
+        identity.ColumnDefinitions.Add(new());
+        identity.ColumnDefinitions.Add(new() { Width = new GridLength(115) });
+        var entryName = Text(item.Label, 13);
+        entryName.FontWeight = FontWeights.SemiBold;
+        entryName.Margin = new Thickness(0, 0, 9, 0);
+        identity.Children.Add(entryName);
+        var adapterName = Text(adapter.Name, 11, true);
+        adapterName.Margin = new Thickness(0);
+        adapterName.TextAlignment = TextAlignment.Right;
+        adapterName.VerticalAlignment = VerticalAlignment.Center;
+        Grid.SetColumn(adapterName, 1);
+        identity.Children.Add(adapterName);
+        stack.Children.Add(identity);
+
+        var values = new StackPanel();
+        var summary = new Border
+        {
+            Child = values, CornerRadius = new CornerRadius(11),
+            Padding = new Thickness(12, 2, 12, 2), Margin = new Thickness(0, 0, 0, 7)
+        };
+        summary.SetResourceReference(Border.BackgroundProperty, "OptionGroupSurface");
+        stack.Children.Add(summary);
+        void ReviewValue(string label, string value)
+        {
+            var section = new StackPanel { Margin = new Thickness(0, 6, 0, 7) };
+            if (values.Children.Count > 0)
+            {
+                var rule = new Border { Height = 1 };
+                rule.SetResourceReference(Border.BackgroundProperty, "Line");
+                values.Children.Add(rule);
+            }
+            var caption = Text(label, 11, true);
+            caption.Margin = new Thickness(0, 0, 0, 2);
+            section.Children.Add(caption);
+            var content = Text(value, 16);
+            content.Margin = new Thickness(0);
+            content.FontWeight = FontWeights.Medium;
+            section.Children.Add(content);
+            values.Children.Add(section);
+        }
         if (profile.AddressMode != NetworkSetting.Keep)
         {
-            stack.Children.Add(Text("IPv4 address", 11, true));
-            stack.Children.Add(Text(profile.AddressMode == NetworkSetting.Automatic ? "Automatic (DHCP)"
-                : $"{profile.Address}/{profile.PrefixLength} · Gateway {profile.Gateway?.ToString() ?? "none"}", 13));
-            stack.Children.Add(Text("Replaces this adapter's IPv4 addresses and default gateway.", 11, true));
+            ReviewValue("IP address", profile.AddressMode == NetworkSetting.Automatic ? AutomaticNetworkMethod : profile.Address!.ToString());
+            if (profile.AddressMode == NetworkSetting.Manual)
+            {
+                ReviewValue("Subnet mask", Ipv4EntryField.FormatMask(profile.PrefixLength));
+                if (profile.Gateway is not null) ReviewValue("Default gateway", profile.Gateway.ToString());
+            }
         }
         if (profile.DnsMode != NetworkSetting.Keep)
         {
-            stack.Children.Add(Text("IPv4 DNS servers", 11, true));
-            stack.Children.Add(Text(profile.DnsMode == NetworkSetting.Automatic ? "Automatic (DHCP)"
-                : profile.SecondaryDns is null ? profile.PrimaryDns!.ToString() : $"{profile.PrimaryDns}, {profile.SecondaryDns}", 13));
+            ReviewValue("DNS", profile.DnsMode == NetworkSetting.Automatic ? AutomaticNetworkMethod : profile.PrimaryDns!.ToString());
+            if (profile.SecondaryDns is not null) ReviewValue("Secondary DNS", profile.SecondaryDns.ToString());
         }
-        stack.Children.Add(Text("This can interrupt your connection. Windows will ask for administrator approval.", 11, true));
+        if (profile.AddressMode == NetworkSetting.Manual && profile.Gateway is null)
+        {
+            var noGateway = Text("No default gateway will be set.", 11, true);
+            noGateway.Margin = new Thickness(0, 0, 0, 4);
+            stack.Children.Add(noGateway);
+        }
+        stack.Children.Add(Text("Windows will ask for administrator approval.", 11, true));
         var page = Body.Content;
-        PageAction(AsyncButton("Apply changes", () => ApplyNetworkProfile(item, provider, profile, startEpoch, page)));
+        var actions = new DockPanel();
+        var cancel = Button("Cancel", ShowList);
+        cancel.Margin = new Thickness(0, 0, 8, 0);
+        DockPanel.SetDock(cancel, Dock.Left);
+        actions.Children.Add(cancel);
+        actions.Children.Add(AsyncButton("Apply changes", () => ApplyNetworkProfile(item, provider, profile, startEpoch, page)));
+        PageAction(actions);
         pageSubmit = null; // Require an explicit click or keyboard activation of Apply.
     }
 
@@ -219,7 +183,7 @@ public partial class MainWindow
             }
             Audit(AuditEvent.EntryActionStarted);
             ShowList();
-            SetStatus("Network profile applied");
+            SetStatus("Network change applied");
             if (!profile.Review) RememberNetworkReview(provider, item);
             _ = ShowRunFeedback(item.Id);
         }

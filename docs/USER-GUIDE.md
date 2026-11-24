@@ -1,4 +1,4 @@
-# Sable user guide — 0.9.7 preview
+# Sable user guide — 9.8.0 preview
 
 Sable keeps secrets, logins, useful commands and server connections in a compact Windows tray app. Everything saved in the vault is encrypted, including shortcuts, descriptions and folder names. It needs no online account.
 
@@ -59,7 +59,7 @@ The masked editor shows **Formatting kept**. This is preservation, not a rich-te
 
 ## Type clipboard
 
-Install **Type clipboard** from Settings → Plugins & modules → GitHub catalog in the development build. Create a reusable entry under **+ → New entry → Extras → Type clipboard**, or right-click the tray → **Type clipboard**. The tray action also works while the vault is locked. It always types the current clipboard, not a saved entry value.
+Install **Type clipboard** from Settings → Plugins & modules → GitHub catalog. Create a reusable entry under **+ → New entry → Extras → Type clipboard**, or right-click the tray → **Type clipboard**. The tray action also works while the vault is locked and types the current clipboard.
 
 Sable hides, the cursor becomes a crosshair, and you click the destination. The default delay is 500 ms, followed by 25 ms between characters. Esc cancels remaining input. A different foreground window or a Windows/session lock cancels the operation. Already typed text remains. Internal line breaks/tabs are sent; trailing Enter/Tab characters are stripped and no extra Enter is added. Multiline confirmation is on by default.
 
@@ -109,16 +109,16 @@ Entry right-click menus keep **Edit, Duplicate, Move to folder, Delete** in orde
 
 ## Modules and connections
 
-In the development build, open **Settings → Plugins & modules → GitHub catalog**, select a module and review it before installing. Sable verifies the GitHub catalog signature and the selected ZIP before installation. **Install from ZIP…** accepts packages you already downloaded. Installed modules show their version and open their settings. Sable contacts GitHub when you open the catalog or select a download. **Default entry types** controls the built-in choices.
+Open **Settings → Plugins & modules → GitHub catalog**, select a module and review it before installing. Sable verifies the GitHub catalog signature and the selected ZIP before installation. **Install from ZIP…** accepts packages you already downloaded. Installed modules show their version and open their settings. Sable contacts GitHub when you open the catalog or select a download. **Default entry types** controls the built-in choices.
 
-### Network Profile (development build)
+### Network change
 
-Install **Network Profile** from the GitHub catalog, then choose **+ → New entry → Extras → Network Profile**. Give the entry a name and select a Windows network adapter.
+Install **Network Profile** from **Settings → Plugins & modules → GitHub catalog**, or use **Install from ZIP…** with `sable.network-profile.zip`. Choose **+ → New entry → Extras → Network change**. Select the Windows adapter for this entry and use **Add a change** to add **IP address**, **DNS**, or both. Sable can name the entry if you leave its name blank.
 
-- **IPv4 address** accepts **Keep current**, **Automatic (DHCP)** or **Manual**. Manual takes an IP address and a subnet mask such as `255.255.255.0` or `/24`. It replaces the adapter's IPv4 addresses and default gateway. Leaving the gateway blank sets no default gateway on that adapter.
-- **IPv4 DNS servers** has the same three choices. Manual takes a primary server and an optional secondary server. For a DNS-only profile, leave the IPv4 address on **Keep current**.
+- **IP address** can use **Automatic (DHCP)** or **Manual**. New manual changes start with the subnet mask `255.255.255.0`. Enter or paste an IP address and change the mask if needed. Pasting `/24` also fills in the mask. This replaces the adapter’s IPv4 addresses and default gateway. Use **+ Default gateway** to set a gateway. Omitting it sets no default gateway.
+- **DNS** can use automatic settings or a manual DNS server. Use **+ Secondary DNS** for a second server. The **X** beside an optional field clears and hides just that value. The **X** in a block header removes the whole change from the entry.
 
-Click the entry, check the adapter and settings, and choose **Apply changes**. Clear **Review changes before applying** in the editor to skip Sable's review for that saved configuration on this PC. Windows authorization is still required. After a transfer or on a different PC, an entry without local approval shows the review and may need an adapter selected again. The module changes IPv4 only. Applying a profile can interrupt network connections, and a later step can fail after an earlier one has taken effect.
+Click the saved entry to review its changes and choose **Apply changes**. Clear **Review before applying** to skip Sable’s review for that entry on this PC. Windows still requires administrator approval. A transferred entry without local approval asks for review and may need an adapter selected again. A change can interrupt network connections, and a later step can fail after an earlier one has taken effect.
 
 ZIP modules are restricted definitions, not executable plugins. They cannot read secret values or run arbitrary background code. Uninstalling/disabling leaves entries encrypted and unavailable until a compatible module is restored. See [the module guide](../modules/README.md) for samples, signatures and supported capabilities.
 

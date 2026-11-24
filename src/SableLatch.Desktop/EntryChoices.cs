@@ -76,7 +76,7 @@ public partial class MainWindow
         var stack = Form("Extras", "", "editor", parent: ShowEntryStarters, compact: true);
         stack.Children.Add(Text("Choose a tool", 12, true));
         foreach (var provider in AvailableStarters.OfType<DeclarativeProvider>().Where(p => p.Package.Manifest.EffectiveCategory == "extras"))
-            stack.Children.Add(StarterRow(provider.Descriptor.Name, provider.Package.Manifest.Description,
+            stack.Children.Add(StarterRow(TemplateName(provider), provider.Package.Manifest.Description,
                 provider.Package.Manifest.Icon is "network" or "keyboard" ? provider.Package.Manifest.Icon : provider.Descriptor.Symbol,
                 () => ShowEditor(selectedType: provider.Descriptor.Id)));
         FocusStarter(stack);
@@ -104,6 +104,7 @@ public partial class MainWindow
     private static string TemplateName(IContentProvider provider) => provider.Descriptor.Id switch
     {
         "sable.secret" => "Secret", "sable.login" => "Login", "sable.shortcut" => "Shortcut",
-        "module.sablelatch.putty" => "SSH · PuTTY", "module.sablelatch.rdp" => "Remote Desktop", _ => provider.Descriptor.Name
+        "module.sablelatch.putty" => "SSH · PuTTY", "module.sablelatch.rdp" => "Remote Desktop",
+        "module.sable.network-profile" => "Network change", _ => provider.Descriptor.Name
     };
 }

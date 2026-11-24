@@ -71,9 +71,23 @@ public partial class MainWindow
     }
     private TextBox Input(StackPanel stack, string label, string value = "", bool multiline = false)
     {
-        var caption = Text(label, 11, true); if (screen == "editor") caption.Margin = new Thickness(0, 0, 0, 4); stack.Children.Add(caption);
+        stack.Children.Add(InputCaption(label));
+        var box = InputControl(label, value, multiline);
+        stack.Children.Add(box);
+        return box;
+    }
+    private TextBlock InputCaption(string label)
+    {
+        var caption = Text(label, 11, true);
+        if (screen == "editor") caption.Margin = new Thickness(0, 0, 0, 4);
+        return caption;
+    }
+    private TextBox InputControl(string label, string value, bool multiline = false)
+    {
         var box = new TextBox { Text = value, Margin = new Thickness(0, 0, 0, screen == "editor" ? 8 : 13), AcceptsReturn = multiline, TextWrapping = multiline ? TextWrapping.Wrap : TextWrapping.NoWrap, VerticalScrollBarVisibility = multiline ? ScrollBarVisibility.Auto : ScrollBarVisibility.Hidden, MinHeight = multiline ? 68 : screen == "editor" ? 32 : 35, MaxHeight = multiline ? 220 : 36 };
-        AutomationProperties.SetName(box, label); stack.Children.Add(box); eraseEditors.Add(() => box.Clear()); return box;
+        AutomationProperties.SetName(box, label);
+        eraseEditors.Add(box.Clear);
+        return box;
     }
     private PasswordBox Password(StackPanel stack, string label)
     {
@@ -89,6 +103,12 @@ public partial class MainWindow
     private static ComboBox Select(StackPanel stack, string label, IEnumerable<string> values, string selected)
     {
         stack.Children.Add(Text(label, 11, true));
+        var box = SelectControl(label, values, selected);
+        stack.Children.Add(box);
+        return box;
+    }
+    private static ComboBox SelectControl(string label, IEnumerable<string> values, string selected)
+    {
         var box = new ComboBox { ItemsSource = values.ToList(), SelectedItem = selected, Margin = new Thickness(0, 0, 0, 13) };
         box.PreviewMouseWheel += (_, e) =>
         {
@@ -97,6 +117,7 @@ public partial class MainWindow
             var scroll = menu?.Child is { } child ? Descendants<ScrollViewer>(child).FirstOrDefault() : FindParent<ScrollViewer>(box);
             if (scroll is not null) SmoothScrolling.Wheel(scroll, e.Delta);
         };
-        AutomationProperties.SetName(box, label); stack.Children.Add(box); return box;
+        AutomationProperties.SetName(box, label);
+        return box;
     }
 }
